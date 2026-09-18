@@ -44,7 +44,8 @@ sám do 1–2 minút.
 
 ## Čo ešte treba doriešiť (pred ostrým spustením)
 - [ ] Reálne tréningové fotky (nahradiť ukážkové), **logo v priehľadnom PNG**.
-- [ ] Naozaj napojiť formuláre (kontakt + prihláška) — podľa zvoleného hostingu.
+- [x] Formuláre (kontakt + prihláška) odosielajú cez `mailto:` na `lub.zavodny1@gmail.com`
+      (obsluha v `js/main.js`). Do budúcna sa dá prejsť na FormSubmit/Formspree bez `mailto:`.
 - [ ] Zásady ochrany osobných údajov (GDPR), súhlasy vrátane detí (rodič).
 - [ ] Vlastná doména (zatiaľ nekúpená) — potom nastaviť v Pages (CNAME).
 - [ ] Skontrolovať/upraviť texty (Čo je taekwondo, Pásy, O nás — teraz sú to návrhy).

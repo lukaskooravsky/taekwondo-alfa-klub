@@ -64,27 +64,54 @@
     document.addEventListener("keyup", function (e) { if (e.key === "Escape") hide(); });
   }
 
-  /* ---- Demo formuláre (zatiaľ len ukážka) ---- */
+  /* ---- Formuláre → e-mail (mailto:) ---- */
+  const CONTACT_EMAIL = "lub.zavodny1@gmail.com";
+
+  // ľudské názvy polí do tela e-mailu
+  const FIELD_LABELS = {
+    meno: "Meno a priezvisko",
+    email: "E-mail",
+    telefon: "Telefón",
+    prekoho: "Prihlasujem",
+    den: "Preferovaný deň",
+    sprava: "Správa / poznámka"
+  };
+
   document.querySelectorAll("form[data-demo]").forEach(function (form) {
     form.addEventListener("submit", function (e) {
       e.preventDefault();
-      const btn = form.querySelector("button[type=submit]");
-      if (btn) { btn.disabled = true; btn.textContent = "Odosielam…"; }
-      setTimeout(function () {
-        // pekné potvrdenie namiesto systémového alertu
-        const title = form.getAttribute("data-demo") === "prihlaska"
-          ? "Prihláška odoslaná!"
-          : "Správa odoslaná!";
-        const ok = document.createElement("div");
-        ok.className = "form-success";
-        ok.setAttribute("role", "status");
-        ok.innerHTML =
-          '<span class="fs-check" aria-hidden="true">✓</span>' +
-          '<h3>' + title + '</h3>' +
-          '<p>Ďakujeme! Čoskoro sa ti ozveme.</p>' +
-          '<p class="fs-demo">Toto je náhľad (demo) — formulár sa naostro napojí pri spustení webu.</p>';
-        form.replaceWith(ok);
-      }, 700);
+      const isPrihlaska = form.getAttribute("data-demo") === "prihlaska";
+
+      // poskladaj predmet + telo z vyplnených polí
+      const subject = isPrihlaska
+        ? "Prihláška na skúšobnú hodinu — ALFA Taekwondo"
+        : "Správa z webu — ALFA Taekwondo";
+      const lines = [];
+      form.querySelectorAll("input, textarea, select").forEach(function (el) {
+        if (el.type === "checkbox" || el.type === "submit" || !el.name) return;
+        const val = (el.value || "").trim();
+        if (!val) return;
+        const label = FIELD_LABELS[el.name] || el.name;
+        lines.push(label + ": " + val);
+      });
+      const body = lines.join("\n");
+
+      const mailto = "mailto:" + CONTACT_EMAIL +
+        "?subject=" + encodeURIComponent(subject) +
+        "&body=" + encodeURIComponent(body);
+      window.location.href = mailto;
+
+      // potvrdenie na stránke (návštevník dokončí odoslanie vo svojom maile)
+      const title = isPrihlaska ? "Prihláška pripravená!" : "Správa pripravená!";
+      const ok = document.createElement("div");
+      ok.className = "form-success";
+      ok.setAttribute("role", "status");
+      ok.innerHTML =
+        '<span class="fs-check" aria-hidden="true">✓</span>' +
+        '<h3>' + title + '</h3>' +
+        '<p>Otvorili sme ti e-mailový program s predvyplnenou správou — už len klikni <b>Odoslať</b>.</p>' +
+        '<p class="fs-demo">Ak sa e-mail neotvoril, napíš nám priamo na <a href="mailto:' + CONTACT_EMAIL + '">' + CONTACT_EMAIL + '</a>.</p>';
+      form.replaceWith(ok);
     });
   });
 
