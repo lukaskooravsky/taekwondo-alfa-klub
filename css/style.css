@@ -305,15 +305,23 @@ section { padding-block: clamp(4rem, 9vw, 7.5rem); position: relative; }
     background: url("../assets/extrakt.png") center 38% / cover no-repeat;
     background-color: var(--ink);
   }
-  /* jemnejšie stmavenie – dosť na čitateľnosť textu, ale kopajúcich vidno */
+  /* stmavenie – hore ľahšie (vidno kopajúcich), za textom výraznejšie kvôli čitateľnosti */
   .hero-bg::after {
     content: "";
     position: absolute; inset: 0;
     background: linear-gradient(180deg,
-      rgba(10,10,12,0.35) 0%,
-      rgba(10,10,12,0.30) 40%,
-      rgba(10,10,12,0.72) 78%,
-      rgba(10,10,12,0.95) 100%);
+      rgba(10,10,12,0.40) 0%,
+      rgba(10,10,12,0.45) 38%,
+      rgba(10,10,12,0.82) 74%,
+      rgba(10,10,12,0.96) 100%);
+  }
+  /* text v hero nech je čitateľný nad fotkou: svetlejší odsek + jemný tieň */
+  .hero .lead { color: var(--bone); }
+  .hero .eyebrow,
+  .hero .hero-title,
+  .hero .hero-claim,
+  .hero .lead {
+    text-shadow: 0 2px 12px rgba(0,0,0,0.75);
   }
 }
 
