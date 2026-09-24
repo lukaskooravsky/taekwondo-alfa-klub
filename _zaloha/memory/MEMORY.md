@@ -1,0 +1,3 @@
+- [ALFA Taekwondo web](project-alfa-taekwondo-web.md) — statický náčrt/demo webu pre klub, beží na GitHub Pages
+- [Deploy / git token](deploy-git-lukasko-token.md) — ako pushnúť: repo je lukaskooravsky, lokálny gh (DusanOravsky) je suspendovaný, push len cez HTTPS token
+- [KR font subset gotcha](fonts-kr-subset-gotcha.md) — nové kórejské znaky = prázdne štvorčeky (fonty sú subsety)
