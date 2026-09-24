@@ -217,7 +217,11 @@ section { padding-block: clamp(4rem, 9vw, 7.5rem); position: relative; }
     z-index: 40;
   }
   .nav-links.show { transform: translateY(0); }
-  .nav-links a { padding: 0.9rem 0.4rem; border-bottom: 1px solid var(--line); font-size: 1.15rem; }
+  /* display:block → padding aj spodná čiara sa počítajú z celej šírky položky,
+     takže oddeľovač je pod textom a neprechádza cezeň */
+  .nav-links a { display: block; padding: 0.9rem 0.4rem; border-bottom: 1px solid var(--line); font-size: 1.15rem; }
+  .nav-links li:last-of-type a { border-bottom: none; }
+  .nav-links .nav-cta a.btn { border-bottom: none; }
   .nav-cta { margin: 0.8rem 0 0; }
   .nav-cta .btn { width: 100%; justify-content: center; }
 }
@@ -283,10 +287,31 @@ section { padding-block: clamp(4rem, 9vw, 7.5rem); position: relative; }
           mask-composite: intersect;
 }
 
+/* Fotka na pozadí hero — zobrazí sa len na mobile/tablete (à la Pezinok).
+   Pri väčších obrazovkách ostáva pravý obrázok (.hero-figure). */
+.hero-bg { display: none; }
+
 @media (max-width: 820px) {
   .hero-grid { grid-template-columns: 1fr; }
   .hero-figure { display: none; }
-  .hero-mark { opacity: 0.1; right: -20%; }
+  .hero-mark { display: none; }
+
+  .hero { padding-block: clamp(4.5rem, 15vw, 7rem); }
+  .hero-bg {
+    display: block;
+    position: absolute; inset: 0; z-index: 0;
+    background: url("../assets/extrakt.png") center / cover no-repeat;
+    background-color: var(--ink);
+  }
+  /* stmavenie, aby bol text (biely/zlatý) čitateľný */
+  .hero-bg::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg,
+      rgba(10,10,12,0.55) 0%,
+      rgba(10,10,12,0.70) 45%,
+      rgba(10,10,12,0.94) 100%);
+  }
 }
 
 /* ============================================================
@@ -364,6 +389,47 @@ section { padding-block: clamp(4rem, 9vw, 7.5rem); position: relative; }
   content: "太"; font-family: var(--font-kr); color: var(--gold);
   font-size: 0.9rem; line-height: 1.6; flex: none;
 }
+
+/* ============================================================
+   DISCIPLÍNY (súťažné ITF)
+   ============================================================ */
+.disc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.4rem;
+}
+.disc {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  transition: transform .2s ease, border-color .2s ease;
+}
+.disc:hover { transform: translateY(-4px); border-color: var(--gold-deep); }
+.disc-media {
+  position: relative;
+  aspect-ratio: 16/11;
+  background-color: var(--ink-3);
+  /* fotku doplníš cez inline --img (viď HTML); dovtedy ostane tmavý placeholder */
+  background-image: var(--img, none);
+  background-size: cover;
+  background-position: center;
+  filter: grayscale(0.2);
+}
+/* jemný watermark názvu ako placeholder (na doplnenej fotke je takmer neviditeľný) */
+.disc-media::after {
+  content: attr(data-tag);
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  font-family: var(--font-display); font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.14em;
+  font-size: 2rem; color: rgba(200,160,78,0.12);
+  pointer-events: none;
+}
+.disc-body { padding: 1.5rem 1.6rem 1.8rem; display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
+.disc-tag { font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.18em; color: var(--gold); font-size: 0.82rem; }
+.disc h3 { color: var(--white); font-size: 1.5rem; }
+.disc p { color: var(--muted); font-size: 0.96rem; }
 
 /* ============================================================
    ROZVRH

@@ -41,6 +41,15 @@ sám do 1–2 minút.
 - **Rozvrh**: tabuľka `.schedule` v `o-nas.html` a `index.html`.
 - **Kontakty**: telefón/e-mail/adresa v pätičke každej stránky + na `kontakty.html`.
 - **Fotky**: nahraj do `assets/` a v HTML zmeň `src`. Hlavná akčná fotka je `assets/extrakt.png`.
+- **Hero na mobile**: má fotku na pozadí za textom (`.hero-bg` v `css/style.css`, len ≤820px,
+  so stmavením kvôli čitateľnosti). Teraz používa `assets/extrakt.png`; zmeníš v `.hero-bg`.
+- **Disciplíny** (`index.html`, sekcia `#discipliny`): 4 karty (Tul, Matsogi, Wi-ryok, Teuki).
+  Fotku každej doplníš cez inline `--img:url('assets/disc-*.jpg')`: `disc-tul.jpg`,
+  `disc-matsogi.jpg`, `disc-wiryok.jpg`, `disc-teuki.jpg`. Kým chýbajú, je tam tmavý placeholder.
+
+> ⚠️ **Kórejské znaky:** fonty sú self-hostované *subsety* — obsahujú len znaky reálne
+> použité v obsahu (태권도, 무도, 太). Nový KR znak sa zobrazí ako prázdny štvorček (□).
+> V nových sekciách preto KR akcenty nepoužívaj (alebo regeneruj subset cez `pyftsubset`).
 
 ## Čo ešte treba doriešiť (pred ostrým spustením)
 - [ ] Reálne tréningové fotky (nahradiť ukážkové), **logo v priehľadnom PNG**.
