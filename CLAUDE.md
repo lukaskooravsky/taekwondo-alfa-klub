@@ -31,6 +31,9 @@ assets/               obrázky + fonty
 
 ## Dizajn (premenné v `css/style.css`)
 - Farby: čierna `#0a0a0c`, zlatá `#c8a04e` / `#e6bd6a`, kosť/biela `#f3efe6`.
+- Text: nadpisy biele, telový/sekundárny text `--muted` (`#c3bdb1` — zosvetlené 2026-09-24
+  kvôli čitateľnosti sivej na čiernom pozadí; predtým `#9c968a` bolo slabo vidno na mobile),
+  najtlmenejšie `--muted-2` (`#948e83`). Pri zmene farby textu drž kontrast na čiernom.
 - Fonty: **Saira Condensed** (nadpisy), **Barlow** (text), **Noto Sans KR** (kórejské akcenty 태권도).
 - Uhlové rezy cez `--cut` (clip-path).
 

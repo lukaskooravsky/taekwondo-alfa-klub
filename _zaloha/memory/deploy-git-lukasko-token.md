@@ -5,13 +5,21 @@ metadata:
   node_type: memory
   type: reference
   originSessionId: 5ec1f520-6c77-43e6-9002-0d521bb3d45e
-  modified: 2026-09-16T17:41:09.603Z
+  modified: 2026-09-24T14:12:42.649Z
 ---
 
-Repozitár `lukaskooravsky/taekwondo-alfa-klub` patrí účtu **lukaskooravsky**.
-Na tomto stroji je `gh` prihlásené ako **DusanOravsky** (to je používateľ), ktorý má na repe len **READ** a jeho **SSH kľúč je pozastavený** („Your account is suspended"). Preto push cez SSH ani cez DusanOravsky **nefunguje**.
+Repozitár `lukaskooravsky/taekwondo-alfa-klub` patrí účtu **lukaskooravsky** a je **verejný** (kvôli GitHub Pages).
 
-**Push ide len ako lukaskooravsky cez HTTPS token** (classic token, scope `repo`, z https://github.com/settings/tokens). Token NEukladať do configu — použiť ho priamo v URL:
+**AKTUÁLNY funkčný spôsob (od 2026-09-24):** `gh` je teraz prihlásené aj ako **lukaskooravsky** cez OAuth (browser device flow), je to aktívny účet a nastavený git credential helper. Push preto funguje jednoducho:
+```
+gh auth login -h github.com -w      # ak treba znova (starší gh nepozná -p/--git-protocol)
+gh auth setup-git -h github.com
+cd .../site && git push origin HEAD:main
+```
+Tento gh verzia `gh auth login` v neinteraktívnom `!` režime **vyžaduje `-w` (--web)** — inak padne s „--web or --with-token required".
+
+---
+**Staršia poznámka (fallback cez token):** pôvodne bolo `gh` len ako DusanOravsky (READ, suspendovaný SSH), takže push išiel len ako lukaskooravsky cez HTTPS token (classic, scope `repo`) priamo v URL:
 
 ```
 git -c credential.helper= push \
