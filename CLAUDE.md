@@ -65,7 +65,8 @@ sám do 1–2 minút.
 ## Fakty o klube (aktuálne v obsahu)
 - Tréner: **Ľubomír Závodný**, IV. Dan čierny pás, Majster Európy.
 - Miesto: **ZŠ Holíčska 50, Bratislava — Petržalka**.
-- Tréningy: **Utorok a Štvrtok, 17:00–19:00** (deti 17–18, pokročilí+dospelí 18–19).
+- Tréningy: **Utorok a Štvrtok, 16:30–19:30** — začiatočníci 16:30–17:30, stredne pokročilí 17:30–18:30,
+  pokročilí a dospelí 18:30–19:30 (zmenené 2026-10-12).
 - Kontakt: 0911 818 815, lub.zavodny1@gmail.com.
 
 ## Nasadenie / práca s gitom

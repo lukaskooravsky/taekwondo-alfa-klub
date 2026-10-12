@@ -452,7 +452,7 @@ section { padding-block: clamp(4rem, 9vw, 7.5rem); position: relative; }
 }
 .schedule-row {
   display: grid;
-  grid-template-columns: 160px 1fr 1fr;
+  grid-template-columns: 160px repeat(3, 1fr);
   border-bottom: 1px solid var(--line);
 }
 .schedule-row:last-child { border-bottom: none; }
