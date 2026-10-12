@@ -5,13 +5,13 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 5ec1f520-6c77-43e6-9002-0d521bb3d45e
-  modified: 2026-09-24T14:28:54.784Z
+  modified: 2026-10-12T17:33:16.000Z
 ---
 
 Web pre klub **ALFA Taekwondo Club Bratislava** (ITF Taekwon-Do), robený pre používateľovho trénera. Ide o **náčrt/demo** na schválenie trénerom (obsah a fotky ukážkové, formuláre nie sú naostro napojené).
 
 - **Technológia:** čisté HTML/CSS/JS, žiadny build. Fonty self-hostované v `assets/fonts/` cez `css/fonts.css` (bez Google, kvôli GDPR).
-- **Zdroj:** `/home/cvcta/projects/learning/luki-takewondoo/site/` (samostatný git repo, root = site). Podrobnosti v `site/CLAUDE.md`.
+- **Zdroj:** `C:\Users\lukas\projekty\taekwondo-alfa-klub\` (klon z GitHubu 2026-10-12, root repa = web; pôvodne `/home/cvcta/projects/learning/luki-takewondoo/site/` na inom stroji). Podrobnosti v `CLAUDE.md`.
 - **Naživo:** https://lukaskooravsky.github.io/taekwondo-alfa-klub/ (GitHub Pages, vetva `main`, main/root).
 - **7 stránok:** Domov, Čo je taekwondo, Pásy, Aktuality, Galéria, O nás, Kontakt.
 - **Fakty v obsahu:** tréner Ľubomír Závodný (IV. Dan, Majster Európy); ZŠ Holíčska 50, Petržalka; tréningy Ut+Št 17:00–19:00; 0911 818 815.
@@ -22,6 +22,6 @@ Web pre klub **ALFA Taekwondo Club Bratislava** (ITF Taekwon-Do), robený pre po
 
 **Kontrast textu (2026-09-24, zapracované):** tréner/používateľ hlásili, že sivé a zlaté písmo na čiernom pozadí je na mobile slabo vidno (hlavne lead odsek v úvode, popisy kariet, adresa/čas v páse, disciplíny). Opravené jedným ťahom — zosvetlená premenná `--muted` (`#9c968a` → `#c3bdb1`) a `--muted-2` (`#6f6a61` → `#948e83`) v `css/style.css`. Nadpisy ostali biele, zlaté akcenty zlaté, hierarchia drží. Nasadené naživo.
 
-**Nová požiadavka (2026-09-24, ODLOŽENÁ):** tréner chce **admin sekciu / CMS** na správu príspevkov, fotiek a albumov. Statický web nemá backend — bude treba git-CMS (Decap na Pages cez GitHub OAuth, alebo presun na Netlify + Decap/Identity). Používateľ zvolil zatiaľ neriešiť, spraviť neskôr ako samostatný krok. Súvisí so skorším návrhom „Astro + Netlify + git-CMS (voľba A)".
+**CMS admin (rozbehnuté 2026-10-12):** web sa presunie na klasický PHP hosting + vlastnú doménu (zatiaľ nevybrané/nekúpené). Zvolený vlastný PHP admin s heslom (len tréner), JSON súbory, len aktuality + albumy, zmenšovanie fotiek v prehliadači. Práca na vetve `cms-admin` (main/Pages nedotknuté). Spec: `docs/superpowers/specs/2026-10-12-cms-admin-design.md` (schválený), plán: `docs/superpowers/plans/2026-10-12-cms-admin.md` (14 taskov). Stav: beží kritická review specu+plánu — používateľ chce dotiahnuť na **0 critical/0 high/0 medium/0 low** pred implementáciou; spôsob vykonania (subagenti vs. priamo) ešte nevybral.
 
 Pozor na fonty: viď [[fonts-kr-subset-gotcha]]. Nasadenie a git gotcha viď [[deploy-git-lukasko-token]].
