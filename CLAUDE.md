@@ -68,21 +68,22 @@ sám do 1–2 minút.
 - Tréningy: **Utorok a Štvrtok, 17:00–19:00** (deti 17–18, pokročilí+dospelí 18–19).
 - Kontakt: 0911 818 815, lub.zavodny1@gmail.com.
 
-## Nasadenie / práca s gitom (DÔLEŽITÉ — čítaj)
-Repozitár patrí účtu **lukaskooravsky**. Na tomto počítači je `gh` prihlásené ako
-**DusanOravsky**, ktorý má na repe len **READ** a jeho **SSH kľúč je pozastavený**
-(„account is suspended"). Preto sa **priamy push cez SSH ani cez DusanOravsky nedá.**
+## Nasadenie / práca s gitom
+Repozitár patrí účtu **lukaskooravsky**. Lokálna kópia: `C:\Users\lukas\projekty\taekwondo-alfa-klub`
+(root repa = web, žiadny podpriečinok `site/`).
 
-Push funguje len **ako lukaskooravsky cez HTTPS token**:
-1. Prihlás sa v prehliadači ako lukaskooravsky → https://github.com/settings/tokens
-   → *Tokens (classic)* → scope **`repo`** → vygeneruj token `ghp_…`.
-2. Push (token sa NEukladá do configu):
-   ```
-   git -c credential.helper= push \
-     "https://lukaskooravsky:<TOKEN>@github.com/lukaskooravsky/taekwondo-alfa-klub.git" \
-     main:main
-   ```
-3. **Token potom zmaž/revokni** na tej istej stránke (Tokens).
+Na tomto počítači je `gh` prihlásené ako **lukaskooravsky** (HTTPS + git credential helper),
+takže push je bežný:
+```
+git push origin main
+```
+GitHub Pages sa prebuduje do 1–2 minút.
 
-> Alternatíva do budúcna: nech lukaskooravsky pridá DusanOravsky ako collaboratora
-> s právom **Write** a vyrieši sa suspendovaný SSH kľúč — potom by šiel bežný `git push`.
+Ak by prihlásenie vypršalo:
+```
+gh auth login -h github.com -w
+gh auth setup-git -h github.com
+```
+
+> Staré postupy (push cez HTTPS token v URL, účet DusanOravsky so suspendovaným SSH)
+> už neplatia. Tokeny nedávaj do URL ani do `.git/config`.
