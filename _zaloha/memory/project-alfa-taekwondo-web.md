@@ -14,7 +14,7 @@ Web pre klub **ALFA Taekwondo Club Bratislava** (ITF Taekwon-Do), robený pre po
 - **Zdroj:** `C:\Users\lukas\projekty\taekwondo-alfa-klub\` (klon z GitHubu 2026-10-12, root repa = web; pôvodne `/home/cvcta/projects/learning/luki-takewondoo/site/` na inom stroji). Podrobnosti v `CLAUDE.md`.
 - **Naživo:** https://lukaskooravsky.github.io/taekwondo-alfa-klub/ (GitHub Pages, vetva `main`, main/root).
 - **7 stránok:** Domov, Čo je taekwondo, Pásy, Aktuality, Galéria, O nás, Kontakt.
-- **Fakty v obsahu:** tréner Ľubomír Závodný (IV. Dan, Majster Európy); ZŠ Holíčska 50, Petržalka; tréningy Ut+Št 17:00–19:00; 0911 818 815.
+- **Fakty v obsahu:** tréner Ľubomír Závodný (IV. Dan, Majster Európy); ZŠ Holíčska 50, Petržalka; tréningy Ut+Št 16:30–19:30 (začiatočníci 16:30–17:30, stredne pokročilí 17:30–18:30, pokročilí a dospelí 18:30–19:30; zmenené a nasadené 2026-10-12); 0911 818 815.
 
 **Otvorené úlohy pred ostrým spustením:** reálne fotky + logo v priehľadnom PNG, naozaj napojiť formuláre, GDPR/zásady, vlastná doména (zatiaľ nekúpená). Používateľ nechce WordPress.
 
@@ -22,6 +22,6 @@ Web pre klub **ALFA Taekwondo Club Bratislava** (ITF Taekwon-Do), robený pre po
 
 **Kontrast textu (2026-09-24, zapracované):** tréner/používateľ hlásili, že sivé a zlaté písmo na čiernom pozadí je na mobile slabo vidno (hlavne lead odsek v úvode, popisy kariet, adresa/čas v páse, disciplíny). Opravené jedným ťahom — zosvetlená premenná `--muted` (`#9c968a` → `#c3bdb1`) a `--muted-2` (`#6f6a61` → `#948e83`) v `css/style.css`. Nadpisy ostali biele, zlaté akcenty zlaté, hierarchia drží. Nasadené naživo.
 
-**CMS admin (rozbehnuté 2026-10-12):** web sa presunie na klasický PHP hosting + vlastnú doménu (zatiaľ nevybrané/nekúpené). Zvolený vlastný PHP admin s heslom (len tréner), JSON súbory, len aktuality + albumy, zmenšovanie fotiek v prehliadači. Práca na vetve `cms-admin` (main/Pages nedotknuté). Spec: `docs/superpowers/specs/2026-10-12-cms-admin-design.md` (schválený), plán: `docs/superpowers/plans/2026-10-12-cms-admin.md` (14 taskov). Stav: beží kritická review specu+plánu — používateľ chce dotiahnuť na **0 critical/0 high/0 medium/0 low** pred implementáciou; spôsob vykonania (subagenti vs. priamo) ešte nevybral.
+**CMS admin (rozbehnuté 2026-10-12):** web sa presunie na klasický PHP hosting + vlastnú doménu (zatiaľ nevybrané/nekúpené). Zvolený vlastný PHP admin s heslom (len tréner), JSON súbory, len aktuality + albumy, zmenšovanie fotiek v prehliadači. Práca na vetve `cms-admin` (main/Pages nedotknuté). Spec: `docs/superpowers/specs/2026-10-12-cms-admin-design.md` (schválený), plán: `docs/superpowers/plans/2026-10-12-cms-admin.md` (14 taskov). Stav: beží kritická review specu+plánu — používateľ chce dotiahnuť na **0 critical/0 high/0 medium/0 low** pred implementáciou; spôsob vykonania (subagenti vs. priamo) ešte nevybral. Pozn.: na `main` pribudla zmena rozvrhu (commit bb73128) — pred implementáciou mergnúť main do cms-admin. Worktree s main: `../taekwondo-main`.
 
 Pozor na fonty: viď [[fonts-kr-subset-gotcha]]. Nasadenie a git gotcha viď [[deploy-git-lukasko-token]].
