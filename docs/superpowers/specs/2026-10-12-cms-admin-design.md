@@ -49,7 +49,8 @@ galeria.php?album=…       fotky jedného albumu (lightbox ako doteraz)
 co-je-taekwondo.html, pasy.html, o-nas.html, kontakty.html   ostávajú .html (len upravené odkazy)
 
 inc/
-  bootstrap.php           načítanie configu, nastavenia, autoload funkcií
+  bootstrap.php           cesty, ensure_storage, načítanie modulov
+  render.php, install.php vykresľovanie kariet/404, inštalácia (token, seed, požiadavky)
   layout-header.php       <head>, hlavička a menu (zdieľané PHP stránkami)
   layout-footer.php       pätička
   store.php               čítanie/zápis JSON (atomicky, so zálohou)
@@ -68,15 +69,21 @@ admin/
   api/upload.php          príjem jednej fotky (volá sa z JS po jednej)
   admin.css, admin.js     štýl a zmenšovanie fotiek v prehliadači
 
-data/          (mimo gitu)  posts.json, albums.json, login-attempts.json, backup/
+data/          (mimo gitu)  posts.json, albums.json, auth.json (hash hesla), login-attempts.json,
+                            backup/, sessions/
 uploads/       (mimo gitu)  posts/, albums/<album-id>/
-config.php     (mimo gitu)  hash hesla, názov webu; vzor v config.sample.php
-install.php    jednorazové nastavenie prvého hesla (po použití sa sám zablokuje)
+install.php    jednorazové nastavenie prvého hesla — beží len s jednorazovým tokenom (viď §5)
+install-token.php (mimo gitu) jednorazový token pre install.php; vytvorí ho tools/new-install-token.php
+tools/new-install-token.php  CLI skript, ktorý vygeneruje token a vypíše odkaz na inštaláciu
+inc/site.php   nastavenia webu v kóde (napr. SITE_DEMO — zobrazenie pásika „demo“)
 tests/run.php  jednoduchý test runner bez závislostí
 seed/          ukážkové dáta a obrázky (súčasný demo obsah) na prvé spustenie
 ```
 
-`.gitignore` doplní `data/`, `uploads/`, `config.php`.
+`.gitignore` doplní `data/`, `uploads/`, `install-token.php`.
+
+Hash hesla je v `data/auth.json` (nie v PHP súbore), aby zmenu hesla nikdy neskryla opcache
+a aby bol chránený rovnako ako ostatné dáta.
 
 ### 3.2 Dátový model
 
@@ -128,13 +135,27 @@ seed/          ukážkové dáta a obrázky (súčasný demo obsah) na prvé spu
 - `.htaccess`: 301 presmerovanie `aktuality.html → aktuality.php`, `galeria.html → galeria.php`,
   `index.html → ./`; staré `.html` súbory sa zmažú.
 
+- Pásik „Náhľad webu (demo)…“ sa na PHP stránkach zobrazuje len pri `SITE_DEMO = true` (`inc/site.php`);
+  pred ostrým spustením sa vypne (a odstráni zo statických `.html`).
+- `aktuality.php` ponechá CTA pás „Chceš byť pri tom?“ ako dnešná `aktuality.html`.
+
 ## 4. Admin
 
 ### 4.1 Prihlásenie a relácia
-- `admin/login.php` — jedno pole „Heslo“. Overenie `password_verify` voči hashu v `config.php`.
-- Po prihlásení `session_regenerate_id`, cookie `HttpOnly`, `SameSite=Lax`, `Secure` (na HTTPS),
-  platnosť **30 dní**.
-- Rate-limit: **5 chybných pokusov → blokácia 15 minút** (podľa IP, uložené v `data/login-attempts.json`).
+- `admin/login.php` — jedno pole „Heslo“. Overenie `password_verify` voči hashu v `data/auth.json`.
+- Admin a `install.php` bežia **len cez HTTPS** (presmerovanie v `.htaccess` aj v PHP; za proxy sa
+  rešpektuje `X-Forwarded-Proto`). Výnimka: `localhost` pri vývoji.
+- Po prihlásení `session_regenerate_id` a nový CSRF token; cookie `HttpOnly`, `SameSite=Lax`, `Secure`
+  (na HTTPS), platnosť **30 dní**. Relácie sa ukladajú do `data/sessions/` (handler `files`).
+- Relácia si pamätá „verziu hesla“ — **po zmene hesla sa všetky ostatné zariadenia odhlásia**
+  (napr. stratený mobil); aktuálne zariadenie ostane prihlásené.
+- Rate-limit (`data/login-attempts.json`):
+  - **5 chybných pokusov → blokácia 15 minút** pre daného klienta (IPv4 adresa, pri IPv6 celá /64 sieť);
+  - globálny strop **50 chybných pokusov za 15 minút** zo všetkých adries → prihlasovanie sa na 15 minút
+    zablokuje pre všetkých (ochrana proti hádaniu z mnohých adries);
+  - pokus sa **započíta ešte pred overením hesla** v jednom zamknutom kroku, takže ani súbežné požiadavky
+    nedostanú viac pokusov; úspešné prihlásenie počítadlo klienta vynuluje;
+  - súbor má najviac 500 záznamov, nezálohuje sa a poškodený sa považuje za prázdny (nikoho nezamkne).
 - Každá stránka v `admin/` (okrem login) vyžaduje prihlásenie; inak presmeruje na login.
 - `admin/password.php` — zmena hesla (staré heslo + nové 2×, min. 10 znakov).
 
@@ -142,16 +163,20 @@ seed/          ukážkové dáta a obrázky (súčasný demo obsah) na prvé spu
 - Zoznam: náhľad, nadpis, dátum, „Upraviť“, „Zmazať“; hore „+ Nová aktualita“.
 - Formulár: **Nadpis** (povinný, max 150 znakov), **Dátum** (predvyplnený dnes), **Fotka** (voliteľná,
   `accept="image/*"` → na mobile ponúkne fotoaparát aj galériu), **Krátky úvod** (povinný, max 300),
-  **Celý text** (voliteľný; prázdny riadok = nový odsek, URL sa stanú odkazmi).
+  **Celý text** (voliteľný, max 20 000; prázdny riadok = nový odsek, URL sa stanú odkazmi).
+- Po výbere fotky sa ukáže jej náhľad a „Fotka pripravená“; výber ostane viditeľný.
 - Pri úprave sa dá fotka vymeniť alebo odstrániť.
-- Zmazanie: potvrdenie „Naozaj zmazať?“, zmaže sa aj súbor fotky.
+- Zmazanie: potvrdenie druhým kliknutím („Naozaj? Klikni znova“), zmaže sa aj súbor fotky.
+- Ak aktualitu medzitým niekto zmazal (iná karta), uloženie ohlási „Aktualita sa nenašla.“ a nahratú
+  fotku zmaže.
 
 ### 4.3 Galéria
 - Zoznam albumov: titulná fotka, názov, dátum, počet fotiek; „+ Nový album“ (názov, dátum).
 - Detail albumu:
   - **„Pridať fotky“** — výber viacerých naraz (aj 30+). JS ich zmenší a posiela **po jednej** na
     `admin/api/upload.php`; ukazuje priebeh „Nahrávam 7 / 30“. Zlyhaná fotka nezastaví ostatné,
-    na konci sa vypíše, ktoré zlyhali, s možnosťou skúsiť znova.
+    na konci sa vypíše, ktoré zlyhali, s možnosťou skúsiť znova. Počas nahrávania prehliadač
+    varuje pred odchodom zo stránky.
   - Mriežka fotiek s „Zmazať“ a „Nastaviť ako titulnú“.
   - Premenovanie / zmena dátumu albumu; zmazanie celého albumu (potvrdenie, zmaže aj priečinok).
 - Poradie fotiek = poradie nahratia (bez drag & drop).
@@ -161,8 +186,11 @@ seed/          ukážkové dáta a obrázky (súčasný demo obsah) na prvé spu
   formát **WebP** (kvalita ~0,82), fallback JPEG, ak prehliadač WebP neenkóduje. Rešpektuje sa orientácia
   z EXIF (`createImageBitmap` s `imageOrientation: "from-image"`); EXIF (GPS) sa tým zahodí.
 - Na server ide dvojica súborov (full + thumb) v jednom `multipart` požiadavku.
-- Ak JS zlyhá alebo nie je k dispozícii, formulár aktuality funguje aj bez neho — server prijme pôvodný
-  súbor do 5 MB a zmenší ho cez GD (ak je na hostingu dostupné), inak ho uloží tak, ako je.
+- Ak JS zlyhá alebo nie je k dispozícii, server prijme pôvodný súbor do 5 MB a zmenší ho cez GD
+  (ak je na hostingu dostupné), inak ho uloží tak, ako je.
+- Server pred dekódovaním cez GD odmietne fotku nad **25 megapixelov** („Fotka má príliš vysoké
+  rozlíšenie…“) a zvýši `memory_limit` na 256 MB, aby veľká fotka neskončila bielou stránkou.
+- Ak je fotka väčšia ako limit hostingu (`upload_max_filesize`), hláška uvedie skutočný limit servera.
 
 ### 4.5 Vzhľad
 - Rovnaké farby a fonty ako web (premenné z `css/style.css`), vlastný jednoduchý `admin.css`.
@@ -173,42 +201,50 @@ seed/          ukážkové dáta a obrázky (súčasný demo obsah) na prvé spu
 
 | Hrozba | Opatrenie |
 |---|---|
-| Hádanie hesla | `password_hash` (bcrypt/argon2), rate-limit 5 / 15 min |
-| CSRF | token v session, povinný v každom POST formulári aj v upload API |
+| Hádanie hesla | `password_hash` (bcrypt/argon2); rate-limit 5 / 15 min na klienta (IPv6 po /64), globálny strop 50 / 15 min, pokus sa počíta pred overením (§4.1) |
+| Odpočúvanie hesla / cookie | admin a install len cez HTTPS (presmerovanie), cookie `Secure` aj za proxy (`X-Forwarded-Proto`) |
+| CSRF | token v session (nový po prihlásení), povinný v každom POST formulári aj v upload API |
 | XSS | všetok text z dát sa vypisuje cez `htmlspecialchars`; odkazy sa tvoria až po escapovaní, len `http(s)://` |
-| Nahratie skriptu | povolené len JPEG/PNG/WebP (kontrola `finfo` + `getimagesize`), max 5 MB, nové náhodné meno + prípona podľa skutočného typu; v `uploads/.htaccess` zakázané spúšťanie PHP |
-| Čítanie dát zvonka | `data/.htaccess`: `Require all denied`; `config.php` nevracia nič pri priamom volaní |
-| Path traversal | ID sa validujú regexom (`^[pfa]_[a-z0-9]{6,}$`), cesty sa nikdy neskladajú zo vstupu priamo |
-| Únik session | `HttpOnly`, `SameSite=Lax`, `Secure` na HTTPS, regenerácia ID po prihlásení |
-| `install.php` po inštalácii | odmietne bežať, ak `config.php` už existuje |
+| Nahratie skriptu | povolené len JPEG/PNG/WebP (kontrola `finfo` + `getimagesize`), max 5 MB, nové náhodné meno + prípona podľa skutočného typu; koreňový `.htaccess` zakáže `*.php` v `uploads/` |
+| Čítanie dát zvonka | koreňový `.htaccess` vráti 403 pre `data/`, `inc/`, `tools/`, `seed/`, `tests/`, `docs/`, `_zaloha/`, `*.md`; navyše `data/.htaccess` (`Require all denied`) |
+| Path traversal | ID sa validujú regexom `^[paf]_[a-z0-9]{6,32}$` s modifikátorom `D` (bez koncového `\n`), cesty sa nikdy neskladajú zo vstupu priamo |
+| Únik / krádež session | `HttpOnly`, `SameSite=Lax`, `Secure`, regenerácia ID po prihlásení; zmena hesla zneplatní ostatné relácie |
+| Únos inštalácie | `install.php` beží len, ak na hostingu existuje `install-token.php` a požiadavka nesie ten istý token; `data/auth.json` sa vytvára výhradne (`fopen` režim `x`), token sa po úspechu zmaže; existujúci `auth.json` → 403 |
 
 ## 6. Spoľahlivosť a chyby
 
 - Zápis JSON: `flock` + zápis do dočasného súboru + `rename` (atomicky). Pred zápisom kópia do
-  `data/backup/` (posledných 20 verzií na súbor).
-- Poškodený/chýbajúci JSON → web zobrazí prázdny stav, admin hlášku „Dáta sa nepodarilo načítať —
-  obnov zálohu“, nič sa neprepíše.
+  `data/backup/` (posledných 20 verzií na súbor; okrem `login-attempts.json`).
+- Poškodený/chýbajúci JSON → web zobrazí prázdny stav (HTTP 200); **každá** stránka adminu aj upload API
+  zachytí chybu čítania a ukáže hlášku „Dáta sa nepodarilo načítať — obnov zálohu“ (API vráti JSON), nič
+  sa neprepíše. Výnimka: poškodený `login-attempts.json` sa považuje za prázdny.
 - Chyby pre trénera po slovensky („Fotka je príliš veľká (max 5 MB).“, „Nepodarilo sa uložiť, skús znova.“);
   technické detaily len do `error_log`.
 - Pri mazaní: najprv sa upravia dáta, potom sa zmažú súbory (ak zmazanie súboru zlyhá, ostane len
   nepoužitý súbor, nie rozbitý odkaz).
+- `install.php` najprv skontroluje požiadavky hostingu (PHP ≥ 8.1, `fileinfo`, `mbstring`, `json`;
+  `gd` ako odporúčané) a chýbajúce vypíše po slovensky.
 
 ## 7. Testovanie
 
 - **Lokálne:** PHP nainštalované cez `winget`, spustenie `php -S localhost:8000`.
 - **Automatické testy** (`php tests/run.php`, bez závislostí):
-  store (atomický zápis, záloha, poškodený JSON), posts/albums (CRUD, zoradenie, titulná fotka,
-  mazanie súborov), upload (odmietnutie ne-obrázka, prípony, veľkosti), auth (správne/zlé heslo,
-  rate-limit, CSRF), text (escapovanie, odseky, odkazy).
+  store (atomický zápis, záloha, poškodený JSON, „volatile“ súbory), posts/albums (CRUD, zoradenie,
+  titulná fotka, mazanie súborov), upload (odmietnutie ne-obrázka, prípony, veľkosti, limit megapixelov),
+  auth (správne/zlé heslo, rate-limit vrátane globálneho stropu a IPv6 /64, CSRF, zneplatnenie relácií
+  po zmene hesla), install (token, výhradné vytvorenie `auth.json`, seed), text, render.
 - **Ručne v prehliadači** (desktop + mobilné zobrazenie): celý tok pridania/úpravy/zmazania aktuality,
   nahratie 10+ fotiek do albumu, titulná fotka, zmazanie albumu, prihlásenie/odhlásenie, zablokovanie.
 
 ## 8. Migrácia a nasadenie
 
 - Súčasný ukážkový obsah (6 aktualít, obrázky galérie) sa prevedie do `seed/`. `install.php` ho pri
-  prvom spustení skopíruje do `data/` a `uploads/`, aby web nebol prázdny.
-- `NASADENIE.md`: výber hostingu (PHP ≥ 8.1, `.htaccess`, HTTPS), nahratie cez FTP/správcu súborov,
-  spustenie `install.php` a nastavenie hesla, zálohovanie `data/` + `uploads/`, nasmerovanie domény.
-- GitHub Pages: ostáva na `main` v súčasnej statickej podobe, kým hosting nebude pripravený.
-  Po nasadení na hosting sa Pages vypne alebo nahradí presmerovaním na novú doménu.
-- `CLAUDE.md` sa aktualizuje (nová štruktúra, ako spravovať obsah, ako nasadzovať).
+  prvom spustení (voliteľne) skopíruje do `data/` a `uploads/`, aby web nebol prázdny.
+- **Poradie nasadenia:** na hosting sa nahrávajú súbory z vetvy `cms-admin` (ZIP z GitHubu). Do `main`
+  sa vetva zlúči až **po** vypnutí GitHub Pages alebo jeho nahradení presmerovaním na novú doménu —
+  inak by Pages (bez PHP) ostal bez `index.html`.
+- `NASADENIE.md`: požiadavky hostingu (PHP ≥ 8.1, `fileinfo`, `mbstring`, `gd`, `.htaccess`, HTTPS),
+  odkiaľ brať súbory, nahratie cez FTP, vygenerovanie install tokenu a nastavenie hesla, kontroly po
+  nasadení (403 na `data/`, fotky sa načítajú, HTTPS presmerovanie), čo robiť pri chybe 500 v `.htaccess`,
+  zálohovanie `data/` + `uploads/`, zabudnuté heslo, nasmerovanie domény.
+- `CLAUDE.md` a `README.md` sa aktualizujú (nová štruktúra, ako spravovať obsah, ako nasadzovať).
