@@ -421,8 +421,7 @@ section { padding-block: clamp(4rem, 9vw, 7.5rem); position: relative; }
   position: relative;
   aspect-ratio: 16/11;
   background-color: var(--ink-3);
-  /* fotku doplníš cez inline --img (viď HTML); dovtedy ostane tmavý placeholder */
-  background-image: var(--img, none);
+  /* fotka je v HTML ako inline background-image (relatívne k stránke); bez nej ostane tmavý placeholder */
   background-size: cover;
   background-position: center;
   filter: grayscale(0.2);

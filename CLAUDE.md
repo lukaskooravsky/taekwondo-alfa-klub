@@ -47,7 +47,8 @@ sám do 1–2 minút.
 - **Hero na mobile**: má fotku na pozadí za textom (`.hero-bg` v `css/style.css`, len ≤820px,
   so stmavením kvôli čitateľnosti). Teraz používa `assets/extrakt.png`; zmeníš v `.hero-bg`.
 - **Disciplíny** (`index.html`, sekcia `#discipliny`): 4 karty (Tul, Matsogi, Wi-ryok, Teuki).
-  Fotku každej doplníš cez inline `--img:url('assets/disc-*.jpg')`: `disc-tul.jpg`,
+  Fotka každej je inline `style="background-image:url('assets/disc-*.jpg')"` (nie cez CSS premennú —
+  relatívna URL v premennej sa rieši voči `css/` a fotka by sa nenačítala): `disc-tul.jpg`,
   `disc-matsogi.jpg`, `disc-wiryok.jpg`, `disc-teuki.jpg`. Kým chýbajú, je tam tmavý placeholder.
 
 > ⚠️ **Kórejské znaky:** fonty sú self-hostované *subsety* — obsahujú len znaky reálne
