@@ -77,3 +77,4 @@ require_once __DIR__ . '/text.php';
 require_once __DIR__ . '/store.php';
 require_once __DIR__ . '/upload.php';
 require_once __DIR__ . '/posts.php';
+require_once __DIR__ . '/albums.php';
