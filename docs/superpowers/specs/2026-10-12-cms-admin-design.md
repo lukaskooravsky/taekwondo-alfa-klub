@@ -75,7 +75,8 @@ admin/
   admin.css, admin.js     štýl a zmenšovanie fotiek v prehliadači
 
 data/          (mimo gitu)  posts.json, albums.json, auth.json (hash hesla), login-attempts.json,
-                            backup/, sessions/
+                            backup/, sessions/ — ak existuje zapisovateľný ../alfa-data (mimo koreňa webu),
+                            dáta sa ukladajú tam (záloha pre prípad, že .htaccess neochráni data/)
 uploads/       (mimo gitu)  posts/, albums/<album-id>/
 install.php    jednorazové nastavenie prvého hesla — beží len s jednorazovým tokenom (viď §5)
 install-token.php (mimo gitu) jednorazový token pre install.php; vytvorí ho tools/new-install-token.php
@@ -159,9 +160,12 @@ a aby bol chránený rovnako ako ostatné dáta.
 - Rate-limit (`data/login-attempts.json`):
   - **5 chybných pokusov → blokácia 15 minút** pre daného klienta (IPv4 adresa, pri IPv6 celá /64 sieť);
   - adresa klienta = `REMOTE_ADDR`; **len ak je `REMOTE_ADDR` súkromná/loopback adresa** (požiadavka prišla
-    cez nginx proxy hostingu), použije sa `X-Real-IP`, inak prvá adresa z `X-Forwarded-For`. Bez toho by
-    za proxy mali všetci tú istú adresu a 5 cudzích pokusov by zamklo aj trénera. Hlavičky sa inak
-    ignorujú (nedajú sa podvrhnúť zvonka). `install.php` zobrazí zistenú adresu na kontrolu;
+    cez nginx proxy hostingu), použije sa `X-Real-IP`, inak **posledná** adresa z `X-Forwarded-For` (tú
+    pripojila proxy; začiatok zoznamu môže poslať klient). Bez toho by za proxy mali všetci tú istú adresu
+    a 5 cudzích pokusov by zamklo aj trénera. Pri verejnej `REMOTE_ADDR` sa hlavičky ignorujú. Či proxy
+    hostingu hlavičky naozaj prepisuje, sa overí pri nasadení: `install.php` zobrazí zistenú adresu
+    a `NASADENIE.md` obsahuje test s podvrhnutými hlavičkami;
+  - IPv4-mapped IPv6 adresy (`::ffff:a.b.c.d`) sa berú ako IPv4;
   - globálny strop **50 chybných pokusov za 15 minút** zo všetkých adries → prihlasovanie sa na 15 minút
     zablokuje pre všetkých (ochrana proti hádaniu z mnohých adries);
   - pokus sa **započíta ešte pred overením hesla** v jednom zamknutom kroku, takže ani súbežné požiadavky
@@ -198,10 +202,13 @@ a aby bol chránený rovnako ako ostatné dáta.
   z EXIF (`createImageBitmap` s `imageOrientation: "from-image"`); EXIF (GPS) sa tým zahodí.
 - Na server ide dvojica súborov (full + thumb) v jednom `multipart` požiadavku.
 - Ak JS zlyhá alebo nie je k dispozícii, server prijme pôvodný súbor do 5 MB a zmenší ho cez GD
-  (ak je na hostingu dostupné), inak ho uloží tak, ako je.
+  (ak je na hostingu dostupné), inak ho uloží tak, ako je. Platí pre fotku aktuality; **hromadné
+  nahrávanie do albumu vyžaduje JavaScript** (bez neho admin zobrazí hlášku).
 - Server pred dekódovaním cez GD odmietne fotku nad **25 megapixelov** („Fotka má príliš vysoké
-  rozlíšenie…“) a zvýši `memory_limit` na 256 MB, aby veľká fotka neskončila bielou stránkou.
-- Ak je fotka väčšia ako limit hostingu (`upload_max_filesize`), hláška uvedie skutočný limit servera.
+  rozlíšenie…“) a zvýši `memory_limit` na 256 MB, ak je nižší (nikdy ho neznižuje), aby veľká fotka
+  neskončila bielou stránkou.
+- Ak je fotka väčšia ako limit hostingu (`upload_max_filesize`, resp. `post_max_size`), hláška uvedie
+  skutočný limit servera.
 
 ### 4.5 Vzhľad
 - Rovnaké farby a fonty ako web (premenné z `css/style.css`), vlastný jednoduchý `admin.css`.
