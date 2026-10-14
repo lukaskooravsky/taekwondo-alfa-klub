@@ -705,3 +705,23 @@ section { padding-block: clamp(4rem, 9vw, 7.5rem); position: relative; }
   padding: 0.35rem;
   font-weight: 600;
 }
+
+/* ============ CMS: detail aktuality, prázdne stavy, albumy ============ */
+.post > a { display: block; }          /* obrázok je teraz obalený odkazom na detail */
+.post-img { display: block; }          /* bez medzery pod obrázkom (inline img) */
+.post h3 a:hover { color: var(--gold-2); }
+.empty { color: var(--muted); font-size: 1.1rem; }
+.page-hero h1.h1-post { font-size: clamp(2rem, 5.5vw, 3.6rem); }
+.article { max-width: 760px; }
+.article-img img { width: 100%; height: auto; border: 1px solid var(--line); margin-bottom: 2rem; }
+.article-lead { font-size: 1.2rem; color: var(--bone); margin-bottom: 1.4rem; }
+.prose p { color: var(--muted); margin-bottom: 1.1rem; }
+.prose a { color: var(--gold-2); text-decoration: underline; word-break: break-word; }
+
+.albums { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.4rem; }
+.album { display: block; background: var(--panel); border: 1px solid var(--line); clip-path: var(--cut); transition: transform .3s ease, border-color .3s ease; }
+.album:hover { transform: translateY(-4px); border-color: var(--gold-deep); }
+.album img { width: 100%; aspect-ratio: 4/3; object-fit: cover; filter: grayscale(0.2); }
+.album-body { padding: 1.1rem 1.3rem 1.4rem; display: grid; gap: 0.3rem; }
+.album-body h3 { color: var(--white); font-size: 1.3rem; }
+.album-meta { font-family: var(--font-display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); font-size: 0.82rem; }

@@ -1,0 +1,26 @@
+# ALFA Taekwondo — nastavenia pre Apache hosting
+DirectoryIndex index.php index.html
+Options -Indexes
+AddDefaultCharset UTF-8
+
+RewriteEngine On
+# Ak web nebeží v koreni domény, nastav RewriteBase na podpriečinok (napr. /web/).
+RewriteBase /
+
+# Staré adresy statickej verzie
+RewriteRule ^index\.html$ ./ [R=301,L]
+RewriteRule ^aktuality\.html$ aktuality.php [R=301,L]
+RewriteRule ^galeria\.html$ galeria.php [R=301,L]
+
+# Admin a inštalácia len cez HTTPS (Websupport má pred Apache nginx → X-Forwarded-Proto; localhost = vývoj)
+RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)(:[0-9]+)?$
+RewriteRule ^(admin(/|$)|install\.php) https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+# Interné súbory nie sú pre verejnosť
+RewriteRule ^(data|inc|tests|tools|seed|docs|_zaloha)(/|$) - [F,L]
+RewriteRule ^install-token\.php$ - [F,L]
+RewriteRule ^uploads/.*\.(php[0-9]?|phtml|phar)$ - [F,L]
+RewriteRule (^|/)\.(git|user\.ini|htaccess) - [F,L]
+RewriteRule \.md$ - [F,L]

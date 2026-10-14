@@ -20,10 +20,10 @@
   }
 
   /* ---- Aktívny odkaz v navigácii ---- */
-  const here = location.pathname.split("/").pop() || "index.html";
+  const here = location.pathname.split("/").pop() || "index.php";
+  const navKey = here === "aktualita.php" ? "aktuality.php" : here;
   document.querySelectorAll(".nav-links a").forEach(function (a) {
-    const href = a.getAttribute("href");
-    if (href === here || (here === "" && href === "index.html")) {
+    if (a.getAttribute("href") === navKey) {
       a.classList.add("active");
     }
   });
