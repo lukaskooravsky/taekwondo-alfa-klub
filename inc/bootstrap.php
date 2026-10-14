@@ -74,3 +74,4 @@ function require_https(): void
     exit;
 }
 require_once __DIR__ . '/text.php';
+require_once __DIR__ . '/store.php';
