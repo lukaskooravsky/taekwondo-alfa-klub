@@ -1,0 +1,18 @@
+{
+    "albums": [
+        {
+            "id": "a_seed01",
+            "title": "Ukážkový album",
+            "date": "2026-09-12",
+            "cover": null,
+            "photos": [
+                { "id": "f_seed01", "full": "albums/a_seed01/f_seed01.png", "thumb": "albums/a_seed01/f_seed01.png", "w": 966, "h": 760, "added": "2026-09-12T12:00:00+02:00" },
+                { "id": "f_seed02", "full": "albums/a_seed01/f_seed02.jpg", "thumb": "albums/a_seed01/f_seed02.jpg", "w": 1080, "h": 1080, "added": "2026-09-12T12:00:01+02:00" },
+                { "id": "f_seed03", "full": "albums/a_seed01/f_seed03.jpg", "thumb": "albums/a_seed01/f_seed03.jpg", "w": 1080, "h": 509, "added": "2026-09-12T12:00:02+02:00" },
+                { "id": "f_seed04", "full": "albums/a_seed01/f_seed04.jpg", "thumb": "albums/a_seed01/f_seed04.jpg", "w": 1080, "h": 509, "added": "2026-09-12T12:00:03+02:00" }
+            ],
+            "created": "2026-09-12T12:00:00+02:00",
+            "updated": "2026-09-12T12:00:00+02:00"
+        }
+    ]
+}

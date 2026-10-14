@@ -80,3 +80,4 @@ require_once __DIR__ . '/posts.php';
 require_once __DIR__ . '/albums.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/render.php';
+require_once __DIR__ . '/install.php';
