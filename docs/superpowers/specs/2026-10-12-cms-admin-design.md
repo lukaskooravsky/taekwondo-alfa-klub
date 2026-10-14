@@ -16,11 +16,16 @@ dizajn webu ostane nezmenený.
 - Do adminu sa prihlasuje **len tréner** (prípadne Lukáš ako záloha) — jeden účet, jedno heslo.
 - Spravuje sa **len obsah aktualít a galérie**. Rozvrh, kontakty a texty stránok ostávajú v kóde.
 - Obsah sa pridáva **z mobilu aj z počítača**.
-- Web sa presunie na **klasický webhosting s PHP** a vlastnou doménou (poskytovateľ zatiaľ nevybraný).
+- Web sa presunie na **webhosting Websupport** (websupport.sk, zvolené 2026-10-14) a vlastnú doménu.
 
 **Predpoklady:**
-- Hosting má PHP ≥ 8.1, Apache s `.htaccess` (mod_rewrite) a rozšírenie `fileinfo`. To je štandard
-  slovenských/českých hostingov; overí sa pri výbere.
+- **Websupport** (podľa ich technickej špecifikácie): Apache + nginx pred ním, PHP 8.2–8.5 v štandarde
+  (8.1 a staršie len za príplatok „rozšírená podpora PHP“) → nastaví sa **PHP 8.3 alebo novšie** vo WebAdmine.
+  Limity: `memory_limit` 512 MB, `upload_max_filesize` 256 MB, `post_max_size` 512 MB. Let's Encrypt
+  certifikát a presmerovanie HTTP → HTTPS automaticky. Prístup cez (S)FTP; **SSH len dočasne (1 h)**,
+  preto nič pri nasadení nesmie vyžadovať príkazový riadok na serveri. Denné zálohy robí hosting.
+- Kód sám vyžaduje PHP ≥ 8.1, Apache s `.htaccess` (mod_rewrite) a `fileinfo`; `gd` sa overí
+  pri inštalácii (`install.php` vypíše chýbajúce rozšírenia).
 - Databáza sa nepoužíva.
 
 **Mimo rozsahu:** viac používateľov a rolí, editor s formátovaním (tučné písmo, farby),
@@ -74,7 +79,9 @@ data/          (mimo gitu)  posts.json, albums.json, auth.json (hash hesla), log
 uploads/       (mimo gitu)  posts/, albums/<album-id>/
 install.php    jednorazové nastavenie prvého hesla — beží len s jednorazovým tokenom (viď §5)
 install-token.php (mimo gitu) jednorazový token pre install.php; vytvorí ho tools/new-install-token.php
-tools/new-install-token.php  CLI skript, ktorý vygeneruje token a vypíše odkaz na inštaláciu
+tools/new-install-token.php  CLI skript — spúšťa sa **lokálne na počítači**, vytvorí install-token.php
+                          a vypíše odkaz; súbor sa potom nahrá na hosting cez SFTP (na Websupporte
+                          nie je trvalé SSH)
 inc/site.php   nastavenia webu v kóde (napr. SITE_DEMO — zobrazenie pásika „demo“)
 tests/run.php  jednoduchý test runner bez závislostí
 seed/          ukážkové dáta a obrázky (súčasný demo obsah) na prvé spustenie
@@ -151,6 +158,10 @@ a aby bol chránený rovnako ako ostatné dáta.
   (napr. stratený mobil); aktuálne zariadenie ostane prihlásené.
 - Rate-limit (`data/login-attempts.json`):
   - **5 chybných pokusov → blokácia 15 minút** pre daného klienta (IPv4 adresa, pri IPv6 celá /64 sieť);
+  - adresa klienta = `REMOTE_ADDR`; **len ak je `REMOTE_ADDR` súkromná/loopback adresa** (požiadavka prišla
+    cez nginx proxy hostingu), použije sa `X-Real-IP`, inak prvá adresa z `X-Forwarded-For`. Bez toho by
+    za proxy mali všetci tú istú adresu a 5 cudzích pokusov by zamklo aj trénera. Hlavičky sa inak
+    ignorujú (nedajú sa podvrhnúť zvonka). `install.php` zobrazí zistenú adresu na kontrolu;
   - globálny strop **50 chybných pokusov za 15 minút** zo všetkých adries → prihlasovanie sa na 15 minút
     zablokuje pre všetkých (ochrana proti hádaniu z mnohých adries);
   - pokus sa **započíta ešte pred overením hesla** v jednom zamknutom kroku, takže ani súbežné požiadavky
@@ -222,7 +233,7 @@ a aby bol chránený rovnako ako ostatné dáta.
   technické detaily len do `error_log`.
 - Pri mazaní: najprv sa upravia dáta, potom sa zmažú súbory (ak zmazanie súboru zlyhá, ostane len
   nepoužitý súbor, nie rozbitý odkaz).
-- `install.php` najprv skontroluje požiadavky hostingu (PHP ≥ 8.1, `fileinfo`, `mbstring`, `json`;
+- `install.php` najprv skontroluje požiadavky hostingu (PHP ≥ 8.1, na Websupporte nastaviť 8.3+; `fileinfo`, `mbstring`, `json`;
   `gd` ako odporúčané) a chýbajúce vypíše po slovensky.
 
 ## 7. Testovanie
@@ -243,8 +254,10 @@ a aby bol chránený rovnako ako ostatné dáta.
 - **Poradie nasadenia:** na hosting sa nahrávajú súbory z vetvy `cms-admin` (ZIP z GitHubu). Do `main`
   sa vetva zlúči až **po** vypnutí GitHub Pages alebo jeho nahradení presmerovaním na novú doménu —
   inak by Pages (bez PHP) ostal bez `index.html`.
-- `NASADENIE.md`: požiadavky hostingu (PHP ≥ 8.1, `fileinfo`, `mbstring`, `gd`, `.htaccess`, HTTPS),
-  odkiaľ brať súbory, nahratie cez FTP, vygenerovanie install tokenu a nastavenie hesla, kontroly po
+- `NASADENIE.md` písaný **pre Websupport** (WebAdmin: výber PHP verzie, SSL, SFTP prístup, kde je
+  koreň webu): požiadavky (PHP 8.3+, `fileinfo`, `mbstring`, `gd`, `.htaccess`, HTTPS),
+  vygenerovanie `install-token.php` lokálne a nahratie cez SFTP, kontrola zistenej IP adresy v `install.php`,
+  odkiaľ brať súbory, nastavenie hesla, kontroly po
   nasadení (403 na `data/`, fotky sa načítajú, HTTPS presmerovanie), čo robiť pri chybe 500 v `.htaccess`,
   zálohovanie `data/` + `uploads/`, zabudnuté heslo, nasmerovanie domény.
 - `CLAUDE.md` a `README.md` sa aktualizujú (nová štruktúra, ako spravovať obsah, ako nasadzovať).
