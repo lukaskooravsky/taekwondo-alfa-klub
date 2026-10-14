@@ -1,3 +1,7 @@
-- [ALFA Taekwondo web](project-alfa-taekwondo-web.md) — statický náčrt/demo webu pre klub, beží na GitHub Pages
-- [Deploy / git token](deploy-git-lukasko-token.md) — ako pushnúť: repo je lukaskooravsky, lokálny gh (DusanOravsky) je suspendovaný, push len cez HTTPS token
+- [ALFA Taekwondo web](project-alfa-taekwondo-web.md) — demo na GitHub Pages; PHP admin pre trénera hotový na vetve cms-admin, ďalej Websupport
+- [Deploy / git](deploy-git-lukasko-token.md) — repo lukaskooravsky; gh prihlásené ako lukaskooravsky → bežný `git push` (token už netreba)
 - [KR font subset gotcha](fonts-kr-subset-gotcha.md) — nové kórejské znaky = prázdne štvorčeky (fonty sú subsety)
+- [Používateľ Lukáš](user-lukas.md) — pushuje ako lukaskooravsky; DusanOravsky = otcov účet
+- [Ukladaj priebežne](feedback-ukladaj-priebezne.md) — commit+push a pamäť po každom kroku
+- [Review na 0/0/0/0](feedback-review-nulove.md) — spec aj plán kriticky zrevidovať až na nuly pred implementáciou
+- [Lokálne PHP](reference-local-php.md) — prenosné PHP 8.3 v C:\Users\lukas\tools\php83 (winget chcel UAC)

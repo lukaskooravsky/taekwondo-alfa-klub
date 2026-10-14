@@ -10,11 +10,13 @@ metadata:
 
 Repozitár `lukaskooravsky/taekwondo-alfa-klub` patrí účtu **lukaskooravsky** a je **verejný** (kvôli GitHub Pages).
 
+**Windows stroj (2026-10-12):** `gh` 2.94 prihlásené ako lukaskooravsky (keyring, HTTPS, credential manager) → stačí `git push origin main`. CLAUDE.md aktualizovaný.
+
 **AKTUÁLNY funkčný spôsob (od 2026-09-24):** `gh` je teraz prihlásené aj ako **lukaskooravsky** cez OAuth (browser device flow), je to aktívny účet a nastavený git credential helper. Push preto funguje jednoducho:
 ```
 gh auth login -h github.com -w      # ak treba znova (starší gh nepozná -p/--git-protocol)
 gh auth setup-git -h github.com
-cd .../site && git push origin HEAD:main
+cd C:/Users/lukas/projekty/taekwondo-alfa-klub && git push origin HEAD:main
 ```
 Tento gh verzia `gh auth login` v neinteraktívnom `!` režime **vyžaduje `-w` (--web)** — inak padne s „--web or --with-token required".
 
