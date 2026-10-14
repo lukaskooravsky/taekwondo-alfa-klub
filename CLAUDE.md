@@ -9,24 +9,36 @@ naostro napojené. Slúži na to, aby si to tréner pozrel a schválil.
 Repozitár: `lukaskooravsky/taekwondo-alfa-klub` (vetva `main`, Pages: main / root).
 
 ## Technológie
-- Čisté **HTML + CSS + JS**, žiadny build krok (netreba Node ani nič inštalovať).
+- **HTML + CSS + JS + PHP** (bez frameworku, bez databázy, bez buildu). Aktuality a galéria sa
+  spravujú cez admin `/admin/` (heslo) a ukladajú do `data/*.json` + `uploads/` — tie nie sú v gite.
+- Hosting: **Websupport** (PHP 8.3+, SFTP). Nasadenie: `NASADENIE.md`.
+- Lokálne spustenie: `php -S localhost:8000`, testy: `php tests/run.php`. PHP 8.3 je prenosné
+  v `C:\Users\lukas\tools\php83` (v PATH cez `~/.bashrc`; v neinteraktívnom shelli treba
+  `export PATH="/c/Users/lukas/tools/php83:$PATH"`). `php -S` ignoruje `.htaccess`.
+- Návrh: `docs/superpowers/specs/2026-10-12-cms-admin-design.md`.
 - Fonty sú **self-hostované** v `assets/fonts/` (načítané cez `css/fonts.css`) —
   bez volania Google (kvôli GDPR aj spoľahlivému renderu).
 - `.nojekyll` vypína spracovanie cez Jekyll (aby Pages servírovalo súbory 1:1).
 
 ## Štruktúra
 ```
-index.html            Domov
 co-je-taekwondo.html  Čo je taekwondo
 pasy.html             Pásy (systém stupňov gup/dan)
-aktuality.html        Aktuality
-galeria.html          Galéria (lightbox)
 o-nas.html            O nás (tréner + rozvrh)
 kontakty.html         Kontakt + prihláška na skúšobnú hodinu
 css/style.css         hlavný štýl (dizajnové premenné hore)
 css/fonts.css         @font-face pravidlá (self-hosted)
 js/main.js            menu, scroll-reveal, lightbox, obsluha formulárov
 assets/               obrázky + fonty
+index.php             Domov (3 najnovšie aktuality + fotky z najnovšieho albumu)
+aktuality.php         Aktuality (z data/posts.json)
+aktualita.php?id=…    Detail aktuality
+galeria.php           Galéria — albumy; ?album=… fotky albumu (lightbox)
+inc/                  PHP logika (store, posts, albums, upload, auth, render, layout, site.php = SITE_DEMO)
+admin/                administrácia (login, aktuality, albumy, upload API)
+install.php           prvé nastavenie hesla (len s tokenom z tools/new-install-token.php)
+tools/                new-install-token.php — spúšťa sa lokálne
+tests/run.php         testy (php tests/run.php [filter])
 ```
 
 ## Dizajn (premenné v `css/style.css`)
@@ -40,13 +52,15 @@ assets/               obrázky + fonty
 ## Ako upraviť obsah
 Uprav príslušný `.html` súbor a **daj na git** (viď nižšie) — Pages sa prebuduje
 sám do 1–2 minút.
-- **Aktuality**: príspevky sú `<article class="post">` v `aktuality.html` (a teaser v `index.html`).
-- **Rozvrh**: tabuľka `.schedule` v `o-nas.html` a `index.html`.
-- **Kontakty**: telefón/e-mail/adresa v pätičke každej stránky + na `kontakty.html`.
+- **Aktuality a galéria**: spravuje tréner v `/admin/`. V kóde sa nemenia. Na GitHub Pages
+  (bez PHP) sa nezobrazujú — fungujú až na Websupporte.
+- **Rozvrh**: tabuľka `.schedule` v `o-nas.html` a `index.php`.
+- **Kontakty a menu**: telefón/e-mail/adresa a odkazy menu sú v pätičke/hlavičke každej `.html` stránky
+  **a zároveň** v `inc/layout-header.php` + `inc/layout-footer.php` (PHP stránky) — meň oboje. Kontakt aj na `kontakty.html`.
 - **Fotky**: nahraj do `assets/` a v HTML zmeň `src`. Hlavná akčná fotka je `assets/extrakt.png`.
 - **Hero na mobile**: má fotku na pozadí za textom (`.hero-bg` v `css/style.css`, len ≤820px,
   so stmavením kvôli čitateľnosti). Teraz používa `assets/extrakt.png`; zmeníš v `.hero-bg`.
-- **Disciplíny** (`index.html`, sekcia `#discipliny`): 4 karty (Tul, Matsogi, Wi-ryok, Teuki).
+- **Disciplíny** (`index.php`, sekcia `#discipliny`): 4 karty (Tul, Matsogi, Wi-ryok, Teuki).
   Fotka každej je inline `style="background-image:url('assets/disc-*.jpg')"` (nie cez CSS premennú —
   relatívna URL v premennej sa rieši voči `css/` a fotka by sa nenačítala): `disc-tul.jpg`,
   `disc-matsogi.jpg`, `disc-wiryok.jpg`, `disc-teuki.jpg`. Kým chýbajú, je tam tmavý placeholder.
@@ -62,6 +76,9 @@ sám do 1–2 minút.
 - [ ] Zásady ochrany osobných údajov (GDPR), súhlasy vrátane detí (rodič).
 - [ ] Vlastná doména (zatiaľ nekúpená) — potom nastaviť v Pages (CNAME).
 - [ ] Skontrolovať/upraviť texty (Čo je taekwondo, Pásy, O nás — teraz sú to návrhy).
+- [x] Admin na aktuality a galériu (PHP, `/admin/`) — hotový na vetve `cms-admin`.
+- [ ] Nasadiť na Websupport podľa `NASADENIE.md`, potom vypnúť Pages a zlúčiť `cms-admin` do `main`.
+- [ ] Pred ostrým spustením `SITE_DEMO = false` v `inc/site.php` + odstrániť demo pásik zo `.html`.
 
 ## Fakty o klube (aktuálne v obsahu)
 - Tréner: **Ľubomír Závodný**, IV. Dan čierny pás, Majster Európy.
