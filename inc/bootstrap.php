@@ -73,3 +73,4 @@ function require_https(): void
     header('Location: https://' . $_SERVER['HTTP_HOST'] . ($_SERVER['REQUEST_URI'] ?? '/'), true, 301);
     exit;
 }
+require_once __DIR__ . '/text.php';
