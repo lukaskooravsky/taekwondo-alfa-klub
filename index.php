@@ -1,37 +1,20 @@
-<!DOCTYPE html>
-<html lang="sk">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ALFA Taekwondo Club Bratislava — ITF Taekwon-Do</title>
-  <meta name="description" content="ALFA Taekwondo Club Bratislava — ITF Taekwon-Do pod vedením Ľubomíra Závodného (IV. Dan, Majster Európy). Tréningy pre deti aj dospelých na ZŠ Holíčska 50.">
-  <link rel="stylesheet" href="css/fonts.css">
-  <script>document.documentElement.className += " js";</script>
-  <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-  <div class="demo-flag">Náhľad webu (demo) — obsah a fotky sú ukážkové</div>
+<?php
+declare(strict_types=1);
+require __DIR__ . '/inc/bootstrap.php';
 
-  <!-- HLAVIČKA -->
-  <header class="site-header">
-    <div class="container nav">
-      <a class="brand" href="index.php">
-        <img src="assets/logo-mark.jpg" alt="ALFA Taekwondo">
-        <span class="brand-txt"><b>ALFA</b><span>Taekwondo · Bratislava</span></span>
-      </a>
-      <button class="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
-      <ul class="nav-links">
-        <li><a href="index.php">Domov</a></li>
-        <li><a href="co-je-taekwondo.html">Čo je taekwondo</a></li>
-        <li><a href="pasy.html">Pásy</a></li>
-        <li><a href="aktuality.php">Aktuality</a></li>
-        <li><a href="galeria.php">Galéria</a></li>
-        <li><a href="o-nas.html">O nás</a></li>
-        <li><a href="kontakty.html">Kontakt</a></li>
-        <li class="nav-cta"><a class="btn btn-primary" href="kontakty.html#prihlaska">Skúšobná hodina</a></li>
-      </ul>
-    </div>
-  </header>
+try {
+    $latestPosts = array_slice(posts_all(), 0, 3);
+    $albums = albums_public();
+} catch (StoreException $e) {
+    error_log($e->getMessage());
+    $latestPosts = [];
+    $albums = [];
+}
+$teaserAlbum = $albums[0] ?? null;
+$teaserPhotos = $teaserAlbum ? array_slice($teaserAlbum['photos'], 0, 4) : [];
+$page = ['title' => '', 'description' => 'ALFA Taekwondo Club Bratislava — ITF Taekwon-Do pod vedením Ľubomíra Závodného (IV. Dan, Majster Európy). Tréningy pre deti aj dospelých na ZŠ Holíčska 50.'];
+require __DIR__ . '/inc/layout-header.php';
+?>
 
   <!-- HERO -->
   <section class="hero">
@@ -207,35 +190,13 @@
         <span class="eyebrow">Zo života klubu</span>
         <h2 class="section-title">Aktuality</h2>
       </div>
+      <?php if ($latestPosts): ?>
       <div class="posts">
-        <article class="post reveal">
-          <img class="post-img" src="assets/extrakt.png" alt="">
-          <div class="post-body">
-            <span class="date">12. 09. 2026</span>
-            <h3>Nová sezóna sa začína</h3>
-            <p>Otvárame nový tréningový rok — nábor detí aj dospelých je v plnom prúde. Príď si vyskúšať prvú hodinu zdarma.</p>
-            <span class="more">Čítať viac →</span>
-          </div>
-        </article>
-        <article class="post reveal">
-          <img class="post-img" src="assets/logo-full.jpg" alt="">
-          <div class="post-body">
-            <span class="date">28. 08. 2026</span>
-            <h3>Skúšky technických stupňov</h3>
-            <p>Gratulujeme všetkým cvičencom, ktorí úspešne zvládli skúšky na vyšší pás. Skvelá práca celého tímu!</p>
-            <span class="more">Čítať viac →</span>
-          </div>
-        </article>
-        <article class="post reveal">
-          <img class="post-img" src="assets/logo-wordmark.jpg" alt="">
-          <div class="post-body">
-            <span class="date">15. 06. 2026</span>
-            <h3>Medaily z majstrovstiev</h3>
-            <p>Naši cvičenci sa výborne umiestnili na súťaži. Ďakujeme za reprezentáciu klubu ALFA!</p>
-            <span class="more">Čítať viac →</span>
-          </div>
-        </article>
+        <?php foreach ($latestPosts as $p) echo render_post_card($p); ?>
       </div>
+      <?php else: ?>
+      <p class="empty">Zatiaľ tu nie sú žiadne aktuality.</p>
+      <?php endif; ?>
       <div style="margin-top:2.4rem;"><a class="btn btn-ghost" href="aktuality.php">Všetky aktuality →</a></div>
     </div>
   </section>
@@ -247,12 +208,13 @@
         <span class="eyebrow">Galéria</span>
         <h2 class="section-title">Momentky z tréningov</h2>
       </div>
+      <?php if ($teaserPhotos): ?>
       <div class="gallery">
-        <figure class="reveal"><img src="assets/extrakt.png" alt="Tréning"></figure>
-        <figure class="reveal"><img src="assets/logo-full.jpg" alt="Logo klubu"></figure>
-        <figure class="reveal"><img src="assets/logo-wordmark.jpg" alt="ALFA Taekwondo"></figure>
-        <figure class="reveal"><img src="assets/logo-mark.jpg" alt="ALFA"></figure>
+        <?php foreach ($teaserPhotos as $ph) echo render_gallery_figure($ph, $teaserAlbum['title']); ?>
       </div>
+      <?php else: ?>
+      <p class="empty">Galéria sa pripravuje.</p>
+      <?php endif; ?>
       <div style="margin-top:2.4rem;"><a class="btn btn-ghost" href="galeria.php">Celá galéria →</a></div>
     </div>
   </section>
@@ -267,41 +229,4 @@
     </div>
   </section>
 
-  <!-- PÄTIČKA -->
-  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-grid">
-        <div>
-          <a class="brand" href="index.php"><img src="assets/logo-wordmark.jpg" alt="ALFA Taekwondo Bratislava"></a>
-          <p class="f-about">Klub ITF Taekwon-Do v Bratislave pod vedením Ľubomíra Závodného. Bojové umenie na rozvoj sily, kondície a obratnosti.</p>
-        </div>
-        <div class="footer-col">
-          <h4>Web</h4>
-          <ul>
-            <li><a href="co-je-taekwondo.html">Čo je taekwondo</a></li>
-            <li><a href="pasy.html">Pásy</a></li>
-            <li><a href="aktuality.php">Aktuality</a></li>
-            <li><a href="galeria.php">Galéria</a></li>
-            <li><a href="o-nas.html">O nás</a></li>
-          </ul>
-        </div>
-        <div class="footer-col">
-          <h4>Kontakt</h4>
-          <ul>
-            <li><a href="tel:+421911818815">0911 818 815</a></li>
-            <li><a href="mailto:lub.zavodny1@gmail.com">lub.zavodny1@gmail.com</a></li>
-            <li>ZŠ Holíčska 50, Bratislava</li>
-            <li><a href="kontakty.html#prihlaska">Skúšobná hodina</a></li>
-          </ul>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        <span>© <span data-year>2026</span> ALFA Taekwondo Club Bratislava · <span class="kr">태권도</span></span>
-        <span>ITF Taekwon-Do Slovakia</span>
-      </div>
-    </div>
-  </footer>
-
-  <script src="js/main.js"></script>
-</body>
-</html>
+<?php require __DIR__ . '/inc/layout-footer.php';
