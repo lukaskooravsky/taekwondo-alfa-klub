@@ -1,3 +1,7 @@
 *:Zone.Identifier
 .DS_Store
 node_modules/
+# obsah od trénera a tajomstvá — žijú len na hostingu
+/data/
+/uploads/
+/install-token.php
