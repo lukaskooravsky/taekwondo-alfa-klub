@@ -104,4 +104,86 @@
       busy.then(function () { form.requestSubmit ? form.requestSubmit() : form.submit(); }); // Safari < 16 nemá requestSubmit
     });
   });
+  /* ---- Hromadné nahrávanie do albumu (po jednej fotke, s priebehom) ---- */
+  document.querySelectorAll("[data-album-upload]").forEach(function (box) {
+    const input = box.querySelector("input[type=file]");
+    const status = box.querySelector("[data-upload-status]");
+    const failsEl = box.querySelector("[data-upload-fails]");
+    const csrf = box.querySelector("input[name=csrf]").value;
+
+    input.addEventListener("change", function () {
+      const files = Array.from(input.files);
+      input.value = "";
+      if (files.length) run(files);
+    });
+
+    async function uploadOne(file) {
+      const fd = new FormData();
+      fd.append("csrf", csrf);
+      fd.append("album", box.dataset.album);
+      let pair = null;
+      if (canDecode) {
+        try { pair = await makePair(file); } catch (e) { pair = null; }
+      }
+      if (pair) {
+        fd.append("full", pair.full);
+        fd.append("thumb", pair.thumb);
+      } else {
+        fd.append("full", file); // zmenší server
+      }
+      let res;
+      try {
+        res = await fetch(box.dataset.endpoint, { method: "POST", body: fd, credentials: "same-origin" });
+      } catch (e) {
+        throw new Error("Chyba pripojenia.");
+      }
+      let data = null;
+      try { data = await res.json(); } catch (e) { data = null; }
+      if (!res.ok || !data || !data.ok) {
+        throw new Error((data && data.error) || "Nahrávanie zlyhalo (" + res.status + ").");
+      }
+    }
+
+    function warnLeave(e) { e.preventDefault(); e.returnValue = ""; }
+
+    async function run(files) {
+      failsEl.innerHTML = "";
+      input.disabled = true;
+      window.addEventListener("beforeunload", warnLeave); // prehliadač sa spýta pred odchodom zo stránky
+      const failed = [];
+      for (let i = 0; i < files.length; i++) {
+        status.textContent = "Nahrávam " + (i + 1) + " / " + files.length + "…";
+        try { await uploadOne(files[i]); }
+        catch (err) { failed.push({ file: files[i], error: err.message }); }
+      }
+      window.removeEventListener("beforeunload", warnLeave);
+      input.disabled = false;
+      if (!failed.length) {
+        status.textContent = "Hotovo — nahraných " + files.length + ".";
+        location.reload();
+        return;
+      }
+      status.textContent = "Nahraných " + (files.length - failed.length) + " z " + files.length + ". Tieto sa nepodarili:";
+      failed.forEach(function (f) {
+        const li = document.createElement("li");
+        li.textContent = f.file.name + " — " + f.error;
+        failsEl.appendChild(li);
+      });
+      const li = document.createElement("li");
+      const retry = document.createElement("button");
+      retry.type = "button";
+      retry.className = "a-btn";
+      retry.textContent = "Skúsiť znova neúspešné";
+      retry.addEventListener("click", function () { run(failed.map(function (f) { return f.file; })); });
+      const reload = document.createElement("button");
+      reload.type = "button";
+      reload.className = "a-btn";
+      reload.textContent = "Zobraziť nahrané";
+      reload.style.marginLeft = ".5rem";
+      reload.addEventListener("click", function () { location.reload(); });
+      li.appendChild(retry);
+      li.appendChild(reload);
+      failsEl.appendChild(li);
+    }
+  });
 })();
