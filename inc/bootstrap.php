@@ -70,6 +70,8 @@ function is_local_host(?array $server = null): bool
 function require_https(): void
 {
     if (PHP_SAPI === 'cli' || request_is_https() || is_local_host()) return;
+    // test z mobilu cez wifi: len vstavaný `php -S` s ALFA_DEV_LAN=1 (na hostingu sa nikdy nespustí)
+    if (PHP_SAPI === 'cli-server' && getenv('ALFA_DEV_LAN') === '1') return;
     header('Location: https://' . $_SERVER['HTTP_HOST'] . ($_SERVER['REQUEST_URI'] ?? '/'), true, 301);
     exit;
 }
