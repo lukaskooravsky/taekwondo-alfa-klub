@@ -28,7 +28,7 @@
    Over aj, že sa adresa nedá podvrhnúť (na svojom počítači, s odkazom z kroku 1):
    `curl -s -H 'X-Real-IP: 1.2.3.4' -H 'X-Forwarded-For: 1.2.3.4' "<odkaz>" | grep -o 'zistená IP adresa: <b>[^<]*'`
    Nesmie vypísať `1.2.3.4`. Ak vypíše, nepokračuj a daj vedieť programátorovi.
-4. Zadaj prihlasovacie meno a heslo pre trénera (heslo aspoň 8 znakov, veľké aj malé písmeno, číslica a špeciálny znak). Ukážkový obsah môžeš nechať nahrať a neskôr ho zmazať.
+4. Zadaj prihlasovací e-mail a heslo pre trénera (heslo aspoň 8 znakov, veľké aj malé písmeno, číslica a špeciálny znak). Ukážkový obsah môžeš nechať nahrať a neskôr ho zmazať.
 5. Presmeruje ťa na prihlásenie do `https://tvoja-domena.sk/admin/`. Token sa sám zmazal —
    ak by `install-token.php` na serveri ostal, zmaž ho cez SFTP.
 
@@ -70,7 +70,7 @@ Nahraj zmenené súbory cez SFTP. **Nikdy neprepisuj ani nemaž** `data/` (resp.
 Ak sa `data/posts.json` alebo `data/albums.json` poškodí, admin to ohlási (alebo `../alfa-data/`, ak si dáta presunul podľa časti 4). Skopíruj najnovší súbor
 z `data/backup/` (napr. `posts-20261012-181500-ab12cd.json`) späť ako `data/posts.json`.
 
-## 9. Zabudnuté meno alebo heslo
+## 9. Zabudnutý e-mail alebo heslo
 Zmaž cez SFTP `data/auth.json` (alebo `../alfa-data/`, ak si dáta presunul podľa časti 4) a zopakuj časť 3 (nový token). Ukážkový obsah vtedy nezaškrtávaj —
 existujúce dáta by sa aj tak neprepísali.
 

@@ -8,13 +8,12 @@ const LOGIN_MAX_ENTRIES = 500;
 const SESSION_LIFETIME = 30 * 24 * 3600;
 const PASSWORD_MIN = 8;
 const PASSWORD_MAX_BYTES = 72; // bcrypt ďalšie bajty ignoruje
-const USER_MIN = 3;
-const USER_MAX = 32;
+const USER_MAX = 254; // najdlhší platný e-mail
 const AUTH_HASH_OPTIONS = ['cost' => 12];
 // hash náhodného hesla — overuje sa proti nemu pri zlom mene, aby odpoveď trvala rovnako dlho
 const AUTH_DUMMY_HASH = '$2y$12$N2wIW8258KFL3mWnppaAJOwjVxCCMG3hXs/SzhqYMtba2H.iCKVzq';
 
-/* ---------- meno a heslo v data/auth.json (nie v PHP súbore — opcache, rovnaká ochrana ako dáta) ---------- */
+/* ---------- e-mail a heslo v data/auth.json (nie v PHP súbore — opcache, rovnaká ochrana ako dáta) ---------- */
 
 function auth_file(): string
 {
@@ -41,14 +40,14 @@ function auth_hash(): string
     return is_string($hash) ? $hash : '';
 }
 
-/** Prihlasovacie meno; '' ak chýba (starý auth.json bez mena → nikto sa neprihlási). */
+/** Prihlasovací e-mail; '' ak chýba (starý auth.json bez e-mailu → nikto sa neprihlási). */
 function auth_user(): string
 {
     $user = auth_data()['user'] ?? '';
     return is_string($user) && auth_user_error($user) === null ? $user : '';
 }
 
-/** Zapíše meno + hash. $exclusive = true (install): len ak auth.json ešte neexistuje, inak vráti false. */
+/** Zapíše e-mail + hash. $exclusive = true (install): len ak auth.json ešte neexistuje, inak vráti false. */
 function auth_write_credentials(string $user, string $hash, bool $exclusive = false): bool
 {
     ensure_storage();
@@ -77,7 +76,7 @@ function auth_hash_password(string $pw): string
     return password_hash($pw, PASSWORD_DEFAULT, AUTH_HASH_OPTIONS);
 }
 
-/** Odtlačok mena + hesla; relácia ho drží a po zmene mena alebo hesla prestane sedieť. */
+/** Odtlačok e-mailu + hesla; relácia ho drží a po zmene e-mailu alebo hesla prestane sedieť. */
 function auth_pw_version(): string
 {
     $hash = auth_hash();
@@ -85,21 +84,27 @@ function auth_pw_version(): string
     return $hash === '' || $user === '' ? '' : substr(hash('sha256', $user . "\n" . $hash), 0, 16);
 }
 
-/* ---------- pravidlá pre meno a heslo ---------- */
+/* ---------- pravidlá pre e-mail a heslo ---------- */
 
-/** Meno pri prihlásení nerozlišuje veľké/malé písmená. */
+/** E-mail pri prihlásení nerozlišuje veľké/malé písmená. */
 function auth_normalize_user(string $user): string
 {
     return strtolower(trim($user));
 }
 
-/** null = meno je v poriadku, inak slovenská hláška. Očakáva už normalizované meno. */
+/** null = e-mail je v poriadku, inak slovenská hláška. Očakáva už normalizovaný e-mail. */
 function auth_user_error(string $user): ?string
 {
-    if (preg_match('/^[a-z0-9._-]{' . USER_MIN . ',' . USER_MAX . '}$/D', $user) !== 1) {
-        return 'Meno musí mať ' . USER_MIN . '–' . USER_MAX . ' znakov: malé písmená bez diakritiky, číslice, bodka, podčiarkovník alebo pomlčka.';
-    }
+    if (strlen($user) > USER_MAX || filter_var($user, FILTER_VALIDATE_EMAIL) === false) return 'Zadaj platný e-mail.';
     return null;
+}
+
+/** Časť e-mailu pred @ — heslo ju nesmie obsahovať (krátke časti do 2 znakov sa nekontrolujú). */
+function auth_password_has_name(string $pw, string $user): bool
+{
+    $name = strstr($user, '@', true);
+    $name = $name === false ? $user : $name;
+    return str_len($name) >= 3 && str_contains(mb_strtolower($pw), $name);
 }
 
 /** null = heslo spĺňa pravidlá, inak slovenská hláška s tým, čo chýba. */
@@ -113,7 +118,7 @@ function auth_password_error(string $pw, string $user): ?string
     if (preg_match('/\p{Nd}/u', $pw) !== 1) $missing[] = 'číslicu';
     if (preg_match('/[^\p{L}\p{N}\s]/u', $pw) !== 1) $missing[] = 'špeciálny znak (napr. ! ? # * - _)';
     if ($missing) return 'Heslu chýba: ' . implode(', ', $missing) . '.';
-    if ($user !== '' && str_contains(mb_strtolower($pw), $user)) return 'Heslo nesmie obsahovať prihlasovacie meno.';
+    if (auth_password_has_name($pw, $user)) return 'Heslo nesmie obsahovať časť e-mailu pred @.';
     return null;
 }
 
@@ -197,7 +202,7 @@ function auth_client_key(?string $ip = null): string
 
 /**
  * Vráti 'ok' | 'bad' | 'locked'. Pokus sa započíta ešte pred overením hesla (súbežné požiadavky nedostanú navyše).
- * Zlé meno a zlé heslo vyzerajú rovnako (aj časovo) — útočník nezistí, či uhádol meno.
+ * Zlý e-mail a zlé heslo vyzerajú rovnako (aj časovo) — útočník nezistí, či uhádol e-mail.
  */
 function auth_attempt(string $user, string $password, string $clientKey, ?int $now = null): string
 {
@@ -304,9 +309,9 @@ function csrf_field(): string
     return '<input type="hidden" name="csrf" value="' . e(csrf_token()) . '">';
 }
 
-/* ---------- zmena mena a hesla ---------- */
+/* ---------- zmena e-mailu a hesla ---------- */
 
-/** Overí meno + heslo podľa pravidiel a zapíše ich. Aktuálne zariadenie ostane prihlásené, ostatné sa odhlásia. */
+/** Overí e-mail + heslo podľa pravidiel a zapíše ich. Aktuálne zariadenie ostane prihlásené, ostatné sa odhlásia. */
 function auth_set_credentials(string $user, string $new): void
 {
     $user = auth_normalize_user($user);
@@ -316,7 +321,7 @@ function auth_set_credentials(string $user, string $new): void
     if (($_SESSION['admin'] ?? false) === true) $_SESSION['pw'] = auth_pw_version();
 }
 
-/** Zmena mena a/alebo hesla. Prázdne nové heslo = heslo ostáva, mení sa len meno. */
+/** Zmena e-mailu a/alebo hesla. Prázdne nové heslo = heslo ostáva, mení sa len e-mail. */
 function auth_change_credentials(string $old, string $user, string $new, string $new2): void
 {
     $hash = auth_hash();
@@ -324,7 +329,7 @@ function auth_change_credentials(string $old, string $user, string $new, string 
     $user = auth_normalize_user($user);
     if ($err = auth_user_error($user)) throw new ValidationException(['user' => $err]);
     if ($new === '' && $new2 === '') {
-        if (str_contains(mb_strtolower($old), $user)) throw new ValidationException(['user' => 'Meno nesmie byť súčasťou hesla.']);
+        if (auth_password_has_name($old, $user)) throw new ValidationException(['user' => 'Heslo nesmie obsahovať časť e-mailu pred @.']);
         auth_write_credentials($user, $hash);
         if (($_SESSION['admin'] ?? false) === true) $_SESSION['pw'] = auth_pw_version();
         return;

@@ -40,16 +40,16 @@ test('install_token_read odmietne súbor bez platného tokenu', function () {
 });
 
 test('install_set_credentials: validácia a výhradné vytvorenie auth.json', function () {
-    $e = throws(fn() => install_set_credentials('trener', 'kratke', 'kratke'), ValidationException::class);
+    $e = throws(fn() => install_set_credentials('trener@alfa.sk', 'kratke', 'kratke'), ValidationException::class);
     ok(str_starts_with($e->getMessage(), 'Heslu chýba:'));
-    $e = throws(fn() => install_set_credentials('ľ', 'Tajne-Heslo1', 'Tajne-Heslo1'), ValidationException::class);
+    $e = throws(fn() => install_set_credentials('trener', 'Tajne-Heslo1', 'Tajne-Heslo1'), ValidationException::class);
     ok(isset($e->errors['user']));
-    $e = throws(fn() => install_set_credentials('trener', 'Tajne-Heslo1', 'Ine-Heslo12'), ValidationException::class);
+    $e = throws(fn() => install_set_credentials('trener@alfa.sk', 'Tajne-Heslo1', 'Ine-Heslo12'), ValidationException::class);
     eq('Heslá sa nezhodujú.', $e->getMessage());
-    ok(install_set_credentials('Trener', 'Tajne-Heslo1', 'Tajne-Heslo1'));
-    ok(!install_set_credentials('druhy', 'Ine-Heslo123!', 'Ine-Heslo123!'), 'druhá inštalácia neprepíše');
+    ok(install_set_credentials('Trener@Alfa.SK', 'Tajne-Heslo1', 'Tajne-Heslo1'));
+    ok(!install_set_credentials('druhy@alfa.sk', 'Ine-Heslo123!', 'Ine-Heslo123!'), 'druhá inštalácia neprepíše');
     ok(password_verify('Tajne-Heslo1', auth_hash()));
-    eq('trener', auth_user(), 'meno uložené malými');
+    eq('trener@alfa.sk', auth_user(), 'e-mail uložený malými');
 });
 
 test('install_requirements: lokálne PHP spĺňa povinné požiadavky', function () {

@@ -20,6 +20,6 @@ admin_header('Administrácia');
   <a class="a-tile" href="posts.php">Aktuality<span><?= $postCount === null ? '' : e(sk_plural($postCount, 'aktualita', 'aktuality', 'aktualít')) ?></span></a>
   <a class="a-tile" href="albums.php">Galéria<span><?= $albumCount === null ? '' : e(sk_plural($albumCount, 'album', 'albumy', 'albumov')) ?></span></a>
 </div>
-<p class="a-section"><a href="password.php">Zmeniť meno a heslo</a></p>
+<p class="a-section"><a href="password.php">Zmeniť e-mail a heslo</a></p>
 <?php
 admin_footer();

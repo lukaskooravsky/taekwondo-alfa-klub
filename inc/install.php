@@ -58,7 +58,7 @@ function install_requirements(): array
     return ['required' => $req, 'recommended' => $rec];
 }
 
-/** Nastaví prvé meno a heslo. false = už existujú (inštalácia prebehla, alebo súbežný pokus). */
+/** Nastaví prvý e-mail a heslo. false = už existujú (inštalácia prebehla, alebo súbežný pokus). */
 function install_set_credentials(string $user, string $pw, string $pw2): bool
 {
     $user = auth_normalize_user($user);
