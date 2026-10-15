@@ -74,3 +74,8 @@ h2 { font-size: 1.3rem; margin-bottom: 0.8rem; }
 .a-badge { display: block; padding: 0.25rem 0.4rem; background: var(--gold); color: #14100a; font-size: 0.8rem; font-weight: 700; text-align: center; }
 .a-upload { padding: 1.2rem; border: 1px dashed var(--gold); margin: 1.2rem 0; display: grid; gap: 0.6rem; justify-items: start; }
 .a-upload-fails { list-style: none; color: var(--err); display: grid; gap: 0.4rem; }
+
+.a-pw-rules { list-style: none; display: grid; gap: 0.15rem; font-weight: 400; font-size: 0.92rem; color: var(--muted-2); }
+.a-pw-rules li::before { content: "✗ "; color: var(--err); }
+.a-pw-rules li.is-ok { color: var(--muted); }
+.a-pw-rules li.is-ok::before { content: "✓ "; color: var(--ok); }

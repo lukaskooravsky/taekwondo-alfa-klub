@@ -58,10 +58,12 @@ function install_requirements(): array
     return ['required' => $req, 'recommended' => $rec];
 }
 
-/** Nastaví prvé heslo. false = heslo už existuje (inštalácia prebehla, alebo súbežný pokus). */
-function install_set_password(string $pw, string $pw2): bool
+/** Nastaví prvé meno a heslo. false = už existujú (inštalácia prebehla, alebo súbežný pokus). */
+function install_set_credentials(string $user, string $pw, string $pw2): bool
 {
-    if (str_len($pw) < PASSWORD_MIN) throw new ValidationException(['password' => 'Heslo musí mať aspoň 10 znakov.']);
+    $user = auth_normalize_user($user);
+    if ($err = auth_user_error($user)) throw new ValidationException(['user' => $err]);
+    if ($err = auth_password_error($pw, $user)) throw new ValidationException(['password' => $err]);
     if ($pw !== $pw2) throw new ValidationException(['password2' => 'Heslá sa nezhodujú.']);
-    return auth_write_hash(password_hash($pw, PASSWORD_DEFAULT), true);
+    return auth_write_credentials($user, auth_hash_password($pw), true);
 }

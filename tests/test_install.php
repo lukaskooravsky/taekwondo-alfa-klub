@@ -39,14 +39,17 @@ test('install_token_read odmietne súbor bez platného tokenu', function () {
     eq(null, install_token_read(install_token_file()));
 });
 
-test('install_set_password: validácia a výhradné vytvorenie auth.json', function () {
-    $e = throws(fn() => install_set_password('kratke', 'kratke'), ValidationException::class);
-    eq('Heslo musí mať aspoň 10 znakov.', $e->getMessage());
-    $e = throws(fn() => install_set_password('tajneheslo1', 'ineheslo12'), ValidationException::class);
+test('install_set_credentials: validácia a výhradné vytvorenie auth.json', function () {
+    $e = throws(fn() => install_set_credentials('trener', 'kratke', 'kratke'), ValidationException::class);
+    ok(str_starts_with($e->getMessage(), 'Heslu chýba:'));
+    $e = throws(fn() => install_set_credentials('ľ', 'Tajne-Heslo1', 'Tajne-Heslo1'), ValidationException::class);
+    ok(isset($e->errors['user']));
+    $e = throws(fn() => install_set_credentials('trener', 'Tajne-Heslo1', 'Ine-Heslo12'), ValidationException::class);
     eq('Heslá sa nezhodujú.', $e->getMessage());
-    ok(install_set_password('tajneheslo1', 'tajneheslo1'));
-    ok(!install_set_password('ineheslo123', 'ineheslo123'), 'druhá inštalácia heslo neprepíše');
-    ok(password_verify('tajneheslo1', auth_hash()));
+    ok(install_set_credentials('Trener', 'Tajne-Heslo1', 'Tajne-Heslo1'));
+    ok(!install_set_credentials('druhy', 'Ine-Heslo123!', 'Ine-Heslo123!'), 'druhá inštalácia neprepíše');
+    ok(password_verify('Tajne-Heslo1', auth_hash()));
+    eq('trener', auth_user(), 'meno uložené malými');
 });
 
 test('install_requirements: lokálne PHP spĺňa povinné požiadavky', function () {

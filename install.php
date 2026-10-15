@@ -22,7 +22,7 @@ $req = install_requirements();
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$req['required']) {
     try {
-        if (!install_set_password(input_str($_POST['password'] ?? ''), input_str($_POST['password2'] ?? ''))) {
+        if (!install_set_credentials(input_str($_POST['user'] ?? ''), input_str($_POST['password'] ?? ''), input_str($_POST['password2'] ?? ''))) {
             install_stop('Inštalácia už prebehla.');
         }
         if (!empty($_POST['seed'])) install_seed(__DIR__ . '/seed');
@@ -62,15 +62,17 @@ $remote = (string)($_SERVER['REMOTE_ADDR'] ?? '');
   </p>
   <?= isset($errors['form']) ? '<div class="flash flash-error">' . e($errors['form']) . '</div>' : '' ?>
   <?php if (!$req['required']): ?>
-  <p class="a-hint" style="margin-bottom:1.2rem;">Nastav heslo, ktorým sa bude tréner prihlasovať do administrácie.</p>
+  <p class="a-hint" style="margin-bottom:1.2rem;">Nastav meno a heslo, ktorým sa bude tréner prihlasovať do administrácie.</p>
   <form method="post" class="a-form a-narrow">
     <input type="hidden" name="token" value="<?= e($token) ?>">
-    <label>Heslo <small>(aspoň 10 znakov)</small> <?= isset($errors['password']) ? '<em class="a-err">' . e($errors['password']) . '</em>' : '' ?><input type="password" name="password" required minlength="10" autocomplete="new-password"></label>
-    <label>Heslo znova <?= isset($errors['password2']) ? '<em class="a-err">' . e($errors['password2']) . '</em>' : '' ?><input type="password" name="password2" required minlength="10" autocomplete="new-password"></label>
+    <label>Prihlasovacie meno <small>(<?= USER_MIN ?>–<?= USER_MAX ?> znakov: malé písmená bez diakritiky, číslice, . _ -)</small> <?= isset($errors['user']) ? '<em class="a-err">' . e($errors['user']) . '</em>' : '' ?><input type="text" name="user" value="<?= e(input_str($_POST['user'] ?? '')) ?>" required autocomplete="username" autocapitalize="none" spellcheck="false"></label>
+    <label>Heslo <?= isset($errors['password']) ? '<em class="a-err">' . e($errors['password']) . '</em>' : '' ?><input type="password" name="password" required minlength="<?= PASSWORD_MIN ?>" autocomplete="new-password" data-pw-check></label>
+    <label>Heslo znova <?= isset($errors['password2']) ? '<em class="a-err">' . e($errors['password2']) . '</em>' : '' ?><input type="password" name="password2" required minlength="<?= PASSWORD_MIN ?>" autocomplete="new-password"></label>
     <label class="a-check"><input type="checkbox" name="seed" value="1" checked> Nahrať ukážkové aktuality a album</label>
     <button class="a-btn a-btn-primary">Dokončiť inštaláciu</button>
   </form>
   <?php endif; ?>
 </main>
+<script src="admin/admin.js"></script>
 </body>
 </html>

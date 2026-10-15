@@ -1,6 +1,32 @@
-/* Admin ALFA — potvrdzovanie mazania, zmenšovanie a nahrávanie fotiek. */
+/* Admin ALFA — potvrdzovanie mazania, kontrola hesla, zmenšovanie a nahrávanie fotiek. */
 (function () {
   "use strict";
+
+  /* ---- Pravidlá hesla pri písaní (rovnaké ako auth_password_error na serveri) ---- */
+  document.querySelectorAll("input[data-pw-check]").forEach(function (input) {
+    const min = parseInt(input.getAttribute("minlength"), 10) || 8;
+    const rules = [
+      ["aspoň " + min + " znakov", function (v) { return Array.from(v).length >= min; }],
+      ["veľké písmeno", function (v) { return /\p{Lu}/u.test(v); }],
+      ["malé písmeno", function (v) { return /\p{Ll}/u.test(v); }],
+      ["číslica", function (v) { return /\p{Nd}/u.test(v); }],
+      ["špeciálny znak (napr. ! ? # * - _)", function (v) { return /[^\p{L}\p{N}\s]/u.test(v); }]
+    ];
+    const list = document.createElement("ul");
+    list.className = "a-pw-rules";
+    const items = rules.map(function (r) {
+      const li = document.createElement("li");
+      li.textContent = r[0];
+      list.appendChild(li);
+      return li;
+    });
+    input.insertAdjacentElement("afterend", list);
+    function update() {
+      rules.forEach(function (r, i) { items[i].classList.toggle("is-ok", r[1](input.value)); });
+    }
+    input.addEventListener("input", update);
+    update();
+  });
 
   /* ---- Mazanie na dve kliknutia (bez blokujúceho window.confirm) ---- */
   document.querySelectorAll("form[data-confirm]").forEach(function (form) {

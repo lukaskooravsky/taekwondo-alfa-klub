@@ -6,34 +6,53 @@ const LOGIN_LOCK_SECONDS = 900;
 const LOGIN_GLOBAL_MAX = 50;
 const LOGIN_MAX_ENTRIES = 500;
 const SESSION_LIFETIME = 30 * 24 * 3600;
-const PASSWORD_MIN = 10;
+const PASSWORD_MIN = 8;
+const PASSWORD_MAX_BYTES = 72; // bcrypt ďalšie bajty ignoruje
+const USER_MIN = 3;
+const USER_MAX = 32;
+const AUTH_HASH_OPTIONS = ['cost' => 12];
+// hash náhodného hesla — overuje sa proti nemu pri zlom mene, aby odpoveď trvala rovnako dlho
+const AUTH_DUMMY_HASH = '$2y$12$N2wIW8258KFL3mWnppaAJOwjVxCCMG3hXs/SzhqYMtba2H.iCKVzq';
 
-/* ---------- heslo v data/auth.json (nie v PHP súbore — opcache, rovnaká ochrana ako dáta) ---------- */
+/* ---------- meno a heslo v data/auth.json (nie v PHP súbore — opcache, rovnaká ochrana ako dáta) ---------- */
 
 function auth_file(): string
 {
     return data_dir() . '/auth.json';
 }
 
+/** Obsah auth.json; [] ak neexistuje alebo je poškodený. */
+function auth_data(): array
+{
+    $file = auth_file();
+    if (!is_file($file)) return [];
+    $data = json_decode((string)file_get_contents($file), true);
+    if (!is_array($data)) {
+        error_log('data/auth.json je poškodený');
+        return [];
+    }
+    return $data;
+}
+
 /** Hash hesla; '' ak heslo nie je nastavené alebo je auth.json poškodený (vtedy sa nikto neprihlási). */
 function auth_hash(): string
 {
-    $file = auth_file();
-    if (!is_file($file)) return '';
-    $data = json_decode((string)file_get_contents($file), true);
-    $hash = is_array($data) ? ($data['hash'] ?? '') : '';
-    if (!is_string($hash) || $hash === '') {
-        error_log('data/auth.json je poškodený');
-        return '';
-    }
-    return $hash;
+    $hash = auth_data()['hash'] ?? '';
+    return is_string($hash) ? $hash : '';
 }
 
-/** Zapíše hash. $exclusive = true (install): len ak auth.json ešte neexistuje, inak vráti false. */
-function auth_write_hash(string $hash, bool $exclusive = false): bool
+/** Prihlasovacie meno; '' ak chýba (starý auth.json bez mena → nikto sa neprihlási). */
+function auth_user(): string
+{
+    $user = auth_data()['user'] ?? '';
+    return is_string($user) && auth_user_error($user) === null ? $user : '';
+}
+
+/** Zapíše meno + hash. $exclusive = true (install): len ak auth.json ešte neexistuje, inak vráti false. */
+function auth_write_credentials(string $user, string $hash, bool $exclusive = false): bool
 {
     ensure_storage();
-    $json = json_encode(['hash' => $hash, 'changed' => now_iso()], JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    $json = json_encode(['user' => $user, 'hash' => $hash, 'changed' => now_iso()], JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
     if ($exclusive) {
         $fh = @fopen(auth_file(), 'x');
         if ($fh === false) return false;
@@ -53,11 +72,49 @@ function auth_write_hash(string $hash, bool $exclusive = false): bool
     return true;
 }
 
-/** Odtlačok aktuálneho hesla; relácia ho drží a po zmene hesla prestane sedieť. */
+function auth_hash_password(string $pw): string
+{
+    return password_hash($pw, PASSWORD_DEFAULT, AUTH_HASH_OPTIONS);
+}
+
+/** Odtlačok mena + hesla; relácia ho drží a po zmene mena alebo hesla prestane sedieť. */
 function auth_pw_version(): string
 {
     $hash = auth_hash();
-    return $hash === '' ? '' : substr(hash('sha256', $hash), 0, 16);
+    $user = auth_user();
+    return $hash === '' || $user === '' ? '' : substr(hash('sha256', $user . "\n" . $hash), 0, 16);
+}
+
+/* ---------- pravidlá pre meno a heslo ---------- */
+
+/** Meno pri prihlásení nerozlišuje veľké/malé písmená. */
+function auth_normalize_user(string $user): string
+{
+    return strtolower(trim($user));
+}
+
+/** null = meno je v poriadku, inak slovenská hláška. Očakáva už normalizované meno. */
+function auth_user_error(string $user): ?string
+{
+    if (preg_match('/^[a-z0-9._-]{' . USER_MIN . ',' . USER_MAX . '}$/D', $user) !== 1) {
+        return 'Meno musí mať ' . USER_MIN . '–' . USER_MAX . ' znakov: malé písmená bez diakritiky, číslice, bodka, podčiarkovník alebo pomlčka.';
+    }
+    return null;
+}
+
+/** null = heslo spĺňa pravidlá, inak slovenská hláška s tým, čo chýba. */
+function auth_password_error(string $pw, string $user): ?string
+{
+    if (strlen($pw) > PASSWORD_MAX_BYTES) return 'Heslo je príliš dlhé (najviac ' . PASSWORD_MAX_BYTES . ' znakov bez diakritiky).';
+    $missing = [];
+    if (str_len($pw) < PASSWORD_MIN) $missing[] = 'aspoň ' . PASSWORD_MIN . ' znakov';
+    if (preg_match('/\p{Lu}/u', $pw) !== 1) $missing[] = 'veľké písmeno';
+    if (preg_match('/\p{Ll}/u', $pw) !== 1) $missing[] = 'malé písmeno';
+    if (preg_match('/\p{Nd}/u', $pw) !== 1) $missing[] = 'číslicu';
+    if (preg_match('/[^\p{L}\p{N}\s]/u', $pw) !== 1) $missing[] = 'špeciálny znak (napr. ! ? # * - _)';
+    if ($missing) return 'Heslu chýba: ' . implode(', ', $missing) . '.';
+    if ($user !== '' && str_contains(mb_strtolower($pw), $user)) return 'Heslo nesmie obsahovať prihlasovacie meno.';
+    return null;
 }
 
 /* ---------- relácia ---------- */
@@ -138,14 +195,20 @@ function auth_client_key(?string $ip = null): string
     return hash('sha256', $ip);
 }
 
-/** Vráti 'ok' | 'bad' | 'locked'. Pokus sa započíta ešte pred overením hesla (súbežné požiadavky nedostanú navyše). */
-function auth_attempt(string $password, string $clientKey, ?int $now = null): string
+/**
+ * Vráti 'ok' | 'bad' | 'locked'. Pokus sa započíta ešte pred overením hesla (súbežné požiadavky nedostanú navyše).
+ * Zlé meno a zlé heslo vyzerajú rovnako (aj časovo) — útočník nezistí, či uhádol meno.
+ */
+function auth_attempt(string $user, string $password, string $clientKey, ?int $now = null): string
 {
     $now ??= time();
     $gate = auth_rate_register($clientKey, $now); // 'locked' | 'check' | 'last'
     if ($gate === 'locked') return 'locked';
     $hash = auth_hash();
-    if ($hash !== '' && password_verify($password, $hash)) {
+    $stored = auth_user();
+    $userOk = $stored !== '' && hash_equals($stored, auth_normalize_user($user));
+    $pwOk = strlen($password) <= 4096 && password_verify($password, $hash !== '' ? $hash : AUTH_DUMMY_HASH);
+    if ($userOk && $pwOk && $hash !== '') {
         auth_rate_success($clientKey);
         if (session_status() === PHP_SESSION_ACTIVE) session_regenerate_id(true);
         $_SESSION['admin'] = true;
@@ -241,20 +304,32 @@ function csrf_field(): string
     return '<input type="hidden" name="csrf" value="' . e(csrf_token()) . '">';
 }
 
-/* ---------- zmena hesla ---------- */
+/* ---------- zmena mena a hesla ---------- */
 
-function auth_set_password(string $new): void
+/** Overí meno + heslo podľa pravidiel a zapíše ich. Aktuálne zariadenie ostane prihlásené, ostatné sa odhlásia. */
+function auth_set_credentials(string $user, string $new): void
 {
-    if (str_len($new) < PASSWORD_MIN) throw new ValidationException(['new' => 'Heslo musí mať aspoň 10 znakov.']);
-    auth_write_hash(password_hash($new, PASSWORD_DEFAULT));
-    // aktuálne zariadenie ostane prihlásené, ostatné relácie majú starú verziu hesla
+    $user = auth_normalize_user($user);
+    if ($err = auth_user_error($user)) throw new ValidationException(['user' => $err]);
+    if ($err = auth_password_error($new, $user)) throw new ValidationException(['new' => $err]);
+    auth_write_credentials($user, auth_hash_password($new));
     if (($_SESSION['admin'] ?? false) === true) $_SESSION['pw'] = auth_pw_version();
 }
 
-function auth_change_password(string $old, string $new, string $new2): void
+/** Zmena mena a/alebo hesla. Prázdne nové heslo = heslo ostáva, mení sa len meno. */
+function auth_change_credentials(string $old, string $user, string $new, string $new2): void
 {
-    if (!password_verify($old, auth_hash())) throw new ValidationException(['old' => 'Súčasné heslo nesedí.']);
-    if (str_len($new) < PASSWORD_MIN) throw new ValidationException(['new' => 'Heslo musí mať aspoň 10 znakov.']);
+    $hash = auth_hash();
+    if ($hash === '' || !password_verify($old, $hash)) throw new ValidationException(['old' => 'Súčasné heslo nesedí.']);
+    $user = auth_normalize_user($user);
+    if ($err = auth_user_error($user)) throw new ValidationException(['user' => $err]);
+    if ($new === '' && $new2 === '') {
+        if (str_contains(mb_strtolower($old), $user)) throw new ValidationException(['user' => 'Meno nesmie byť súčasťou hesla.']);
+        auth_write_credentials($user, $hash);
+        if (($_SESSION['admin'] ?? false) === true) $_SESSION['pw'] = auth_pw_version();
+        return;
+    }
+    if ($err = auth_password_error($new, $user)) throw new ValidationException(['new' => $err]);
     if ($new !== $new2) throw new ValidationException(['new2' => 'Nové heslá sa nezhodujú.']);
-    auth_set_password($new);
+    auth_set_credentials($user, $new);
 }
