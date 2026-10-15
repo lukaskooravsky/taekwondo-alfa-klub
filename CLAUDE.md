@@ -11,7 +11,7 @@ Repozitár: `lukaskooravsky/taekwondo-alfa-klub` (vetva `main`, Pages: main / ro
 ## Technológie
 - **HTML + CSS + JS + PHP** (bez frameworku, bez databázy, bez buildu). Aktuality a galéria sa
   spravujú cez admin `/admin/` (prihlásenie **e-mail + heslo**) a ukladajú do `data/*.json` + `uploads/` — tie nie sú v gite.
-- Hosting: **Websupport** (PHP 8.3+, SFTP). Nasadenie: `NASADENIE.md`.
+- Hosting: **Brianov zdieľaný hosting** (pôvodný plán Websupport; PHP 8.1+, Apache .htaccess). Nasadenie: `NASADENIE.md`.
 - Lokálne spustenie: `php -S localhost:8000`, testy: `php tests/run.php`. PHP 8.3 je prenosné
   v `C:\Users\lukas\tools\php83` (v PATH cez `~/.bashrc`; v neinteraktívnom shelli treba
   `export PATH="/c/Users/lukas/tools/php83:$PATH"`). `php -S` ignoruje `.htaccess`.
