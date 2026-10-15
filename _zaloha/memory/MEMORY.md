@@ -1,4 +1,4 @@
-- [ALFA Taekwondo web](project-alfa-taekwondo-web.md) — demo na GitHub Pages; PHP admin pre trénera hotový na vetve cms-admin, ďalej Websupport
+- [ALFA Taekwondo web](project-alfa-taekwondo-web.md) — demo na GitHub Pages; PHP admin (e-mail+heslo) na vetve cms-admin; nasadí Brian na svoj hosting
 - [Deploy / git](deploy-git-lukasko-token.md) — repo lukaskooravsky; gh prihlásené ako lukaskooravsky → bežný `git push` (token už netreba)
 - [KR font subset gotcha](fonts-kr-subset-gotcha.md) — nové kórejské znaky = prázdne štvorčeky (fonty sú subsety)
 - [Používateľ Lukáš](user-lukas.md) — pushuje ako lukaskooravsky; DusanOravsky = otcov účet

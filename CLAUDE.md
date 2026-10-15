@@ -10,11 +10,16 @@ Repozitár: `lukaskooravsky/taekwondo-alfa-klub` (vetva `main`, Pages: main / ro
 
 ## Technológie
 - **HTML + CSS + JS + PHP** (bez frameworku, bez databázy, bez buildu). Aktuality a galéria sa
-  spravujú cez admin `/admin/` (heslo) a ukladajú do `data/*.json` + `uploads/` — tie nie sú v gite.
+  spravujú cez admin `/admin/` (prihlásenie **e-mail + heslo**) a ukladajú do `data/*.json` + `uploads/` — tie nie sú v gite.
 - Hosting: **Websupport** (PHP 8.3+, SFTP). Nasadenie: `NASADENIE.md`.
 - Lokálne spustenie: `php -S localhost:8000`, testy: `php tests/run.php`. PHP 8.3 je prenosné
   v `C:\Users\lukas\tools\php83` (v PATH cez `~/.bashrc`; v neinteraktívnom shelli treba
   `export PATH="/c/Users/lukas/tools/php83:$PATH"`). `php -S` ignoruje `.htaccess`.
+- Test admina z mobilu cez wifi: `ALFA_DEV_LAN=1 php -S 0.0.0.0:8001` → `http://<IP-PC>:8001/admin/`
+  (bez premennej admin mimo localhostu presmeruje na HTTPS).
+- Heslo: aspoň 8 znakov, veľké + malé písmeno, číslica, špeciálny znak, bez časti e-mailu pred @
+  (`auth_password_error` v `inc/auth.php` + živá kontrola v `admin/admin.js`). Lokálne testovacie
+  prihlásenie je len v lokálnom `data/auth.json` (nie v gite).
 - Návrh: `docs/superpowers/specs/2026-10-12-cms-admin-design.md`.
 - Fonty sú **self-hostované** v `assets/fonts/` (načítané cez `css/fonts.css`) —
   bez volania Google (kvôli GDPR aj spoľahlivému renderu).
@@ -77,7 +82,9 @@ sám do 1–2 minút.
 - [ ] Vlastná doména (zatiaľ nekúpená) — potom nastaviť v Pages (CNAME).
 - [ ] Skontrolovať/upraviť texty (Čo je taekwondo, Pásy, O nás — teraz sú to návrhy).
 - [x] Admin na aktuality a galériu (PHP, `/admin/`) — hotový na vetve `cms-admin`.
-- [ ] Nasadiť na Websupport podľa `NASADENIE.md`, potom vypnúť Pages a zlúčiť `cms-admin` do `main`.
+- [ ] Nasadiť podľa `NASADENIE.md` — robí to **Brian** (programátor, vlastný zdieľaný hosting); Ľubo kupuje len
+      doménu. Brianovi sa posiela odkaz na vetvu `cms-admin` na GitHube (Gmail ZIP s .js/.php blokuje).
+      Potom vypnúť Pages a zlúčiť `cms-admin` do `main`.
 - [ ] Pred ostrým spustením `SITE_DEMO = false` v `inc/site.php` + odstrániť demo pásik zo `.html`.
 
 ## Fakty o klube (aktuálne v obsahu)
