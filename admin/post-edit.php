@@ -58,8 +58,9 @@ if ($post && empty($post['rich']) && $_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 admin_header($post ? 'Upraviť aktualitu' : 'Nová aktualita');
 ?>
+<p class="a-back"><a href="posts.php">← Všetky aktuality</a><?php if ($post): ?> · <a href="../aktualita.php?id=<?= e(rawurlencode($post['id'])) ?>" target="_blank">Pozrieť na webe ↗</a><?php endif; ?></p>
 <?= isset($errors['form']) ? '<div class="flash flash-error">' . e($errors['form']) . '</div>' : '' ?>
-<form method="post" enctype="multipart/form-data" class="a-form">
+<form method="post" enctype="multipart/form-data" class="a-form" data-unsaved>
   <?= csrf_field() ?>
   <?php if ($post): ?><input type="hidden" name="id" value="<?= e($post['id']) ?>"><?php endif; ?>
   <input type="hidden" name="rich" value="1"><!-- textarea vždy obsahuje HTML (aj bez JS editora) -->
@@ -77,6 +78,7 @@ admin_header($post ? 'Upraviť aktualitu' : 'Nová aktualita');
     <input type="file" name="image_full" hidden>
     <input type="file" name="image_thumb" hidden>
     <img class="a-preview" data-resize-preview alt="" hidden>
+    <small class="a-hint">Vyber fotku alebo ju sem pretiahni myšou. Formáty: JPG, PNG, WebP — aj GIF, AVIF či BMP (prehliadač ich prevedie). HEIC z iPhonu najprv ulož ako JPG.</small>
     <small class="a-hint" data-resize-status><?= $errors ? 'Ak si vyberal fotku, vyber ju prosím znova.' : '' ?></small>
   </div>
   <div class="a-field"><span>Krátky úvod <small>(1–2 vety do zoznamu, max 300 znakov)</small></span> <?= field_error($errors, 'excerpt') ?>

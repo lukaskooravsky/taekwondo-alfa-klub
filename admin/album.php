@@ -53,7 +53,8 @@ admin_header($album['title']);
 <div class="a-upload" data-album-upload data-album="<?= e($album['id']) ?>" data-endpoint="api/upload.php">
   <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
   <label class="a-btn a-btn-primary">+ Pridať fotky<input type="file" accept="image/*" multiple hidden></label>
-  <p class="a-hint" data-upload-status>Môžeš vybrať aj viac fotiek naraz.</p>
+  <p class="a-hint" data-upload-status>Môžeš vybrať aj viac fotiek naraz alebo ich sem pretiahnuť myšou.</p>
+  <p class="a-hint">Formáty: JPG, PNG, WebP — aj GIF, AVIF či BMP (prehliadač ich prevedie). HEIC z iPhonu najprv ulož ako JPG.</p>
   <ul class="a-upload-fails" data-upload-fails></ul>
   <noscript><p class="flash flash-error">Na nahrávanie fotiek treba zapnutý JavaScript.</p></noscript>
 </div>
@@ -76,7 +77,7 @@ admin_header($album['title']);
 
 <section class="a-section">
   <h2>Nastavenia albumu</h2>
-  <form method="post" class="a-form">
+  <form method="post" class="a-form" data-unsaved>
     <?= csrf_field() ?><input type="hidden" name="action" value="rename"><input type="hidden" name="rich" value="1">
     <label>Názov albumu<input name="title" value="<?= e($album['title']) ?>" maxlength="120" required></label>
     <label>Dátum<input type="date" name="date" value="<?= e($album['date']) ?>" required></label>

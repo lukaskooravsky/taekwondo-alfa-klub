@@ -150,7 +150,10 @@ html.a-noscroll, html.a-noscroll body { overflow: hidden; }
 .a-rich .ql-snow .ql-picker.ql-size [data-value=huge]::before { content: "Obrovské"; }
 
 /* plocha na písanie — vyzerá ako text na webe */
-.a-rich .ql-container.ql-snow { border: 0; font: inherit; font-size: 1.02rem; color: var(--bone); }
+/* Quill má .ql-container aj .ql-editor height:100% — v mriežke formulára (.a-field je grid) sa to počíta z výšky celého
+   rámika (aj s lištou), editor potom presahuje a neviditeľne prekrýva tlačidlá pod ním → výška podľa obsahu */
+.a-rich .ql-container.ql-snow { border: 0; font: inherit; font-size: 1.02rem; color: var(--bone); height: auto; }
+.a-rich .ql-editor { height: auto; }
 .a-rich .ql-editor { min-height: 300px; line-height: 1.65; padding: 18px 20px; }
 .a-rich-inline .ql-editor { min-height: 96px; }
 .a-rich .ql-editor.ql-blank::before { color: var(--muted-2); font-style: normal; left: 20px; right: 20px; }
@@ -200,7 +203,7 @@ html.a-noscroll, html.a-noscroll body { overflow: hidden; }
 /* celá obrazovka */
 .a-rich.is-full { position: fixed; inset: 0; z-index: 50; border-radius: 0; display: flex; flex-direction: column; }
 .a-rich.is-full .ql-toolbar.ql-snow { border-radius: 0; }
-.a-rich.is-full .ql-container { flex: 1; overflow-y: auto; }
+.a-rich.is-full .ql-container { flex: 1; min-height: 0; overflow-y: auto; }
 .a-rich.is-full .ql-editor { max-width: 860px; margin: 0 auto; min-height: 100%; }
 .a-rich.is-full .a-rich-status { border-radius: 0; }
 
@@ -244,3 +247,5 @@ html.a-noscroll, html.a-noscroll body { overflow: hidden; }
 @media (max-width: 640px) {
   .a-filter label:not(.a-filter-q) { flex: 1 1 calc(50% - .5rem); }
 }
+
+.a-back { margin: -.4rem 0 1rem; color: var(--muted-2); }

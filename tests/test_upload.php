@@ -9,7 +9,7 @@ test('upload_check prijme PNG podľa obsahu, nie podľa mena', function () {
 test('upload_check odmietne textový súbor aj PHP vydávané za obrázok', function () {
     file_put_contents(tmp('a.jpg'), 'toto nie je obrázok');
     $e = throws(fn() => upload_check(fake_file(tmp('a.jpg'), 'a.jpg')), UploadException::class);
-    eq('Toto nie je fotka vo formáte JPG, PNG alebo WebP.', $e->getMessage());
+    ok(str_starts_with($e->getMessage(), 'Tento formát sa nedá spracovať'), $e->getMessage());
     file_put_contents(tmp('shell.png'), "<?php echo 'hack'; ?>");
     throws(fn() => upload_check(fake_file(tmp('shell.png'), 'shell.png')), UploadException::class);
 });
@@ -96,4 +96,13 @@ test('zmazaná fotka ide do koša a po 30 dňoch sa vymaže', function () {
     eq(0, upload_trash_purge(), 'čerstvé ostanú');
     touch($inTrash[0], time() - (UPLOAD_TRASH_DAYS + 1) * 86400);
     eq(1, upload_trash_purge());
+});
+
+test('kôš: 30 dní sa počíta od zmazania, nie od nahratia fotky', function () {
+    ensure_storage();
+    $r = upload_store_pair(fake_file(fixture_png(tmp('c.png'))), fake_file(fixture_png(tmp('d.png'))), 'posts', 'p_trash2', false);
+    touch(upload_path($r['full']), time() - 60 * 86400);   // fotka nahratá pred 60 dňami
+    upload_delete($r['full']);
+    eq(0, upload_trash_purge(), 'čerstvo zmazaná ostane v koši');
+    eq(1, count(glob(upload_trash_dir() . '/*__posts__p_trash2.png')));
 });

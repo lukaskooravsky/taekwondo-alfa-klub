@@ -283,8 +283,25 @@
     });
   });
 
+  /* ---------- neuložené zmeny: pred odchodom zo stránky sa prehliadač opýta ---------- */
+  document.querySelectorAll("form[data-unsaved]").forEach(function (form) {
+    let dirty = false;
+    form.addEventListener("input", function () { dirty = true; });
+    form.addEventListener("change", function () { dirty = true; });
+    form.addEventListener("rich-change", function () { dirty = true; }); // zmena v editore (Quill)
+    form.addEventListener("submit", function () { dirty = false; });
+    window.addEventListener("beforeunload", function (e) {
+      if (!dirty) return;
+      e.preventDefault();
+      e.returnValue = "";
+    });
+  });
+
   /* ---------- pretiahnutie fotiek myšou (album, titulná fotka aktuality) ---------- */
-  function dropZone(el, onFiles) {
+  const IMAGE_EXT = /\.(jpe?g|png|webp|gif|avif|bmp|heic|heif|tiff?)$/i;
+  function isImageFile(f) { return /^image\//.test(f.type) || IMAGE_EXT.test(f.name); }
+  const NOT_IMAGE = "Toto nie je fotka. Pretiahni súbor JPG, PNG alebo WebP.";
+  function dropZone(el, onFiles, onReject) {
     let depth = 0;
     el.addEventListener("dragenter", function (e) {
       if (!e.dataTransfer || Array.from(e.dataTransfer.types).indexOf("Files") < 0) return;
@@ -305,26 +322,30 @@
       el.classList.remove("is-drag");
       if (!e.dataTransfer || !e.dataTransfer.files.length) return;
       e.preventDefault();
-      const files = Array.from(e.dataTransfer.files).filter(function (f) { return /^image\//.test(f.type); });
+      const all = Array.from(e.dataTransfer.files);
+      const files = all.filter(isImageFile);
       if (files.length) onFiles(files);
+      if (files.length < all.length && onReject) onReject(all.length - files.length);
     });
   }
   document.querySelectorAll("[data-album-upload]").forEach(function (box) {
     const input = box.querySelector("input[type=file]");
+    const status = box.querySelector("[data-upload-status]");
     dropZone(box, function (files) {
       if (!canSetFiles) return;
       setFiles(input, files);
       input.dispatchEvent(new Event("change"));
-    });
+    }, function (n) { if (status) status.textContent = (n === 1 ? "1 súbor nie je fotka" : n + " súbory nie sú fotky") + " — preskočené."; });
   });
   document.querySelectorAll("input[type=file][data-resize]").forEach(function (input) {
     const zone = input.closest(".a-field");
     if (!zone || !canSetFiles) return;
     zone.classList.add("a-drop");
+    const status = zone.querySelector("[data-resize-status]");
     dropZone(zone, function (files) {
       setFiles(input, [files[0]]);
       input.dispatchEvent(new Event("change"));
-    });
+    }, function () { if (status) status.textContent = NOT_IMAGE; });
   });
 
   /* ---------- formátovací editor (Quill) pre textarea[data-rich="full|inline"] ---------- */
@@ -547,7 +568,10 @@
       modules: {
         toolbar: { container: toolbar, handlers: handlers },
         history: { delay: 800, maxStack: 200, userOnly: true },
-        uploader: inline ? { mimetypes: [] } : { handler: function (range, files) { uploadImages(range, files); } }
+        uploader: inline ? { mimetypes: [] } : {
+          mimetypes: ["image/png", "image/jpeg", "image/webp", "image/gif", "image/avif", "image/bmp", "image/heic", "image/heif", "image/tiff", ""],
+          handler: function (range, files) { uploadImages(range, files); }
+        }
       }
     });
     // vložené (Ctrl+V) fotky a videá: povolené sú len vlastné fotky z editora a YouTube — iné by server pri uložení zahodil
@@ -627,8 +651,10 @@
 
     /* fotky v texte: tlačidlo, Ctrl+V aj pretiahnutie (Quill uploader) */
     async function uploadImages(range, files) {
-      files = Array.from(files).filter(function (f) { return /^image\//.test(f.type); });
-      if (!files.length || !csrfIn) return;
+      const all = Array.from(files);
+      files = all.filter(isImageFile);
+      if (!files.length) { if (all.length) say(NOT_IMAGE, true); return; }
+      if (!csrfIn) return;
       let index = range ? range.index : quill.getLength();
       for (let i = 0; i < files.length; i++) {
         say("Nahrávam fotku " + (i + 1) + " z " + files.length + "…");
@@ -636,7 +662,9 @@
         fd.append("csrf", csrfIn.value);
         let pair = null;
         if (canDecode) { try { pair = await makePair(files[i]); } catch (e) { pair = null; } }
-        if (pair) { fd.append("full", pair.full); fd.append("thumb", pair.thumb); } else fd.append("full", files[i]);
+        if (pair) { fd.append("full", pair.full); fd.append("thumb", pair.thumb); }
+        else if (/^image\/(jpeg|png|webp)$/.test(files[i].type)) fd.append("full", files[i]); // zmenší server
+        else { say("Fotku „" + files[i].name + "“ tento prehliadač nevie spracovať (napr. HEIC) — ulož ju ako JPG a skús znova.", true); continue; }
         let data = null;
         try {
           const res = await fetch(API.image, { method: "POST", body: fd, credentials: "same-origin" });
@@ -727,7 +755,10 @@
       statusCount.textContent = max ? chars + " / " + max + " znakov" : words + " slov · " + chars + " znakov";
       statusCount.classList.toggle("a-err", max > 0 && chars > max);
     }
-    quill.on("text-change", sync);
+    quill.on("text-change", function (delta, old, source) {
+      sync();
+      if (source === "user" && form) form.dispatchEvent(new Event("rich-change"));
+    });
     sync();
 
     if (form && !form.querySelector("input[name=rich]")) {

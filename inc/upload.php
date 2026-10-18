@@ -29,7 +29,7 @@ function upload_check(array $file): string
     $mime = (string)(new finfo(FILEINFO_MIME_TYPE))->file($path);
     $info = @getimagesize($path);
     if (!isset(UPLOAD_TYPES[$mime]) || $info === false || $info['mime'] !== $mime) {
-        throw new UploadException('Toto nie je fotka vo formáte JPG, PNG alebo WebP.');
+        throw new UploadException('Tento formát sa nedá spracovať — ulož fotku ako JPG, PNG alebo WebP. (iPhone: Nastavenia → Kamera → Formáty → Najkompatibilnejší.)');
     }
     return UPLOAD_TYPES[$mime];
 }
@@ -155,6 +155,7 @@ function upload_trash_file(string $path, string $rel): void
     if (!is_dir($trash)) @mkdir($trash, 0775, true);
     $to = $trash . '/' . date('Ymd-His') . '__' . str_replace('/', '__', $rel);
     if (!is_dir($trash) || !@rename($path, $to)) @unlink($path);    // bez koša aspoň zmazať
+    else @touch($to);   // rename drží čas nahratia — 30 dní v koši sa má počítať od zmazania
     if (random_int(1, 20) === 1) upload_trash_purge();
 }
 
