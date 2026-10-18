@@ -124,13 +124,107 @@ function auth_password_error(string $pw, string $user): ?string
 
 /* ---------- relácia ---------- */
 
+/**
+ * Relácie v data/sessions cez vlastný handler. Hosting (napr. Webglobe) vie session.save_path vnútiť
+ * cez php_admin_value — session_save_path() sa potom ticho ignoruje a vnútený priečinok nemusí byť
+ * zapisovateľný. Vlastný handler od toho nezávisí a nemaže relácie podľa kratšieho limitu hostingu.
+ */
+final class AlfaSessionHandler implements SessionHandlerInterface, SessionUpdateTimestampHandlerInterface
+{
+    /** @var resource|null */
+    private $fp = null;
+    private string $id = '';
+
+    public function __construct(private string $dir) {}
+
+    private function file(string $id): ?string
+    {
+        return preg_match('/^[a-zA-Z0-9,-]{22,256}$/', $id) ? $this->dir . '/sess_' . $id : null;
+    }
+
+    /** Otvorí a zamkne súbor relácie (zámok drží do close, ako vstavaný handler „files“). */
+    private function lock(string $id): bool
+    {
+        if ($this->fp !== null && $this->id === $id) return true;
+        $this->release();
+        $file = $this->file($id);
+        if ($file === null) return false;
+        $fp = @fopen($file, 'c+');
+        if ($fp === false) return false;
+        flock($fp, LOCK_EX);
+        $this->fp = $fp;
+        $this->id = $id;
+        return true;
+    }
+
+    private function release(): void
+    {
+        if ($this->fp === null) return;
+        flock($this->fp, LOCK_UN);
+        fclose($this->fp);
+        $this->fp = null;
+        $this->id = '';
+    }
+
+    public function open(string $path, string $name): bool { return true; }
+
+    public function close(): bool
+    {
+        $this->release();
+        return true;
+    }
+
+    public function read(string $id): string|false
+    {
+        if (!$this->lock($id)) return false;
+        rewind($this->fp);
+        return (string)stream_get_contents($this->fp);
+    }
+
+    public function write(string $id, string $data): bool
+    {
+        if (!$this->lock($id)) return false;
+        rewind($this->fp);
+        ftruncate($this->fp, 0);
+        return fwrite($this->fp, $data) === strlen($data) && fflush($this->fp);
+    }
+
+    public function destroy(string $id): bool
+    {
+        if ($this->id === $id) $this->release();
+        $file = $this->file($id);
+        if ($file !== null && is_file($file)) @unlink($file);
+        return true;
+    }
+
+    /** Limit hostingu (session.gc_maxlifetime) ignorujeme — relácia platí SESSION_LIFETIME. */
+    public function gc(int $max_lifetime): int|false
+    {
+        $n = 0;
+        foreach (glob($this->dir . '/sess_*') ?: [] as $f) {
+            if (@filemtime($f) < time() - SESSION_LIFETIME && @unlink($f)) $n++;
+        }
+        return $n;
+    }
+
+    public function validateId(string $id): bool
+    {
+        $file = $this->file($id);
+        return $file !== null && is_file($file);
+    }
+
+    public function updateTimestamp(string $id, string $data): bool
+    {
+        $file = $this->file($id);
+        return $file !== null && @touch($file);
+    }
+}
+
 function auth_start_session(): void
 {
     if (session_status() === PHP_SESSION_ACTIVE) return;
     ensure_storage();
-    // vlastný priečinok relácií, aby hosting nemazal relácie skôr ako po 30 dňoch
-    ini_set('session.save_handler', 'files'); // hosting môže mať predvolene iný handler (napr. redis)
-    session_save_path(data_dir() . '/sessions');
+    session_set_save_handler(new AlfaSessionHandler(data_dir() . '/sessions'), true);
     ini_set('session.gc_maxlifetime', (string)SESSION_LIFETIME);
     ini_set('session.use_strict_mode', '1');
     // vlastný priečinok cron hostingu nečistí → upratovanie starých relácií necháme na PHP (1 % požiadaviek)

@@ -187,3 +187,30 @@ test('auth_write_credentials exclusive: druhý pokus neprepíše', function () {
     eq('hash-1', auth_hash());
     eq('trener@alfa.sk', auth_user());
 });
+
+test('AlfaSessionHandler: zápis, čítanie, validácia, zmazanie, upratovanie', function () {
+    ensure_storage();
+    $dir = data_dir() . '/sessions';
+    $h = new AlfaSessionHandler($dir);
+    $id = str_repeat('a', 32);
+    ok(!$h->validateId($id), 'neexistujúca relácia');
+    eq('', $h->read($id));
+    ok($h->write($id, 'csrf|s:3:"abc";'));
+    ok($h->close());
+    ok($h->validateId($id), 'po zápise existuje');
+    eq('csrf|s:3:"abc";', $h->read($id));
+    ok($h->write($id, 'x'));
+    $h->close();
+    eq('x', file_get_contents("$dir/sess_$id"), 'kratší zápis neprilepí zvyšok starých dát');
+    eq(false, $h->read('../../auth'), 'cesta mimo priečinka');
+    ok(!$h->validateId('../x'));
+    ok($h->destroy($id));
+    ok(!is_file("$dir/sess_$id"));
+    $old = "$dir/sess_" . str_repeat('b', 32);
+    $fresh = "$dir/sess_" . str_repeat('c', 32);
+    file_put_contents($old, '');
+    file_put_contents($fresh, '');
+    touch($old, time() - SESSION_LIFETIME - 10);
+    eq(1, $h->gc(60), 'krátky limit hostingu sa ignoruje');
+    ok(!is_file($old) && is_file($fresh));
+});
