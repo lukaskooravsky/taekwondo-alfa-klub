@@ -5,7 +5,7 @@ function album_clean(array $in): array
 {
     $desc = trim(input_str($in['description'] ?? ''));
     // popis z editora je HTML (rich=1); bez JS príde prostý text
-    $desc = rich_clean(input_str($in['rich'] ?? '') === '1' ? $desc : rich_from_text($desc));
+    $desc = input_str($in['rich'] ?? '') === '1' ? rich_from_form($desc) : rich_clean(rich_from_text($desc));
     $f = ['title' => trim(input_str($in['title'] ?? '')), 'date' => trim(input_str($in['date'] ?? '')), 'description' => $desc];
     $err = [];
     if ($f['title'] === '') $err['title'] = 'Doplň názov albumu.';

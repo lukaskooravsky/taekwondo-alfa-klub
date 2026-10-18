@@ -185,3 +185,25 @@ function upload_delete_dir(string $albumId): void
     }
     @rmdir($dir);
 }
+
+/**
+ * Denné upratovanie (volá admin/_init.php): kôš fotiek a zálohy pred zmazaním staršie ako 30 dní — aj keď sa dlho nič
+ * nemaže (sľub „30 dní“ v GDPR texte a NASADENIE.md). Raz za deň podľa času zmeny súboru data/.cleanup.
+ */
+function maintenance_daily(?int $now = null): bool
+{
+    $now ??= time();
+    $marker = data_dir() . '/.cleanup';
+    if (is_file($marker) && (int)@filemtime($marker) > $now - 86400) return false;
+    @touch($marker, $now);
+    upload_trash_purge($now);
+    $limit = $now - UPLOAD_TRASH_DAYS * 86400;
+    foreach (glob(data_dir() . '/backup/*-pred-zmazanim-*.json') ?: [] as $f) {
+        if ((int)@filemtime($f) < $limit) @unlink($f);
+    }
+    // starší kôš priamo v uploads/.trash (verzia z 2026-10-18) — dobehnúť a zmazať
+    foreach (glob(uploads_dir() . '/.trash/*__*') ?: [] as $f) {
+        if (is_file($f) && (int)@filemtime($f) < $limit) @unlink($f);
+    }
+    return true;
+}

@@ -11,8 +11,8 @@ function post_clean(array $in): array
     $f = [
         'title' => trim(input_str($in['title'] ?? '')),
         'date' => trim(input_str($in['date'] ?? '')),
-        'excerpt' => $rich ? rich_clean($excerpt, true) : $excerpt,
-        'body' => $rich ? rich_clean($body) : $body,
+        'excerpt' => $rich ? rich_from_form($excerpt, true) : $excerpt,
+        'body' => $rich ? rich_from_form($body) : $body,
         'rich' => $rich,
     ];
     $excerptText = $rich ? rich_text($f['excerpt']) : $f['excerpt'];

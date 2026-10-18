@@ -30,8 +30,6 @@ function rich_clean(string $html, bool $inline = false): string
 {
     $html = trim(str_replace(["\r\n", "\r"], "\n", $html));
     if ($html === '') return '';
-    // bez značiek = prostý text (textarea bez JS editora) — editor vždy posiela aspoň <p>
-    if (!preg_match('~<[a-z/!]~i', $html)) $html = rich_from_text($html, $inline);
     if (!class_exists(DOMDocument::class)) return '<p>' . nl2br(e(rich_text($html)), false) . '</p>';
 
     $doc = new DOMDocument();
@@ -262,6 +260,16 @@ function rich_text(string $html): string
     $text = html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
     $text = preg_replace('/[ \t\x{00A0}]+/u', ' ', $text);
     return trim(preg_replace('/\s*\n\s*/', "\n", $text));
+}
+
+/**
+ * Vstup z formulára: editor posiela HTML (vždy aspoň <p>); bez JS príde z textarea aj prostý text → odseky a odkazy.
+ * Len pre vstup z formulára — uložené dáta sa čistia priamo cez rich_clean (inak by sa & escapovalo dvakrát).
+ */
+function rich_from_form(string $value, bool $inline = false): string
+{
+    $value = trim(str_replace(["\r\n", "\r"], "\n", $value));
+    return rich_clean(preg_match('~<[a-z/!]~i', $value) ? $value : rich_from_text($value, $inline), $inline);
 }
 
 /** Prostý text (staré aktuality) → HTML pre editor. */

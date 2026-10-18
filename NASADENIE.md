@@ -63,7 +63,7 @@ Cieľ: web beží na trénerovom hostingu a vlastnej doméne, s obsahom, ktorý 
 1. **Pripraviť hosting** podľa časti 1 (PHP 8.1+, HTTPS pre doménu aj `www`).
 2. **Nahrať kód** podľa časti 2.
 3. **V `inc/site.php`** nastaviť `SITE_URL` na novú doménu a `SITE_INDEX = true`; nahrať tento súbor.
-4. **Preniesť obsah** — z ukážky (`public_html/_sub/alfa/`) stiahnuť celé `data/` a `uploads/` (vrátane `data/auth.json`, takže e-mail a heslo trénera ostanú) a nahrať ich na nový hosting do koreňa webu.
+4. **Preniesť obsah** — z ukážky (`public_html/_sub/alfa/`) stiahnuť celé `data/` a `uploads/` (okrem prípadného `uploads/.trash/` — starý kôš sa neprenáša) (vrátane `data/auth.json`, takže e-mail a heslo trénera ostanú) a nahrať ich na nový hosting do koreňa webu.
    Ak chce tréner začať načisto: obsah nepreniesť a spraviť časť 4 (nový token, bez ukážkového obsahu).
 5. **Skontrolovať** podľa časti 5 a prihlásiť sa do `https://<nová-doména>/admin/`.
    Tréner sa na každom zariadení prihlási znova (nová doména = nové cookies).

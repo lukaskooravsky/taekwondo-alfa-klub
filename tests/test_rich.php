@@ -118,11 +118,40 @@ test('fotka v texte: rozmery zo súboru, adresa vlastného webu → relatívna; 
 });
 
 test('rich_clean: prostý text bez JS dostane odseky a odkazy; www a tel odkazy', function () {
-    eq("<p>a</p>\n<p>b <a href=\"http://x.sk\" target=\"_blank\" rel=\"noopener\">http://x.sk</a></p>", rich_clean("a\n\nb http://x.sk"));
-    eq('a<br>b', rich_clean("a\nb", true));
+    eq("<p>a</p>\n<p>b <a href=\"http://x.sk\" target=\"_blank\" rel=\"noopener\">http://x.sk</a></p>", rich_from_form("a\n\nb http://x.sk"));
+    eq('a<br>b', rich_from_form("a\nb", true));
     eq('<p><a href="https://www.facebook.com/alfa" target="_blank" rel="noopener">FB</a></p>', rich_clean('<p><a href="www.facebook.com/alfa">FB</a></p>'));
     eq('<p><a href="tel:+421911818815">volaj</a></p>', rich_clean('<p><a href="tel:+421 911 818 815">volaj</a></p>'));
     eq('<p>zlý</p>', rich_clean('<p><a href="tel:javascript:alert(1)">zlý</a></p>'));
+});
+
+test('rich_clean je idempotentný (uložené dáta sa pri zobrazení čistia znova bez dvojitého escapovania)', function () {
+    foreach (['<p>Tom &amp; Jerry &lt;3 a 5 &gt; 3</p>', '<p><strong>Skúšky &amp; sústredenie</strong></p>', '<h2>A &amp; B</h2><p>x</p>'] as $in) {
+        foreach ([true, false] as $inline) {
+            $once = rich_clean($in, $inline);
+            eq($once, rich_clean($once, $inline), "$in / " . ($inline ? 'inline' : 'full'));
+        }
+    }
+    $p = post_create(['title' => 'T', 'date' => '2026-01-01', 'rich' => '1', 'excerpt' => '<p>Skúšky &amp; sústredenie</p>', 'body' => ''], null);
+    eq('Skúšky &amp; sústredenie', post_excerpt_html($p));
+    eq('Skúšky & sústredenie', post_excerpt_text($p));
+    $plain = post_create(['title' => 'T', 'date' => '2026-01-01', 'rich' => '1', 'excerpt' => 'Tom & Jerry', 'body' => "a\n\nb"], null);
+    eq('Tom &amp; Jerry', post_excerpt_html($plain), 'prostý text bez JS');
+});
+
+test('denné upratovanie: kôš a zálohy pred zmazaním po 30 dňoch aj bez ďalšieho mazania', function () {
+    ensure_storage();
+    $t = time();
+    $old = fn(string $f) => touch($f, $t - 31 * 86400);
+    file_put_contents($a = upload_trash_dir() . '/20260101-000000__posts__p_old111.jpg', 'x');
+    file_put_contents($b = data_dir() . '/backup/posts-pred-zmazanim-x.json', '{}');
+    mkdir(uploads_dir() . '/.trash');
+    file_put_contents($c = uploads_dir() . '/.trash/20260101-000000__posts__p_old222.jpg', 'x');
+    $old($a); $old($b); $old($c);
+    ok(maintenance_daily($t));
+    ok(!is_file($a) && !is_file($b), 'kôš aj záloha pred zmazaním');
+    ok(!is_file($c), 'starý kôš uploads/.trash');
+    ok(!maintenance_daily($t + 3600), 'najviac raz za deň');
 });
 
 test('rozpracovaný text: fotky mladšie ako platnosť prihlásenia sa neupracú', function () {
