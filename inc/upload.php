@@ -142,10 +142,11 @@ function upload_from_request(string $fullField, ?string $thumbField, string $sub
 
 const UPLOAD_TRASH_DAYS = 30;
 
-function upload_trash_dir(): string { return uploads_dir() . '/.trash'; }
+/** Kôš je v data/trash — rovnako chránený ako dáta (aj keď sa data/ presunie mimo webu do ../alfa-data). */
+function upload_trash_dir(): string { return data_dir() . '/trash'; }
 
 /**
- * „Zmazaná“ fotka ide do koša uploads/.trash (zvonku neprístupný) a natrvalo zmizne po UPLOAD_TRASH_DAYS dňoch.
+ * „Zmazaná“ fotka ide do koša data/trash (zvonku neprístupný) a natrvalo zmizne po UPLOAD_TRASH_DAYS dňoch.
  * Po obnove zálohy data/backup/*.json sa dá vrátiť (NASADENIE.md). Názov v koši: <čas>__<cesta s __ namiesto />.
  */
 function upload_trash_file(string $path, string $rel): void

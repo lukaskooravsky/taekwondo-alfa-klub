@@ -2,7 +2,7 @@
 declare(strict_types=1);
 require __DIR__ . '/inc/bootstrap.php';
 
-$page = ['title' => 'Pásy — systém stupňov ITF Taekwon-Do | ALFA Bratislava', 'description' => 'Systém pásov v ITF Taekwon-Do — od bieleho po čierny pás. Význam farieb a technické stupne (gup a dan).'];
+$page = ['title' => 'Pásy — systém stupňov ITF Taekwon-Do', 'description' => 'Systém pásov v ITF Taekwon-Do — od bieleho po čierny pás. Význam farieb a technické stupne (gup a dan).'];
 require __DIR__ . '/inc/layout-header.php';
 ?>
 

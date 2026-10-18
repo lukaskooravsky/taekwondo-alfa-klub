@@ -14,7 +14,7 @@ Web pre klub **ALFA Taekwondo Club Bratislava** (ITF Taekwon-Do): verejné strá
   layoutom `inc/layout-header.php` / `inc/layout-footer.php` (menu, kontakty v pätičke, SEO) — **meníš na jednom mieste**.
   Staré `*.html` adresy presmeruje `.htaccess` (301).
 - Dáta: `data/*.json` (aktuality, albumy, heslo, zálohy v `data/backup/`, relácie v `data/sessions/`), fotky `uploads/`
-  (`posts/`, `albums/a_*/`, `inline/` = fotky v texte, `.trash/` = kôš 30 dní). **Nie sú v gite.**
+  (`posts/`, `albums/a_*/`, `inline/` = fotky v texte); kôš zmazaných fotiek `data/trash/` (30 dní). **Nie sú v gite.**
 - Nastavenia na jednom mieste: `inc/site.php` — `SITE_URL`, `SITE_INDEX`, `SITE_DEMO`, `CLUB` (fakty o klube pre SEO/AI).
 - Editor textu: **Quill 2.0.3** (`assets/vendor/quill/`, self-hosted). Server čistí HTML v `inc/rich.php` (whitelist značiek,
   písiem, farieb, fotky len z `uploads/inline`, video len YouTube → youtube-nocookie). **Palety a písma v `inc/rich.php`

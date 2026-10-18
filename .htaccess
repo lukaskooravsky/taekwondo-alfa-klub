@@ -44,6 +44,5 @@ RewriteRule ^(admin(/|$)|install\.php) https://%{HTTP_HOST}%{REQUEST_URI} [R=301
 RewriteRule ^(data|inc|tests|tools|seed|docs|_zaloha)(/|$) - [F,L]
 RewriteRule ^install-token\.php$ - [F,L]
 RewriteRule ^uploads/.*\.(php[0-9]?|phtml|phar)$ - [F,L]
-RewriteRule ^uploads/\.trash(/|$) - [F,L]
 RewriteRule (^|/)\.(git|user\.ini|htaccess) - [F,L]
 RewriteRule \.md$ - [F,L]

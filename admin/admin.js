@@ -657,7 +657,7 @@
     const videoBox = document.createElement("div");
     videoBox.className = "a-rich-pop";
     videoBox.hidden = true;
-    videoBox.innerHTML = '<label>Odkaz na video z YouTube<input type="url" placeholder="https://www.youtube.com/watch?v=…"></label>' +
+    videoBox.innerHTML = '<label>Odkaz na video z YouTube<input type="text" inputmode="url" autocomplete="off" placeholder="https://www.youtube.com/watch?v=…"></label>' +
       '<div class="a-rich-pop-actions"><button type="button" class="a-btn a-btn-primary">Vložiť</button><button type="button" class="a-btn">Zrušiť</button></div>';
     if (!inline) toolbarEl.after(videoBox);
     const videoInput = videoBox.querySelector("input");
@@ -676,13 +676,15 @@
       quill.insertEmbed(at, "video", "https://www.youtube-nocookie.com/embed/" + id, "user");
       quill.setSelection(at + 1, 0, "user");
       videoBox.hidden = true;
+      videoInput.value = "";
       say("Video vložené.");
     }
     videoOk.addEventListener("click", insertVideo);
-    videoCancel.addEventListener("click", function () { videoBox.hidden = true; quill.focus(); });
+    function closeVideo() { videoBox.hidden = true; videoInput.value = ""; quill.focus(); }
+    videoCancel.addEventListener("click", closeVideo);
     videoInput.addEventListener("keydown", function (e) {
       if (e.key === "Enter") { e.preventDefault(); insertVideo(); }
-      if (e.key === "Escape") { videoBox.hidden = true; quill.focus(); }
+      if (e.key === "Escape") closeVideo();
     });
 
     /* náhľad — server vráti presne to, čo uloží; zobrazí sa so štýlmi webu */

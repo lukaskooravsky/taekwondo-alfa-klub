@@ -30,7 +30,7 @@ Overené na: Webglobe (dočasná ukážka `alfa.oravsky.sk`, PHP 8.4, nginx pred
 5. Prihlásenie: `https://<doména>/admin/`. Token sa sám zmaže.
 
 ## 5. Kontroly po nasadení
-- `https://<doména>/data/auth.json`, `/data/posts.json`, `/uploads/.trash/` → **403 alebo 404**.
+- `https://<doména>/data/auth.json`, `/data/posts.json` → **403 alebo 404** (v `data/` je aj kôš zmazaných fotiek `data/trash/`).
   Ak vráti **200** (nginx servíruje súbory priamo): vytvor priečinok `alfa-data` **o úroveň vyššie** ako koreň webu, presuň doň obsah `data/` a `data/` zmaž.
 - `/inc/auth.php`, `/install-token.php` → **403**; `http://…/admin/` → presmeruje na `https://`.
 - Domov, Aktuality, Galéria, Kontakt sa načítajú; `/robots.txt`, `/sitemap.xml`, `/llms.txt` vrátia text.
@@ -43,9 +43,9 @@ Overené na: Webglobe (dočasná ukážka `alfa.oravsky.sk`, PHP 8.4, nginx pred
 - **Certifikát pre subdoménu** — vo Webglobe: Hosting → Web → Subdomény (vytvoriť) a SSL certifikáty (vystaviť aj pre subdoménu); trvá pár minút.
 
 ## 7. Zálohy a obnova
-- Zálohuj `data/` (alebo `../alfa-data/`) a `uploads/` — raz za čas ich stiahni cez FTP. Hosting robí aj vlastné denné zálohy.
+- Zálohuj `data/` (alebo `../alfa-data/`) a `uploads/`. Zálohy pred zmazaním (`data/backup/*-pred-zmazanim-*.json`) sa držia 30 dní — raz za čas ich stiahni cez FTP. Hosting robí aj vlastné denné zálohy.
 - Pri každom uložení vzniká záloha v `data/backup/` (napr. `posts-20261012-181500-ab12cd.json`). Poškodený `data/posts.json` / `albums.json` nahraď najnovšou zálohou.
-- **Zmazané fotky** sa 30 dní držia v koši `uploads/.trash/` ako `<čas>__posts__p_abc.webp` — pri obnove zálohy ich presuň späť (`__` → `/`, napr. do `uploads/posts/p_abc.webp`).
+- **Zmazané fotky** sa 30 dní držia v koši `data/trash/` ako `<čas>__posts__p_abc.webp` — pri obnove zálohy ich presuň späť (`__` → `/`, napr. do `uploads/posts/p_abc.webp`).
 
 ## 8. Aktualizácia kódu
 Nahraj zmenené súbory cez FTP. **Nikdy neprepisuj ani nemaž** `data/`, `../alfa-data/` a `uploads/`.

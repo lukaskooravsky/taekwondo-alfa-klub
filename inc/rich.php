@@ -30,6 +30,8 @@ function rich_clean(string $html, bool $inline = false): string
 {
     $html = trim(str_replace(["\r\n", "\r"], "\n", $html));
     if ($html === '') return '';
+    // bez značiek = prostý text (textarea bez JS editora) — editor vždy posiela aspoň <p>
+    if (!preg_match('~<[a-z/!]~i', $html)) $html = rich_from_text($html, $inline);
     if (!class_exists(DOMDocument::class)) return '<p>' . nl2br(e(rich_text($html)), false) . '</p>';
 
     $doc = new DOMDocument();
@@ -109,8 +111,10 @@ function rich_attrs(DOMElement $el, string $tag): void
     $keep = [];
     if ($tag === 'a') {
         $href = trim($el->getAttribute('href'));
-        if (preg_match('~^(https?://|mailto:)~i', $href)) {
-            $keep = ['href' => $href, 'target' => '_blank', 'rel' => 'noopener'];
+        if (preg_match('~^www\.[a-z0-9-]+\.~i', $href)) $href = 'https://' . $href;   // „www.facebook.com/…“ bez https
+        if (preg_match('~^tel:~i', $href)) $href = preg_match('~^tel:\+?[0-9][0-9 /-]{4,20}$~i', $href) ? 'tel:' . preg_replace('~[^0-9+]~', '', substr($href, 4)) : '';
+        if (preg_match('~^(https?://|mailto:|tel:)~i', $href)) {
+            $keep = str_starts_with(strtolower($href), 'tel:') ? ['href' => $href] : ['href' => $href, 'target' => '_blank', 'rel' => 'noopener'];
         }
     }
     if (in_array($tag, ['span', 'p', 'h2', 'h3', 'li', 'blockquote', 'strong', 'em', 'u', 's', 'a'], true)) {
@@ -236,10 +240,13 @@ function rich_gc_images(array $candidates): void
     }
 }
 
-/** Fotky v uploads/inline staršie ako 2 dni, ktoré nepoužíva žiadna aktualita ani album (neuložený/zrušený text) → kôš. */
+/**
+ * Fotky v uploads/inline, ktoré nepoužíva žiadna aktualita ani album (neuložený/zrušený text) → kôš.
+ * Lehota = platnosť prihlásenia + 1 deň: rozpracovaný neuložený text v otvorenej karte prehliadača dlhšie neprežije.
+ */
 function rich_sweep_inline(?int $now = null): void
 {
-    $limit = ($now ?? time()) - 2 * 86400;
+    $limit = ($now ?? time()) - SESSION_LIFETIME - 86400;
     $old = [];
     foreach (glob(uploads_dir() . '/inline/i_*.*') ?: [] as $f) {
         $name = basename($f);

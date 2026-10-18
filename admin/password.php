@@ -10,6 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user = input_str($_POST['user'] ?? '');
     try {
         auth_change_credentials(input_str($_POST['old'] ?? ''), $user, input_str($_POST['new'] ?? ''), input_str($_POST['new2'] ?? ''));
+        auth_cookie(TRUST_COOKIE, auth_trust_value(), 365 * 24 * 3600); // nový podpis — zariadenie ostáva dôveryhodné
         flash('Prihlasovacie údaje zmenené.');
         redirect('index.php');
     } catch (ValidationException $e) {

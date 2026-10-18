@@ -34,10 +34,10 @@ function ensure_storage(): void
         data_dir() => "Require all denied\n",
         data_dir() . '/backup' => null,
         data_dir() . '/sessions' => null,
+        data_dir() . '/trash' => null,   // kôš zmazaných fotiek (chráni ho data/.htaccess)
         uploads_dir() => null, // PHP v uploads/ blokuje koreňový .htaccess (Options/RemoveHandler tu môžu dať chybu 500)
         uploads_dir() . '/posts' => null,
         uploads_dir() . '/inline' => null,
-        uploads_dir() . '/.trash' => "Require all denied\n", // kôš zmazaných fotiek
         uploads_dir() . '/albums' => null,
     ];
     foreach ($dirs as $dir => $htaccess) {

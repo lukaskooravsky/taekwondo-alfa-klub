@@ -109,10 +109,26 @@ test('fotka v texte: rozmery zo súboru, adresa vlastného webu → relatívna; 
         rich_clean('<p><img src="' . SITE_URL . '/uploads/inline/i_ffffff.png"></p>'));
     eq('', rich_clean('<p><img src="https://cudzi.sk/uploads/inline/i_ffffff.png"></p>'), 'cudzia doména nie');
     fixture_big_png(upload_path('inline/i_gggggg.png'), 10, 10);
-    touch(upload_path('inline/i_gggggg.png'), time() - 3 * 86400);
+    touch(upload_path('inline/i_gggggg.png'), time() - SESSION_LIFETIME - 2 * 86400);
     post_create(['title' => 'T', 'date' => '2026-01-01', 'excerpt' => 'u', 'rich' => '1', 'body' => '<p><img src="uploads/inline/i_ffffff.png"></p>'], null);
-    touch(upload_path('inline/i_ffffff.png'), time() - 3 * 86400);
+    touch(upload_path('inline/i_ffffff.png'), time() - SESSION_LIFETIME - 2 * 86400);
     rich_sweep_inline();
     ok(!is_file(upload_path('inline/i_gggggg.png')), 'neuložená stará fotka preč');
     ok(is_file(upload_path('inline/i_ffffff.png')), 'použitá ostane');
+});
+
+test('rich_clean: prostý text bez JS dostane odseky a odkazy; www a tel odkazy', function () {
+    eq("<p>a</p>\n<p>b <a href=\"http://x.sk\" target=\"_blank\" rel=\"noopener\">http://x.sk</a></p>", rich_clean("a\n\nb http://x.sk"));
+    eq('a<br>b', rich_clean("a\nb", true));
+    eq('<p><a href="https://www.facebook.com/alfa" target="_blank" rel="noopener">FB</a></p>', rich_clean('<p><a href="www.facebook.com/alfa">FB</a></p>'));
+    eq('<p><a href="tel:+421911818815">volaj</a></p>', rich_clean('<p><a href="tel:+421 911 818 815">volaj</a></p>'));
+    eq('<p>zlý</p>', rich_clean('<p><a href="tel:javascript:alert(1)">zlý</a></p>'));
+});
+
+test('rozpracovaný text: fotky mladšie ako platnosť prihlásenia sa neupracú', function () {
+    ensure_storage();
+    fixture_big_png(upload_path('inline/i_hhhhhh.png'), 10, 10);
+    touch(upload_path('inline/i_hhhhhh.png'), time() - 3 * 86400);
+    rich_sweep_inline();
+    ok(is_file(upload_path('inline/i_hhhhhh.png')), 'trojdňový koncept ostane');
 });
