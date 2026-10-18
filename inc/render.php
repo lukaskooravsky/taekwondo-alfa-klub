@@ -42,6 +42,23 @@ function render_post_card(array $p): string
         . '</div></article>';
 }
 
+/** Detail aktuality (aktualita.php aj náhľad v admine). */
+function render_post_article(array $p): string
+{
+    $img = post_image($p);
+    return '<section class="page-hero"><div class="container">'
+        . '<div class="breadcrumb"><a href="index.php">Domov</a> / <a href="aktuality.php">Aktuality</a></div>'
+        . '<span class="eyebrow">' . e(format_date_sk($p['date'])) . '</span>'
+        . '<h1 class="h1-post">' . e($p['title']) . '</h1>'
+        . '</div></section>'
+        . '<section><div class="container article">'
+        . (!empty($p['image']) ? '<figure class="article-img"><img src="' . e($img['full']) . '" alt="' . e($p['title']) . '"></figure>' : '')
+        . '<p class="article-lead">' . post_excerpt_html($p) . '</p>'
+        . '<div class="prose">' . post_body_html($p) . '</div>'
+        . '<p style="margin-top:2.4rem;"><a class="btn btn-ghost" href="aktuality.php">← Všetky aktuality</a></p>'
+        . '</div></section>';
+}
+
 function render_gallery_figure(array $photo, string $alt): string
 {
     return '<figure class="reveal"><img src="' . e(upload_url($photo['thumb'])) . '" data-full="' . e(upload_url($photo['full']))

@@ -20,8 +20,8 @@
   --maxw: 1200px;
   --gutter: clamp(1.1rem, 4vw, 3rem);
 
-  --font-display: "Saira Condensed", "Oswald", sans-serif;
-  --font-body: "Barlow", system-ui, sans-serif;
+  --font-display: "Twemoji Country Flags", "Saira Condensed", "Oswald", sans-serif;
+  --font-body: "Twemoji Country Flags", "Barlow", system-ui, sans-serif;
   --font-kr: "Noto Sans KR", sans-serif;
 
   --cut: polygon(0 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%);
@@ -740,9 +740,20 @@ section { padding-block: clamp(4rem, 9vw, 7.5rem); position: relative; }
 .rich strong { color: var(--bone); }
 .album-desc { max-width: 760px; margin: 0.4rem 0 1rem; }
 .ql-font-saira { font-family: var(--font-display); }
-.ql-font-georgia { font-family: Georgia, "Times New Roman", serif; }
-.ql-font-arial { font-family: Arial, Helvetica, sans-serif; }
-.ql-font-courier { font-family: "Courier New", Courier, monospace; }
+.ql-font-georgia { font-family: "Twemoji Country Flags", Georgia, "Times New Roman", serif; }
+.ql-font-arial { font-family: "Twemoji Country Flags", Arial, Helvetica, sans-serif; }
+.ql-font-courier { font-family: "Twemoji Country Flags", "Courier New", Courier, monospace; }
 .ql-size-small { font-size: 0.8em; }
 .ql-size-large { font-size: 1.4em; }
 .ql-size-huge { font-size: 2em; line-height: 1.2; }
+.rich blockquote { border-left: 3px solid var(--gold); background: var(--panel); padding: 0.9rem 1.2rem; margin: 0 0 1.1rem; color: var(--bone); }
+.rich blockquote p:last-child { margin-bottom: 0; }
+.rich hr { border: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); margin: 2rem 0; }
+.rich img { display: block; max-width: 100%; height: auto; border: 1px solid var(--line); margin: 0.4rem 0; }
+.rich .ql-video { display: block; width: 100%; aspect-ratio: 16 / 9; height: auto; border: 1px solid var(--line); margin: 0 0 1.1rem; }
+.rich .ql-align-center { text-align: center; }
+.rich .ql-align-center img { margin-inline: auto; }
+.rich .ql-align-right { text-align: right; }
+.rich .ql-align-right img { margin-left: auto; }
+.rich .ql-align-justify { text-align: justify; }
+.rich [style*="background-color"] { padding: 0 0.15em; border-radius: 2px; }

@@ -84,6 +84,7 @@ admin_header($post ? 'Upraviť aktualitu' : 'Nová aktualita');
     <textarea name="body" rows="12" data-rich="full" aria-label="Celý text"><?= e($values['body']) ?></textarea></div>
   <div class="a-actions">
     <button class="a-btn a-btn-primary">Uložiť</button>
+    <button type="button" class="a-btn" data-post-preview hidden>Náhľad aktuality</button>
     <a class="a-btn" href="posts.php">Zrušiť</a>
   </div>
 </form>

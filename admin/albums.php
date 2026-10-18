@@ -29,6 +29,14 @@ try {
     $loadError = 'Dáta sa nepodarilo načítať — obnov zálohu z data/backup/.';
 }
 
+$f = admin_filter_params();
+$items = array_map(fn(array $a): array => [
+    'fold' => text_fold($a['title'] . ' ' . rich_text($a['description'] ?? '')),
+    'year' => substr($a['date'], 0, 4), 'flag' => $a['photos'] ? '1' : '0', 'date' => $a['date'], 'title' => $a['title'], 'row' => $a,
+], $albums);
+$shown = admin_filter($items, $f['q'], $f['year'], $f['flag'], $f['sort']);
+$years = array_values(array_unique(array_column($items, 'year')));
+
 admin_header('Galéria');
 ?>
 <?php if ($loadError): ?><div class="flash flash-error"><?= e($loadError) ?></div><?php endif; ?>
@@ -43,9 +51,14 @@ admin_header('Galéria');
   </form>
 </details>
 <?php if (!$albums && !$loadError): ?><p class="a-empty">Zatiaľ žiadne albumy.</p><?php endif; ?>
-<ul class="a-list">
-  <?php foreach ($albums as $a): $cover = album_cover($a); ?>
-  <li class="a-item">
+<?php if ($albums): ?>
+<?= admin_filter_bar($f, $years, ['Fotky', 's fotkami', 'prázdne (na webe sa nezobrazia)'], count($shown), count($albums), 'Hľadať v názve a popise…') ?>
+<p class="a-empty" data-filter-empty<?= $shown ? ' hidden' : '' ?>>Nič sa nenašlo. <a href="?">Zrušiť filter</a></p>
+<?php endif; ?>
+<ul class="a-list" data-filter-list>
+  <?php $shownIds = array_column(array_column($shown, 'row'), 'id');
+  foreach (admin_filter($items, '', '', '', $f['sort']) as $it): $a = $it['row']; $cover = album_cover($a); ?>
+  <li class="a-item" data-fold="<?= e($it['fold']) ?>" data-year="<?= e($it['year']) ?>" data-flag="<?= e($it['flag']) ?>" data-date="<?= e($a['date']) ?>" data-title="<?= e(text_fold($a['title'])) ?>"<?= in_array($a['id'], $shownIds, true) ? '' : ' hidden' ?>>
     <img src="../<?= e($cover ? upload_url($cover['thumb']) : PLACEHOLDER_IMAGE) ?>" alt="">
     <div class="a-item-txt"><b><?= e($a['title']) ?></b><span><?= e(format_date_sk($a['date'])) ?> · <?= e(sk_plural(count($a['photos']), 'fotka', 'fotky', 'fotiek')) ?></span></div>
     <div class="a-item-act"><a class="a-btn" href="album.php?id=<?= e(rawurlencode($a['id'])) ?>">Otvoriť</a></div>

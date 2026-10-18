@@ -214,3 +214,45 @@ test('AlfaSessionHandler: zápis, čítanie, validácia, zmazanie, upratovanie',
     eq(1, $h->gc(60), 'krátky limit hostingu sa ignoruje');
     ok(!is_file($old) && is_file($fresh));
 });
+
+test('dôveryhodné zariadenie obíde globálnu blokáciu, nie blokáciu vlastnej IP', function () {
+    with_password('tajneheslo1');
+    $t = 2_000_000;
+    for ($i = 0; $i < LOGIN_GLOBAL_MAX; $i++) auth_attempt('trener@alfa.sk', 'zle', "a$i", $t);
+    eq('locked', auth_attempt('trener@alfa.sk', 'tajneheslo1', 'trener', $t + 5), 'cudzie zariadenie je zablokované');
+    $cookie = [TRUST_COOKIE => auth_trust_value()];
+    ok(auth_is_trusted($cookie));
+    ok(!auth_is_trusted([TRUST_COOKIE => 'falosny']));
+    ok(!auth_is_trusted([]));
+    eq('ok', auth_attempt('trener@alfa.sk', 'tajneheslo1', 'trener', $t + 6, true), 'tréner sa prihlási');
+    for ($i = 0; $i < LOGIN_MAX_FAILS - 1; $i++) auth_attempt('trener@alfa.sk', 'zle', 'ip-x', $t + 7, true);
+    eq('locked', auth_attempt('trener@alfa.sk', 'zle', 'ip-x', $t + 8, true), 'vlastná IP sa po 5 chybách zablokuje aj tak');
+    with_password('ineHeslo2!');
+    ok(!auth_is_trusted($cookie), 'zmena hesla zneplatní dôveru');
+});
+
+test('CSRF prihlásenia cez cookie bez relácie', function () {
+    $t = str_repeat('ab', 32);
+    ok(login_csrf_check($t, [LOGIN_CSRF_COOKIE => $t]));
+    ok(!login_csrf_check($t, [LOGIN_CSRF_COOKIE => str_repeat('cd', 32)]));
+    ok(!login_csrf_check($t, []));
+    ok(!login_csrf_check('', [LOGIN_CSRF_COOKIE => '']));
+    ok(!login_csrf_check(['x'], [LOGIN_CSRF_COOKIE => $t]));
+});
+
+test('relácia: anonymná návšteva nevytvorí súbor; gc maže staré anonymné', function () {
+    ensure_storage();
+    $dir = data_dir() . '/sessions';
+    $h = new AlfaSessionHandler($dir);
+    $id = str_repeat('z', 32);
+    eq('', $h->read($id));
+    ok($h->write($id, ''));
+    $h->close();
+    ok(!is_file("$dir/sess_$id"), 'prázdna relácia nezaloží súbor');
+    file_put_contents("$dir/sess_" . str_repeat('m', 32), 'csrf|s:1:"x";');
+    file_put_contents("$dir/sess_" . str_repeat('n', 32), 'admin|b:1;pw|s:1:"v";');
+    touch("$dir/sess_" . str_repeat('m', 32), time() - SESSION_ANON_LIFETIME - 5);
+    touch("$dir/sess_" . str_repeat('n', 32), time() - SESSION_ANON_LIFETIME - 5);
+    eq(1, $h->gc(0));
+    ok(is_file("$dir/sess_" . str_repeat('n', 32)), 'prihlásená relácia ostane');
+});

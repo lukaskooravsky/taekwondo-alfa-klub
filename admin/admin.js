@@ -213,101 +213,505 @@
     }
   });
 
+
+
+  /* ---------- vyhľadávanie a filter v zoznamoch (aktuality, albumy) — hneď pri písaní ---------- */
+  const fold = function (s) { return String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim(); };
+  document.querySelectorAll("form[data-filter]").forEach(function (form) {
+    const list = document.querySelector("[data-filter-list]");
+    if (!list) return;
+    const items = Array.from(list.children);
+    const count = form.querySelector("[data-filter-count]");
+    const empty = document.querySelector("[data-filter-empty]");
+    const reset = form.querySelector(".a-filter-reset");
+    const submit = form.querySelector("[data-filter-submit]");
+    if (submit) submit.hidden = true; // filtruje sa hneď
+    let timer = null;
+    function apply() {
+      const q = form.elements.q.value, year = form.elements.rok.value, flag = form.elements.stav.value, sort = form.elements.zoradit.value;
+      const words = fold(q).split(" ").filter(Boolean);
+      let shown = 0;
+      items.forEach(function (li) {
+        const ok = words.every(function (w) { return li.dataset.fold.indexOf(w) >= 0; }) &&
+          (!year || li.dataset.year === year) && (!flag || li.dataset.flag === flag);
+        li.hidden = !ok;
+        if (ok) shown++;
+      });
+      const sorted = items.slice().sort(function (a, b) {
+        if (sort === "old") return a.dataset.date < b.dataset.date ? -1 : a.dataset.date > b.dataset.date ? 1 : 0;
+        if (sort === "az") return a.dataset.title.localeCompare(b.dataset.title, "sk");
+        return a.dataset.date < b.dataset.date ? 1 : a.dataset.date > b.dataset.date ? -1 : 0;
+      });
+      sorted.forEach(function (li) { list.appendChild(li); });
+      count.textContent = "Zobrazené " + shown + " z " + items.length;
+      if (empty) empty.hidden = shown > 0;
+      const active = q.trim() !== "" || year || flag || sort !== "new";
+      if (reset) reset.hidden = !active;
+      // filter ostane v adrese (späť, obnovenie stránky, záložka)
+      const params = new URLSearchParams();
+      if (q.trim()) params.set("q", q.trim());
+      if (year) params.set("rok", year);
+      if (flag) params.set("stav", flag);
+      if (sort !== "new") params.set("zoradit", sort);
+      const qs = params.toString();
+      history.replaceState(null, "", location.pathname + (qs ? "?" + qs : ""));
+    }
+    form.addEventListener("input", function (e) {
+      clearTimeout(timer);
+      timer = setTimeout(apply, e.target.name === "q" ? 120 : 0);
+    });
+    form.addEventListener("submit", function (e) { e.preventDefault(); apply(); });
+    if (reset) reset.addEventListener("click", function (e) {
+      e.preventDefault();
+      form.reset();
+      form.elements.q.value = "";
+      ["rok", "stav"].forEach(function (n) { form.elements[n].value = ""; });
+      form.elements.zoradit.value = "new";
+      apply();
+      form.elements.q.focus();
+    });
+    if (empty) {
+      const emptyLink = empty.querySelector("a");
+      if (emptyLink && reset) emptyLink.addEventListener("click", function (e) { e.preventDefault(); reset.click(); });
+    }
+    // "/" skočí do vyhľadávania (ako na GitHube)
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "/" && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName) && !document.activeElement.isContentEditable) {
+        e.preventDefault();
+        form.elements.q.focus();
+      }
+    });
+  });
+
+  /* ---------- pretiahnutie fotiek myšou (album, titulná fotka aktuality) ---------- */
+  function dropZone(el, onFiles) {
+    let depth = 0;
+    el.addEventListener("dragenter", function (e) {
+      if (!e.dataTransfer || Array.from(e.dataTransfer.types).indexOf("Files") < 0) return;
+      e.preventDefault();
+      depth++;
+      el.classList.add("is-drag");
+    });
+    el.addEventListener("dragover", function (e) {
+      if (!e.dataTransfer || Array.from(e.dataTransfer.types).indexOf("Files") < 0) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "copy";
+    });
+    el.addEventListener("dragleave", function () {
+      if (--depth <= 0) { depth = 0; el.classList.remove("is-drag"); }
+    });
+    el.addEventListener("drop", function (e) {
+      depth = 0;
+      el.classList.remove("is-drag");
+      if (!e.dataTransfer || !e.dataTransfer.files.length) return;
+      e.preventDefault();
+      const files = Array.from(e.dataTransfer.files).filter(function (f) { return /^image\//.test(f.type); });
+      if (files.length) onFiles(files);
+    });
+  }
+  document.querySelectorAll("[data-album-upload]").forEach(function (box) {
+    const input = box.querySelector("input[type=file]");
+    dropZone(box, function (files) {
+      if (!canSetFiles) return;
+      setFiles(input, files);
+      input.dispatchEvent(new Event("change"));
+    });
+  });
+  document.querySelectorAll("input[type=file][data-resize]").forEach(function (input) {
+    const zone = input.closest(".a-field");
+    if (!zone || !canSetFiles) return;
+    zone.classList.add("a-drop");
+    dropZone(zone, function (files) {
+      setFiles(input, [files[0]]);
+      input.dispatchEvent(new Event("change"));
+    });
+  });
+
   /* ---------- formátovací editor (Quill) pre textarea[data-rich="full|inline"] ---------- */
-  // Povolené písma, veľkosti a farby musia sedieť s RICH_* v inc/rich.php (server ostatné zahodí).
-  const RICH_COLORS = ["#f3efe6", "#c3bdb1", "#948e83", "#e6bd6a", "#c8a04e", "#ef5350", "#ff9f43", "#66bb6a", "#4fc3f7", "#ba68c8"];
-  const EMOJI = ("🥋 🥇 🥈 🥉 🏆 🎖️ 🏅 💪 🔥 ⭐ ✨ 👏 🙌 👍 👊 🤜 🦵 🎉 🎊 🥳 📣 📢 📅 🗓️ ⏰ 📍 🏫 🏟️ ✅ ❗ ❓ " +
-    "ℹ️ ⚠️ ➡️ 👉 📸 🎥 📝 📞 ✉️ 🔗 😀 😃 😄 😁 😊 🙂 😉 😍 🤩 😎 🤗 🤔 😮 😢 😭 😅 🙏 ❤️ 🧡 💛 💚 💙 🤍 🖤 " +
-    "🇸🇰 🇰🇷 🌍 ☀️ 🌧️ ❄️ 🎂 🍕 🚌 🚗 ✈️").split(" ");
+  // Povolené písma, veľkosti, farby a médiá musia sedieť s RICH_* v inc/rich.php (server ostatné zahodí).
+  const RICH_COLORS = ["#ffffff", "#f3efe6", "#c3bdb1", "#948e83", "#e6bd6a", "#c8a04e", "#ffd54f", "#ff9f43",
+    "#ff8a65", "#ef5350", "#f48fb1", "#ba68c8", "#4fc3f7", "#80cbc4", "#66bb6a", "#aed581"];
+  const RICH_BACKGROUNDS = ["#5c4a1f", "#3a2e14", "#4a1f1f", "#1f3d2a", "#1a3247", "#3b2449", "#2a2a31", "#4d3b10"];
+  // emoji po kategóriách [ikona záložky, názov, zoznam]
+  const EMOJI = [
+    ["🥋", "Šport", "🥋 🥊 🤸 🤼 🏋️ 🧘 🏃 🤾 ⛹️ 🚴 🏊 🧗 🤺 🥅 ⚽ 🏀 🏐 🎾 🏓 🏸 ⛸️ 🎿 🏂 🛹 🥏 🎯 ⏱️ 🧭 🦵 🦶 💪 🫀 🧠 🥤 🍌"],
+    ["🏆", "Úspech", "🏆 🥇 🥈 🥉 🏅 🎖️ 🎗️ 🏵️ 👑 💯 🔝 ✅ ☑️ ✔️ 🎯 📈 🚀 ⭐ 🌟 ✨ 💫 🔥 ⚡ 💥 🎉 🎊 🥳 🎈 🎁 🍾 🥂"],
+    ["👏", "Ľudia a gestá", "👏 🙌 👍 👎 👊 🤜 🤛 ✊ ✌️ 🤞 🤟 🤘 👌 🤙 👋 🙏 🤝 💁 🙋 🙆 🙅 🤷 👨‍👩‍👧‍👦 👪 🧒 👦 👧 🧑 👨 👩 🧑‍🏫 👨‍🏫 👩‍🏫 🧑‍🎓 🥷 🧑‍⚕️ 👮"],
+    ["😀", "Tváre", "😀 😃 😄 😁 😆 😅 😂 🤣 😊 🙂 😉 😍 🥰 😘 🤩 😎 🤗 🤔 🤨 😐 😮 😯 😲 🥺 😢 😭 😤 😡 🤯 😳 🥵 🥶 😴 🤒 🤕 😇 🤠 🥳 😬 🙃 😜 🤪 🫡 🫶"],
+    ["❤️", "Srdcia", "❤️ 🧡 💛 💚 💙 💜 🤎 🖤 🤍 ❤️‍🔥 💕 💞 💓 💗 💖 💘 💝 💌 💯"],
+    ["📅", "Čas a miesto", "📅 🗓️ 📆 ⏰ ⏱️ ⏳ ⌛ 🕐 🕒 🕔 🕕 🕖 🕗 📍 📌 🗺️ 🧭 🏫 🏟️ 🏠 🏢 🏛️ 🏰 ⛺ 🏖️ 🏔️ 🌍 🌎 🌏"],
+    ["📣", "Oznamy", "📣 📢 🔔 🔕 📯 📝 ✏️ 🖊️ 📋 📎 📞 📱 ✉️ 📧 📨 💬 🗨️ 💭 ℹ️ ⚠️ ❗ ❕ ❓ ❔ ‼️ ⁉️ 🆕 🆓 🆗 🔜 🔗 📸 📷 🎥 📹 🎬 🎤 🎵 🎶 📰 📖 📚 🎓 💡 💰 💶 🎟️ 🎫"],
+    ["☀️", "Príroda a počasie", "☀️ 🌤️ ⛅ 🌥️ 🌦️ 🌧️ ⛈️ 🌩️ ❄️ ☃️ ⛄ 🌨️ 💨 🌪️ 🌈 ☔ 🌊 🔥 🌙 ⭐ 🌸 🌼 🌻 🌷 🍀 🌿 🌲 🍂 🍁 🐉 🐯 🦅 🐻 🐺 🦁"],
+    ["🍕", "Jedlo", "🍕 🍔 🌭 🍟 🥪 🌮 🍝 🍜 🍣 🥗 🍎 🍌 🍉 🍇 🍓 🍒 🥝 🥑 🥕 🥨 🍞 🧀 🥚 🍰 🎂 🧁 🍩 🍪 🍫 🍬 🍭 🍦 ☕ 🍵 🧃 🥤 💧"],
+    ["🚌", "Doprava", "🚌 🚍 🚎 🚐 🚗 🚕 🚙 🚓 🚑 🚒 🚲 🛴 🚂 🚆 🚇 🚊 🚉 ✈️ 🛫 🛬 🚢 ⛴️ 🚀 🛣️ 🚦 🅿️ ⛽"],
+    ["➡️", "Symboly", "➡️ ⬅️ ⬆️ ⬇️ ↗️ ↘️ ↔️ 🔄 🔁 ▶️ ⏸️ ⏹️ ⏺️ 🔴 🟠 🟡 🟢 🔵 🟣 ⚫ ⚪ 🟥 🟧 🟨 🟩 🟦 🟪 ⬛ ⬜ 🔶 🔷 🔸 🔹 ✳️ ❇️ ➕ ➖ ✖️ ➗ 🔢 #️⃣ 1️⃣ 2️⃣ 3️⃣ 4️⃣ 5️⃣ 🔟 ☯️ ☮️ ⚖️ ♻️ ⛔ 🚫 🔞"],
+    ["🇸🇰", "Vlajky", "🇸🇰 🇨🇿 🇰🇷 🇰🇵 🇪🇺 🇦🇹 🇭🇺 🇵🇱 🇩🇪 🇬🇧 🇮🇪 🇫🇷 🇮🇹 🇪🇸 🇵🇹 🇳🇱 🇧🇪 🇨🇭 🇸🇮 🇭🇷 🇷🇸 🇧🇬 🇷🇴 🇬🇷 🇹🇷 🇺🇦 🇸🇪 🇳🇴 🇫🇮 🇩🇰 🇺🇸 🇨🇦 🇯🇵 🇨🇳 🏳️ 🏴 🏁 🚩 🏳️‍🌈"]
+  ].map(function (c) { return { icon: c[0], name: c[1], list: c[2].split(" ") }; });
+  const ICONS = {
+    undo: '<svg viewBox="0 0 18 18"><path class="ql-stroke" d="M6 4 3 7l3 3"/><path class="ql-stroke" d="M3 7h7.5a4 4 0 0 1 0 8H8"/></svg>',
+    redo: '<svg viewBox="0 0 18 18"><path class="ql-stroke" d="m12 4 3 3-3 3"/><path class="ql-stroke" d="M15 7H7.5a4 4 0 0 0 0 8H10"/></svg>',
+    divider: '<svg viewBox="0 0 18 18"><line class="ql-stroke" x1="2" x2="16" y1="9" y2="9"/><line class="ql-stroke ql-thin" x1="5" x2="13" y1="4" y2="4"/><line class="ql-stroke ql-thin" x1="5" x2="13" y1="14" y2="14"/></svg>',
+    emoji: '<svg viewBox="0 0 18 18"><circle class="ql-stroke" cx="9" cy="9" r="7"/><path class="ql-stroke" d="M6 10.5a3.5 3.5 0 0 0 6 0"/><circle class="ql-fill" cx="6.6" cy="7" r="1"/><circle class="ql-fill" cx="11.4" cy="7" r="1"/></svg>',
+    preview: '<svg viewBox="0 0 18 18"><path class="ql-stroke" d="M1.5 9S4.5 3.5 9 3.5 16.5 9 16.5 9 13.5 14.5 9 14.5 1.5 9 1.5 9Z"/><circle class="ql-stroke" cx="9" cy="9" r="2.5"/></svg>',
+    fullscreen: '<svg viewBox="0 0 18 18"><path class="ql-stroke" d="M2 6V2h4M12 2h4v4M16 12v4h-4M6 16H2v-4"/></svg>'
+  };
+  const TITLES = { undo: "Späť (Ctrl+Z)", redo: "Znova (Ctrl+Y)", bold: "Tučné (Ctrl+B)", italic: "Kurzíva (Ctrl+I)",
+    underline: "Podčiarknuté (Ctrl+U)", strike: "Prečiarknuté", link: "Odkaz", image: "Vložiť fotky (dajú sa aj pretiahnuť myšou alebo vložiť Ctrl+V)",
+    video: "Vložiť video z YouTube", divider: "Oddeľovacia čiara", emoji: "Emoji", blockquote: "Citát / zvýraznený rámček",
+    clean: "Zrušiť formátovanie", preview: "Náhľad, ako to bude vyzerať na webe", fullscreen: "Celá obrazovka (Esc zavrie)",
+    "list-ordered": "Číslovaný zoznam", "list-bullet": "Odrážky" };
+  const API = { image: "api/inline-image.php", preview: "api/preview.php" };
+
+  /** Okno s náhľadom stránky so štýlmi webu (base = koreň webu, aby sedeli cesty k CSS, fontom aj fotkám). */
+  function previewModal(content, onClose) {
+    const dlg = document.createElement("div");
+    dlg.className = "a-preview-modal";
+    dlg.setAttribute("role", "dialog");
+    dlg.setAttribute("aria-modal", "true");
+    dlg.setAttribute("aria-label", "Náhľad");
+    dlg.innerHTML = '<div class="a-preview-bar"><strong>Náhľad — takto to uvidia návštevníci</strong>' +
+      '<button type="button" class="a-btn">Zavrieť (Esc)</button></div><iframe title="Náhľad"></iframe>';
+    dlg.querySelector("iframe").srcdoc = '<!DOCTYPE html><html lang="sk"><head><meta charset="utf-8">' +
+      '<base href="' + new URL("../", location.href).href + '" target="_blank">' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="css/fonts.css">' +
+      '<link rel="stylesheet" href="css/style.css"><style>.reveal{opacity:1!important;transform:none!important}' +
+      '.a-pv-label{font:600 .8rem/1 var(--font-display);letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin:2rem 0 1rem}' +
+      '</style></head><body>' + content + "</body></html>";
+    function close() {
+      dlg.remove();
+      document.documentElement.classList.remove("a-noscroll");
+      document.removeEventListener("keydown", onKey, true);
+      if (onClose) onClose();
+    }
+    function onKey(e) { if (e.key === "Escape") { e.stopPropagation(); close(); } }
+    dlg.querySelector("button").addEventListener("click", close);
+    document.addEventListener("keydown", onKey, true);
+    document.documentElement.classList.add("a-noscroll");
+    document.body.appendChild(dlg);
+    dlg.querySelector("button").focus();
+  }
+
+  async function previewFetch(fields) {
+    const fd = new FormData();
+    Object.keys(fields).forEach(function (k) { fd.append(k, fields[k]); });
+    const res = await fetch(API.preview, { method: "POST", body: fd, credentials: "same-origin" });
+    let data = null;
+    try { data = await res.json(); } catch (e) { data = null; }
+    if (!res.ok || !data || !data.ok) throw new Error((data && data.error) || "Náhľad zlyhal.");
+    return data;
+  }
+
+  function formError(form, msg) {
+    let box = form.querySelector(".a-preview-err");
+    if (!box) {
+      box = document.createElement("div");
+      box.className = "flash flash-error a-preview-err";
+      box.setAttribute("role", "alert");
+      form.prepend(box);
+    }
+    box.textContent = msg;
+  }
+
+  /* náhľad celej aktuality (karta v zozname + detail) pred uložením */
+  document.querySelectorAll("[data-post-preview]").forEach(function (btn) {
+    const form = btn.form;
+    btn.hidden = false;
+    btn.addEventListener("click", async function () {
+      const val = function (n) { const el = form.elements[n]; return el && el.value !== undefined ? el.value : ""; };
+      btn.disabled = true;
+      let data;
+      try {
+        data = await previewFetch({ csrf: val("csrf"), mode: "post", title: val("title"), date: val("date"),
+          excerpt: val("excerpt"), body: val("body") });
+      } catch (e) {
+        formError(form, e.message);
+        return;
+      } finally {
+        btn.disabled = false;
+      }
+      // fotka: novo vybraná (náhľad z prehliadača), inak súčasná, ak sa nemaže
+      const fresh = form.querySelector("img[data-resize-preview]:not([hidden])");
+      const current = form.querySelector("img.a-preview:not([data-resize-preview])");
+      const removing = form.elements.remove_image && form.elements.remove_image.checked;
+      const src = fresh ? fresh.src : (current && !removing ? current.src : "");
+      const wrap = document.createElement("div");
+      wrap.innerHTML = '<div class="container"><p class="a-pv-label">V zozname aktualít</p><div class="posts" style="max-width:420px">' +
+        data.card + '</div><p class="a-pv-label">Celý článok</p></div>' + data.article;
+      if (src) {
+        wrap.querySelectorAll(".post-img").forEach(function (i) { i.setAttribute("src", src); });
+        const art = wrap.querySelector(".article");
+        if (art && !art.querySelector(".article-img")) {
+          const fig = document.createElement("figure");
+          fig.className = "article-img";
+          const img = document.createElement("img");
+          img.alt = "";
+          img.setAttribute("src", src);
+          fig.appendChild(img);
+          art.prepend(fig);
+        }
+      }
+      previewModal(wrap.innerHTML, function () { btn.focus(); });
+    });
+  });
+
   const richBoxes = document.querySelectorAll("textarea[data-rich]");
   if (richBoxes.length && window.Quill) {
     const Font = Quill.import("formats/font");
     Font.whitelist = ["saira", "georgia", "arial", "courier"];
     Quill.register(Font, true);
+    const BlockEmbed = Quill.import("blots/block/embed");
+    class Divider extends BlockEmbed {}
+    Divider.blotName = "divider";
+    Divider.tagName = "hr";
+    Quill.register(Divider, true);
+    const icons = Quill.import("ui/icons");
+    Object.keys(ICONS).forEach(function (k) { icons[k] = ICONS[k]; });
   }
+
+  // fotky sa ukladajú ako uploads/…, v admine (/admin/) sa musia zobraziť cez ../uploads/…
+  const toEditor = function (html) { return html.replace(/(<img[^>]+src=")uploads\//g, "$1../uploads/"); };
+  const toStored = function (html) { return html.replace(/(<img[^>]+src=")(?:\.\.\/)+uploads\//g, "$1uploads/"); };
+  function youtubeId(url) {
+    const m = String(url).trim().match(/^https?:\/\/(?:www\.|m\.)?(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:[^#]*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})(?:[?&#/].*)?$/);
+    return m ? m[1] : null;
+  }
+
   richBoxes.forEach(function (ta) {
     if (!window.Quill) return; // bez editora ostane obyčajná textarea (server ju berie ako prostý text)
     const inline = ta.dataset.rich === "inline";
     const max = parseInt(ta.dataset.max || "0", 10);
+    const form = ta.form;
+    const csrfIn = form && form.querySelector("input[name=csrf]");
     const fontSize = [{ font: [false, "saira", "georgia", "arial", "courier"] }, { size: ["small", false, "large", "huge"] }];
+    const colors = [{ color: RICH_COLORS }, { background: RICH_BACKGROUNDS }];
     const toolbar = inline
-      ? [fontSize, ["bold", "italic", "underline"], [{ color: RICH_COLORS }], ["link", "emoji", "clean"]]
-      : [fontSize, ["bold", "italic", "underline", "strike"], [{ color: RICH_COLORS }],
-        [{ header: 2 }, { header: 3 }, { list: "ordered" }, { list: "bullet" }], ["link", "emoji", "clean"]];
-    const formats = ["font", "size", "bold", "italic", "underline", "color", "link"]
-      .concat(inline ? [] : ["strike", "header", "list"]);
+      ? [["undo", "redo"], fontSize, ["bold", "italic", "underline"], colors, ["link", "emoji", "clean"]]
+      : [["undo", "redo"], [{ header: [false, 2, 3] }], fontSize, ["bold", "italic", "underline", "strike"], colors,
+        [{ align: [] }, { list: "ordered" }, { list: "bullet" }, "blockquote"],
+        ["link", "image", "video", "divider", "emoji"], ["clean"], ["preview", "fullscreen"]];
+    const formats = ["font", "size", "bold", "italic", "underline", "color", "background", "link"]
+      .concat(inline ? [] : ["strike", "header", "align", "list", "blockquote", "image", "video", "divider"]);
 
     const box = document.createElement("div");
     box.className = "a-rich" + (inline ? " a-rich-inline" : "");
     const host = document.createElement("div");
     box.appendChild(host);
+    const statusBar = document.createElement("div");
+    statusBar.className = "a-rich-status";
+    const statusMsg = document.createElement("span");
+    statusMsg.className = "a-rich-msg";
+    statusMsg.setAttribute("role", "status");
+    const statusCount = document.createElement("span");
+    statusBar.appendChild(statusMsg);
+    statusBar.appendChild(statusCount);
+    box.appendChild(statusBar);
     ta.hidden = true;
     ta.parentNode.insertBefore(box, ta.nextSibling);
 
-    const quill = new Quill(host, {
+    let msgTimer = null;
+    function say(text, isErr) {
+      statusMsg.textContent = text;
+      statusMsg.classList.toggle("a-err", !!isErr);
+      clearTimeout(msgTimer);
+      if (!isErr && text) msgTimer = setTimeout(function () { statusMsg.textContent = ""; }, 4000);
+    }
+
+    let quill;
+    const handlers = {
+      undo: function () { quill.history.undo(); },
+      redo: function () { quill.history.redo(); },
+      emoji: function () { picker.hidden = !picker.hidden; },
+      divider: function () {
+        const r = quill.getSelection(true);
+        quill.insertEmbed(r.index, "divider", true, "user");
+        quill.setSelection(r.index + 1, 0, "user");
+      },
+      image: function () {
+        const fi = document.createElement("input");
+        fi.type = "file";
+        fi.accept = "image/*";
+        fi.multiple = true;
+        fi.addEventListener("change", function () { uploadImages(quill.getSelection(true), Array.from(fi.files)); });
+        fi.click();
+      },
+      video: function () { openVideo(); },
+      preview: function () { openPreview(); },
+      fullscreen: function () { setFull(!box.classList.contains("is-full")); }
+    };
+    quill = new Quill(host, {
       theme: "snow",
       formats: formats,
-      placeholder: inline ? "1–2 vety, ktoré sa zobrazia v zozname aktualít…" : "Sem napíš text…",
-      modules: { toolbar: { container: toolbar, handlers: { emoji: function () { togglePicker(); } } } }
+      placeholder: inline ? "1–2 vety, ktoré sa zobrazia v zozname aktualít…" : "Sem napíš text… Fotky môžeš rovno pretiahnuť myšou.",
+      modules: {
+        toolbar: { container: toolbar, handlers: handlers },
+        history: { delay: 800, maxStack: 200, userOnly: true },
+        uploader: inline ? { mimetypes: [] } : { handler: function (range, files) { uploadImages(range, files); } }
+      }
     });
-    if (ta.value.trim() !== "") quill.clipboard.dangerouslyPasteHTML(ta.value);
+    if (ta.value.trim() !== "") quill.clipboard.dangerouslyPasteHTML(toEditor(ta.value));
     quill.history.clear();
 
-    // popisy tlačidiel (title) — tréner nemusí poznať ikony
-    const titles = { bold: "Tučné", italic: "Kurzíva", underline: "Podčiarknuté", strike: "Prečiarknuté", link: "Odkaz",
-      clean: "Zrušiť formátovanie", emoji: "Emoji", "header-2": "Nadpis", "header-3": "Podnadpis",
-      "list-ordered": "Číslovaný zoznam", "list-bullet": "Odrážky" };
-    box.querySelectorAll(".ql-toolbar button").forEach(function (b) {
+    box.querySelectorAll(".ql-toolbar button, .ql-toolbar .ql-picker").forEach(function (b) {
       const name = (b.className.match(/ql-(\w+)/) || [])[1];
       const key = b.value ? name + "-" + b.value : name;
-      if (titles[key]) b.title = titles[key];
+      if (TITLES[key]) { b.title = TITLES[key]; b.setAttribute("aria-label", TITLES[key]); }
     });
-    const emojiBtn = box.querySelector(".ql-emoji");
-    if (emojiBtn) emojiBtn.textContent = "😀";
+    const toolbarEl = box.querySelector(".ql-toolbar");
+    toolbarEl.setAttribute("role", "toolbar");
 
-    // výber emoji
+    /* výber emoji */
     const picker = document.createElement("div");
     picker.className = "a-emoji";
     picker.hidden = true;
-    EMOJI.forEach(function (em) {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.textContent = em;
-      b.addEventListener("mousedown", function (e) { e.preventDefault(); }); // nestratiť výber v editore
-      b.addEventListener("click", function () {
-        const range = quill.getSelection(true);
-        quill.insertText(range.index, em, "user");
-        quill.setSelection(range.index + em.length, 0, "user");
-        picker.hidden = true;
+    const tabs = document.createElement("div");
+    tabs.className = "a-emoji-tabs";
+    tabs.setAttribute("role", "tablist");
+    const grid = document.createElement("div");
+    grid.className = "a-emoji-grid";
+    const caption = document.createElement("div");
+    caption.className = "a-emoji-name";
+    picker.appendChild(tabs);
+    picker.appendChild(caption);
+    picker.appendChild(grid);
+    const keep = function (e) { e.preventDefault(); }; // nestratiť výber v editore
+    function showCategory(i) {
+      tabs.querySelectorAll("button").forEach(function (t, j) { t.setAttribute("aria-selected", i === j ? "true" : "false"); });
+      caption.textContent = EMOJI[i].name;
+      grid.textContent = "";
+      EMOJI[i].list.forEach(function (em) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.textContent = em;
+        b.addEventListener("mousedown", keep);
+        b.addEventListener("click", function () {
+          const range = quill.getSelection(true);
+          quill.insertText(range.index, em, "user");
+          quill.setSelection(range.index + em.length, 0, "user"); // okno ostane otvorené — dá sa vložiť viac emoji
+        });
+        grid.appendChild(b);
       });
-      picker.appendChild(b);
+    }
+    EMOJI.forEach(function (c, i) {
+      const t = document.createElement("button");
+      t.type = "button";
+      t.textContent = c.icon;
+      t.title = c.name;
+      t.setAttribute("role", "tab");
+      t.setAttribute("aria-label", c.name);
+      t.addEventListener("mousedown", keep);
+      t.addEventListener("click", function () { showCategory(i); });
+      tabs.appendChild(t);
     });
-    box.querySelector(".ql-toolbar").after(picker);
-    function togglePicker() { picker.hidden = !picker.hidden; }
+    showCategory(0);
+    toolbarEl.after(picker);
+    const emojiBtn = box.querySelector(".ql-emoji");
     document.addEventListener("click", function (e) {
-      if (!picker.hidden && !picker.contains(e.target) && e.target !== emojiBtn) picker.hidden = true;
+      if (!picker.hidden && !picker.contains(e.target) && !(emojiBtn && emojiBtn.contains(e.target))) picker.hidden = true;
     });
 
-    // počítadlo znakov (krátky úvod)
-    let counter = null;
-    if (max) {
-      counter = document.createElement("small");
-      counter.className = "a-hint a-rich-count";
-      box.after(counter);
+    /* fotky v texte: tlačidlo, Ctrl+V aj pretiahnutie (Quill uploader) */
+    async function uploadImages(range, files) {
+      files = Array.from(files).filter(function (f) { return /^image\//.test(f.type); });
+      if (!files.length || !csrfIn) return;
+      let index = range ? range.index : quill.getLength();
+      for (let i = 0; i < files.length; i++) {
+        say("Nahrávam fotku " + (i + 1) + " z " + files.length + "…");
+        const fd = new FormData();
+        fd.append("csrf", csrfIn.value);
+        let pair = null;
+        if (canDecode) { try { pair = await makePair(files[i]); } catch (e) { pair = null; } }
+        if (pair) { fd.append("full", pair.full); fd.append("thumb", pair.thumb); } else fd.append("full", files[i]);
+        let data = null;
+        try {
+          const res = await fetch(API.image, { method: "POST", body: fd, credentials: "same-origin" });
+          try { data = await res.json(); } catch (e) { data = null; }
+          if (!res.ok || !data || !data.ok) throw new Error((data && data.error) || "Nahrávanie zlyhalo (" + res.status + ").");
+        } catch (e) {
+          say(e.message || "Chyba pripojenia.", true);
+          return;
+        }
+        quill.insertEmbed(index, "image", "../" + data.src, "user");
+        index++;
+        quill.setSelection(index, 0, "user");
+      }
+      say(files.length === 1 ? "Fotka vložená." : "Vložené fotky: " + files.length + ".");
     }
 
+    /* video z YouTube — malé okno priamo pod lištou */
+    const videoBox = document.createElement("div");
+    videoBox.className = "a-rich-pop";
+    videoBox.hidden = true;
+    videoBox.innerHTML = '<label>Odkaz na video z YouTube<input type="url" placeholder="https://www.youtube.com/watch?v=…"></label>' +
+      '<div class="a-rich-pop-actions"><button type="button" class="a-btn a-btn-primary">Vložiť</button><button type="button" class="a-btn">Zrušiť</button></div>';
+    if (!inline) toolbarEl.after(videoBox);
+    const videoInput = videoBox.querySelector("input");
+    const [videoOk, videoCancel] = videoBox.querySelectorAll("button");
+    let videoRange = null;
+    function openVideo() {
+      videoRange = quill.getSelection(true);
+      videoBox.hidden = false;
+      videoInput.value = "";
+      videoInput.focus();
+    }
+    function insertVideo() {
+      const id = youtubeId(videoInput.value);
+      if (!id) { say("Toto nie je odkaz na YouTube video.", true); videoInput.focus(); return; }
+      const at = videoRange ? videoRange.index : quill.getLength();
+      quill.insertEmbed(at, "video", "https://www.youtube-nocookie.com/embed/" + id, "user");
+      quill.setSelection(at + 1, 0, "user");
+      videoBox.hidden = true;
+      say("Video vložené.");
+    }
+    videoOk.addEventListener("click", insertVideo);
+    videoCancel.addEventListener("click", function () { videoBox.hidden = true; quill.focus(); });
+    videoInput.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); insertVideo(); }
+      if (e.key === "Escape") { videoBox.hidden = true; quill.focus(); }
+    });
+
+    /* náhľad — server vráti presne to, čo uloží; zobrazí sa so štýlmi webu */
+    async function openPreview() {
+      say("Pripravujem náhľad…");
+      let data;
+      try {
+        data = await previewFetch({ csrf: csrfIn ? csrfIn.value : "", mode: inline ? "inline" : "full", html: ta.value });
+      } catch (e) {
+        say(e.message || "Náhľad zlyhal.", true);
+        return;
+      }
+      say("");
+      const wasFull = box.classList.contains("is-full");
+      if (wasFull) setFull(false);
+      previewModal('<section><div class="container article" style="padding-top:2rem">' +
+        (inline ? '<p class="article-lead">' + data.html + "</p>" : '<div class="prose"><div class="rich">' + data.html + "</div></div>") +
+        "</div></section>", function () { if (wasFull) setFull(true); else quill.focus(); });
+    }
+
+    /* celá obrazovka */
+    function setFull(on) {
+      box.classList.toggle("is-full", on);
+      document.documentElement.classList.toggle("a-noscroll", on);
+      const b = box.querySelector(".ql-fullscreen");
+      if (b) b.classList.toggle("ql-active", on);
+      quill.focus();
+    }
+    box.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && box.classList.contains("is-full") && videoBox.hidden) setFull(false);
+    });
+
+    /* synchronizácia do textarea + počítadlo */
     function sync() {
       const text = quill.getText().trim();
-      ta.value = text === "" ? "" : quill.root.innerHTML;
-      if (counter) {
-        counter.textContent = Array.from(text).length + " / " + max + " znakov";
-        counter.classList.toggle("a-err", Array.from(text).length > max);
-      }
+      const hasMedia = !!quill.root.querySelector("img, iframe, hr");
+      ta.value = text === "" && !hasMedia ? "" : toStored(quill.root.innerHTML);
+      const chars = Array.from(text).length;
+      const words = text === "" ? 0 : text.split(/\s+/).length;
+      statusCount.textContent = max ? chars + " / " + max + " znakov" : words + " slov · " + chars + " znakov";
+      statusCount.classList.toggle("a-err", max > 0 && chars > max);
     }
     quill.on("text-change", sync);
     sync();
 
-    const form = ta.form;
     if (form && !form.querySelector("input[name=rich]")) {
       const flag = document.createElement("input");
       flag.type = "hidden";
@@ -315,5 +719,6 @@
       flag.value = "1";
       form.appendChild(flag);
     }
+    if (form) form.addEventListener("submit", function () { sync(); setFull(false); });
   });
 })();

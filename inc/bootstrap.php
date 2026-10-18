@@ -36,6 +36,7 @@ function ensure_storage(): void
         data_dir() . '/sessions' => null,
         uploads_dir() => null, // PHP v uploads/ blokuje koreňový .htaccess (Options/RemoveHandler tu môžu dať chybu 500)
         uploads_dir() . '/posts' => null,
+        uploads_dir() . '/inline' => null,
         uploads_dir() . '/albums' => null,
     ];
     foreach ($dirs as $dir => $htaccess) {

@@ -52,3 +52,35 @@ function sk_plural(int $n, string $one, string $few, string $many): string
     $word = $n === 1 ? $one : ($n >= 2 && $n <= 4 ? $few : $many);
     return "$n $word";
 }
+
+/** Text na vyhľadávanie: malé písmená bez diakritiky („Súťaž“ → „sutaz“). */
+function text_fold(string $s): string
+{
+    if (class_exists(Normalizer::class)) {
+        $n = Normalizer::normalize($s, Normalizer::FORM_D);
+        if ($n !== false) $s = preg_replace('/\p{Mn}+/u', '', $n);
+    } else {
+        $s = strtr($s, ['á' => 'a', 'ä' => 'a', 'č' => 'c', 'ď' => 'd', 'é' => 'e', 'ě' => 'e', 'í' => 'i', 'ĺ' => 'l', 'ľ' => 'l',
+            'ň' => 'n', 'ó' => 'o', 'ô' => 'o', 'ö' => 'o', 'ŕ' => 'r', 'ř' => 'r', 'š' => 's', 'ť' => 't', 'ú' => 'u', 'ů' => 'u',
+            'ü' => 'u', 'ý' => 'y', 'ž' => 'z', 'Á' => 'A', 'Ä' => 'A', 'Č' => 'C', 'Ď' => 'D', 'É' => 'E', 'Ě' => 'E', 'Í' => 'I',
+            'Ĺ' => 'L', 'Ľ' => 'L', 'Ň' => 'N', 'Ó' => 'O', 'Ô' => 'O', 'Ö' => 'O', 'Ŕ' => 'R', 'Ř' => 'R', 'Š' => 'S', 'Ť' => 'T',
+            'Ú' => 'U', 'Ů' => 'U', 'Ü' => 'U', 'Ý' => 'Y', 'Ž' => 'Z']);
+    }
+    return mb_strtolower(trim(preg_replace('/\s+/u', ' ', $s)), 'UTF-8');
+}
+
+/**
+ * Filter zoznamu v admine (aktuality, albumy). $items: [['fold' => hľadaný text, 'year' => '2026', 'flag' => '1'|'0',
+ * 'date' => 'Y-m-d', 'title' => …, 'row' => pôvodná položka], …]. Vráti vyfiltrované a zoradené položky.
+ */
+function admin_filter(array $items, string $q, string $year, string $flag, string $sort): array
+{
+    $words = array_filter(explode(' ', text_fold($q)), fn($w) => $w !== '');
+    $out = array_values(array_filter($items, function (array $it) use ($words, $year, $flag): bool {
+        foreach ($words as $w) if (!str_contains($it['fold'], $w)) return false;
+        return ($year === '' || $it['year'] === $year) && ($flag === '' || $it['flag'] === $flag);
+    }));
+    if ($sort === 'old') usort($out, fn($a, $b) => $a['date'] <=> $b['date']);
+    elseif ($sort === 'az') usort($out, fn($a, $b) => strcoll(text_fold($a['title']), text_fold($b['title'])));
+    return $out;                                               // 'new' = poradie z posts_all()/albums_all()
+}

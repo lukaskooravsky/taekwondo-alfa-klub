@@ -9,9 +9,9 @@ const IMAGE_FULL_MAX = 1600;
 const IMAGE_THUMB_MAX = 480;
 const GD_MAX_PIXELS = 25_000_000;
 // modifikátor D: $ nepustí koncové \n
-const UPLOAD_SUBDIR_RE = '~^(posts|albums/a_[a-z0-9]{6,32})$~D';
-const UPLOAD_BASE_RE = '~^[pf]_[a-z0-9]{6,32}$~D';
-const UPLOAD_REL_RE = '~^(posts|albums/a_[a-z0-9]{6,32})/[pf]_[a-z0-9]{6,32}(_t)?\.(jpg|png|webp)$~D';
+const UPLOAD_SUBDIR_RE = '~^(posts|inline|albums/a_[a-z0-9]{6,32})$~D'; // inline = fotky vložené do textu v editore
+const UPLOAD_BASE_RE = '~^[pfi]_[a-z0-9]{6,32}$~D';
+const UPLOAD_REL_RE = '~^(posts|inline|albums/a_[a-z0-9]{6,32})/[pfi]_[a-z0-9]{6,32}(_t)?\.(jpg|png|webp)$~D';
 
 /** Overí záznam z $_FILES; vráti príponu podľa skutočného obsahu súboru. */
 function upload_check(array $file): string

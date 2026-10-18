@@ -44,3 +44,60 @@ test('rich_text a rich_from_text', function () {
     eq('<p>a<br>&lt;b&gt;</p>', rich_from_text("a\n<b>", true));
     eq("<p>x</p>\n<p>y</p>", rich_from_text("x\n\ny"));
 });
+
+test('rich_clean: fotky len z uploads/inline, aj z cesty ../ v admine', function () {
+    eq('<p><img src="uploads/inline/i_abc123.webp" alt="" loading="lazy"></p>', rich_clean('<p><img src="../uploads/inline/i_abc123.webp" onerror="x"></p>'));
+    eq('', rich_clean('<img src="https://evil.sk/x.png">'));
+    eq('', rich_clean('<img src="data:image/png;base64,AAAA">'));
+    eq('', rich_clean('<img src="uploads/posts/p_abc123.jpg">'), 'iné priečinky nie');
+    eq('', rich_clean('<p><img src="uploads/inline/i_abc123.webp"></p>', true), 'v úvode fotky nie');
+});
+
+test('rich_clean: YouTube video cez nocookie, iné iframe preč', function () {
+    $out = rich_clean('<iframe class="ql-video" src="https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=5" onload="x"></iframe>');
+    ok(str_starts_with($out, '<iframe class="ql-video" src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"'), $out);
+    ok(!str_contains($out, 'onload'), $out);
+    eq('dQw4w9WgXcQ', rich_youtube_id('https://youtu.be/dQw4w9WgXcQ?si=x'));
+    eq('dQw4w9WgXcQ', rich_youtube_id('https://www.youtube.com/shorts/dQw4w9WgXcQ'));
+    eq(null, rich_youtube_id('https://evil.sk/embed/dQw4w9WgXcQ'));
+    eq(null, rich_youtube_id('https://www.youtube.com.evil.sk/embed/dQw4w9WgXcQ'));
+    eq('', rich_clean('<iframe src="https://evil.sk/"></iframe>'));
+    eq('', rich_clean('<iframe src="javascript:alert(1)"></iframe>'));
+});
+
+test('rich_clean: zarovnanie, citát, čiara, zvýraznenie', function () {
+    eq('<p class="ql-align-center">a</p><blockquote class="ql-align-right">b</blockquote><hr>',
+        rich_clean('<p class="ql-align-center">a</p><blockquote class="ql-align-right x">b</blockquote><hr onclick="x">'));
+    eq('<p><span style="color:#ffd54f;background-color:#5c4a1f">x</span></p>',
+        rich_clean('<p><span style="background-color: rgb(92, 74, 31); color: rgb(255, 213, 79);">x</span></p>'));
+    eq('<p>y</p>', rich_clean('<p><span style="background:url(javascript:x)">y</span></p>'));
+    eq('<p>z</p>', rich_clean('<p><span class="ql-align-center">z</span></p>'), 'zarovnanie len na blokoch');
+    eq('a<br>b', rich_clean('<blockquote>a</blockquote><p>b</p>', true));
+    eq('', rich_clean('<hr>', true));
+});
+
+test('rich_images a rich_gc_images: maže len nepoužité fotky', function () {
+    ensure_storage();
+    foreach (['i_aaaaaa.webp', 'i_aaaaaa_t.webp', 'i_bbbbbb.jpg', 'i_bbbbbb_t.jpg'] as $f) file_put_contents(upload_path("inline/$f"), 'x');
+    eq(['inline/i_aaaaaa.webp'], rich_images('<img src="uploads/inline/i_aaaaaa.webp"><img src="uploads/inline/i_aaaaaa.webp">'));
+    post_create(['title' => 'T', 'date' => '2026-01-01', 'excerpt' => 'u', 'rich' => '1', 'body' => '<img src="uploads/inline/i_aaaaaa.webp">'], null);
+    rich_gc_images(['inline/i_aaaaaa.webp', 'inline/i_bbbbbb.jpg']);
+    ok(is_file(upload_path('inline/i_aaaaaa.webp')), 'použitá ostane');
+    ok(!is_file(upload_path('inline/i_bbbbbb.jpg')) && !is_file(upload_path('inline/i_bbbbbb_t.jpg')), 'nepoužitá aj s náhľadom preč');
+});
+
+test('fotky z textu sa zmažú pri úprave a zmazaní aktuality aj albumu', function () {
+    ensure_storage();
+    foreach (['i_cccccc', 'i_dddddd', 'i_eeeeee'] as $b) file_put_contents(upload_path("inline/$b.webp"), 'x');
+    $p = post_create(['title' => 'T', 'date' => '2026-01-01', 'excerpt' => 'u', 'rich' => '1',
+        'body' => '<p><img src="uploads/inline/i_cccccc.webp"><img src="uploads/inline/i_dddddd.webp"></p>'], null);
+    post_update($p['id'], ['title' => 'T', 'date' => '2026-01-01', 'excerpt' => 'u', 'rich' => '1',
+        'body' => '<p><img src="uploads/inline/i_cccccc.webp"></p>'], null);
+    ok(is_file(upload_path('inline/i_cccccc.webp')) && !is_file(upload_path('inline/i_dddddd.webp')), 'po úprave');
+    post_delete($p['id']);
+    ok(!is_file(upload_path('inline/i_cccccc.webp')), 'po zmazaní aktuality');
+    $a = album_create(['title' => 'A', 'date' => '2026-01-01', 'rich' => '1', 'description' => '<p><img src="uploads/inline/i_eeeeee.webp"></p>']);
+    ok(is_file(upload_path('inline/i_eeeeee.webp')));
+    album_delete($a['id']);
+    ok(!is_file(upload_path('inline/i_eeeeee.webp')), 'po zmazaní albumu');
+});

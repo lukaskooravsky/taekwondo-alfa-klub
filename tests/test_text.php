@@ -42,3 +42,18 @@ test('str_len počíta znaky, nie bajty; sk_plural; input_str', function () {
     eq('', input_str(null));
     eq('', input_str("ab\xFF\xFEcd"), 'neplatné UTF-8');
 });
+
+test('text_fold a admin_filter', function () {
+    eq('sutaz v bratislave', text_fold("  Súťaž  v\nBRATISLAVE "));
+    $items = [
+        ['fold' => 'skusky pasov', 'year' => '2026', 'flag' => '1', 'date' => '2026-06-01', 'title' => 'Skúšky', 'row' => 1],
+        ['fold' => 'sutaz bratislava', 'year' => '2025', 'flag' => '0', 'date' => '2025-03-01', 'title' => 'Súťaž', 'row' => 2],
+        ['fold' => 'nabor deti', 'year' => '2026', 'flag' => '0', 'date' => '2026-09-01', 'title' => 'Ábor', 'row' => 3],
+    ];
+    $rows = fn($l) => array_column($l, 'row');
+    eq([2], $rows(admin_filter($items, 'SÚŤAŽ brat', '', '', 'new')));
+    eq([1, 3], $rows(admin_filter($items, '', '2026', '', 'new')));
+    eq([2, 3], $rows(admin_filter($items, '', '', '0', 'new')));
+    eq([2, 1, 3], $rows(admin_filter($items, '', '', '', 'old')));
+    eq([], admin_filter($items, 'nič', '', '', 'new'));
+});

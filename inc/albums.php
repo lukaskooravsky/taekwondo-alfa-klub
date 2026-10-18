@@ -65,25 +65,34 @@ function album_modify(string $id, callable $fn, mixed $missing = null): mixed
 function album_update(string $id, array $in): ?array
 {
     $f = album_clean($in);
-    return album_modify($id, function (array &$a) use ($f): array {
+    $oldDesc = '';
+    $album = album_modify($id, function (array &$a) use ($f, &$oldDesc): array {
+        $oldDesc = $a['description'] ?? '';
         $a = array_merge($a, $f);
         return $a;
     });
+    if ($album !== null) rich_gc_images(rich_images($oldDesc));   // fotky vymazané z popisu
+    return $album;
 }
 
 function album_delete(string $id): bool
 {
     if (!valid_id($id, 'a')) return false;
-    $found = store_update('albums', 'albums', function (array &$albums) use ($id): bool {
+    $desc = '';
+    $found = store_update('albums', 'albums', function (array &$albums) use ($id, &$desc): bool {
         foreach ($albums as $i => $a) {
             if ($a['id'] === $id) {
+                $desc = $a['description'] ?? '';
                 array_splice($albums, $i, 1);
                 return true;
             }
         }
         return false;
     });
-    if ($found) upload_delete_dir($id);
+    if ($found) {
+        upload_delete_dir($id);
+        rich_gc_images(rich_images($desc));
+    }
     return $found;
 }
 

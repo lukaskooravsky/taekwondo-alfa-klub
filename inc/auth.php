@@ -6,6 +6,9 @@ const LOGIN_LOCK_SECONDS = 900;
 const LOGIN_GLOBAL_MAX = 50;
 const LOGIN_MAX_ENTRIES = 500;
 const SESSION_LIFETIME = 30 * 24 * 3600;
+const SESSION_ANON_LIFETIME = 2 * 3600;
+const TRUST_COOKIE = 'alfa_trusted';   // „dôveryhodné zariadenie“ — obíde globálnu blokáciu prihlasovania
+const LOGIN_CSRF_COOKIE = 'alfa_login'; // CSRF prihlasovacieho formulára bez relácie
 const PASSWORD_MIN = 8;
 const PASSWORD_MAX_BYTES = 72; // bcrypt ďalšie bajty ignoruje
 const USER_MAX = 254; // najdlhší platný e-mail
@@ -174,8 +177,12 @@ final class AlfaSessionHandler implements SessionHandlerInterface, SessionUpdate
         return true;
     }
 
+    /** Neexistujúca relácia = prázdna; súbor sa nevytvára (anonymné návštevy adminu nezakladajú súbory). */
     public function read(string $id): string|false
     {
+        $file = $this->file($id);
+        if ($file === null) return false;
+        if (!is_file($file)) return '';
         if (!$this->lock($id)) return false;
         rewind($this->fp);
         return (string)stream_get_contents($this->fp);
@@ -183,6 +190,8 @@ final class AlfaSessionHandler implements SessionHandlerInterface, SessionUpdate
 
     public function write(string $id, string $data): bool
     {
+        $file = $this->file($id);
+        if ($file !== null && $data === '' && !is_file($file)) return true;
         if (!$this->lock($id)) return false;
         rewind($this->fp);
         ftruncate($this->fp, 0);
@@ -197,12 +206,18 @@ final class AlfaSessionHandler implements SessionHandlerInterface, SessionUpdate
         return true;
     }
 
-    /** Limit hostingu (session.gc_maxlifetime) ignorujeme — relácia platí SESSION_LIFETIME. */
+    /**
+     * Limit hostingu (session.gc_maxlifetime) ignorujeme — prihlásená relácia platí SESSION_LIFETIME,
+     * neprihlásená (napr. rozpracovaný formulár bez prihlásenia) len SESSION_ANON_LIFETIME.
+     */
     public function gc(int $max_lifetime): int|false
     {
         $n = 0;
         foreach (glob($this->dir . '/sess_*') ?: [] as $f) {
-            if (@filemtime($f) < time() - SESSION_LIFETIME && @unlink($f)) $n++;
+            $age = time() - (int)@filemtime($f);
+            $old = $age > SESSION_LIFETIME
+                || ($age > SESSION_ANON_LIFETIME && !str_contains((string)@file_get_contents($f, false, null, 0, 4096), 'admin|b:1;'));
+            if ($old && @unlink($f)) $n++;
         }
         return $n;
     }
@@ -298,17 +313,17 @@ function auth_client_key(?string $ip = null): string
  * Vráti 'ok' | 'bad' | 'locked'. Pokus sa započíta ešte pred overením hesla (súbežné požiadavky nedostanú navyše).
  * Zlý e-mail a zlé heslo vyzerajú rovnako (aj časovo) — útočník nezistí, či uhádol e-mail.
  */
-function auth_attempt(string $user, string $password, string $clientKey, ?int $now = null): string
+function auth_attempt(string $user, string $password, string $clientKey, ?int $now = null, bool $trusted = false): string
 {
     $now ??= time();
-    $gate = auth_rate_register($clientKey, $now); // 'locked' | 'check' | 'last'
+    $gate = auth_rate_register($clientKey, $now, $trusted); // 'locked' | 'check' | 'last'
     if ($gate === 'locked') return 'locked';
     $hash = auth_hash();
     $stored = auth_user();
     $userOk = $stored !== '' && hash_equals($stored, auth_normalize_user($user));
     $pwOk = strlen($password) <= 4096 && password_verify($password, $hash !== '' ? $hash : AUTH_DUMMY_HASH);
     if ($userOk && $pwOk && $hash !== '') {
-        auth_rate_success($clientKey);
+        auth_rate_success($clientKey, $trusted);
         if (session_status() === PHP_SESSION_ACTIVE) session_regenerate_id(true);
         $_SESSION['admin'] = true;
         $_SESSION['pw'] = auth_pw_version();
@@ -319,16 +334,16 @@ function auth_attempt(string $user, string $password, string $clientKey, ?int $n
 }
 
 /** V jednom zamknutom kroku: skontroluje blokácie a započíta pokus. 'last' = týmto pokusom sa práve zablokovalo. */
-function auth_rate_register(string $key, int $now): string
+function auth_rate_register(string $key, int $now, bool $trusted = false): string
 {
-    return store_update('login-attempts', 'attempts', function (array &$all) use ($key, $now): string {
+    return store_update('login-attempts', 'attempts', function (array &$all) use ($key, $now, $trusted): string {
         $g = $all['*'] ?? ['times' => [], 'locked_until' => 0];
         $g['times'] = array_values(array_filter((array)($g['times'] ?? []), fn($t): bool => is_int($t) && $t > $now - LOGIN_LOCK_SECONDS));
         foreach ($all as $k => $a) {
             if ($k !== '*' && (($a['locked_until'] ?? 0) <= $now) && (($a['last'] ?? 0) < $now - LOGIN_LOCK_SECONDS)) unset($all[$k]);
         }
         $a = $all[$key] ?? ['fails' => 0, 'locked_until' => 0, 'last' => 0];
-        if (($g['locked_until'] ?? 0) > $now || $a['locked_until'] > $now) {
+        if ((!$trusted && ($g['locked_until'] ?? 0) > $now) || $a['locked_until'] > $now) {
             $all['*'] = $g;
             return 'locked';
         }
@@ -336,14 +351,14 @@ function auth_rate_register(string $key, int $now): string
         $a['fails']++;
         $a['last'] = $now;
         $a['locked_until'] = 0;
-        $g['times'][] = $now;
+        if (!$trusted) $g['times'][] = $now;
         $last = false;
         if ($a['fails'] >= LOGIN_MAX_FAILS) {
             $a['fails'] = 0;
             $a['locked_until'] = $now + LOGIN_LOCK_SECONDS;
             $last = true;
         }
-        if (count($g['times']) >= LOGIN_GLOBAL_MAX) {
+        if (!$trusted && count($g['times']) >= LOGIN_GLOBAL_MAX) {
             $g['times'] = [];
             $g['locked_until'] = $now + LOGIN_LOCK_SECONDS;
             $last = true;
@@ -356,12 +371,52 @@ function auth_rate_register(string $key, int $now): string
 }
 
 /** Úspešné prihlásenie: vynuluje klienta a jeho pokus sa nepočíta do globálneho stropu. */
-function auth_rate_success(string $key): void
+function auth_rate_success(string $key, bool $trusted = false): void
 {
-    store_update('login-attempts', 'attempts', function (array &$all) use ($key): void {
+    store_update('login-attempts', 'attempts', function (array &$all) use ($key, $trusted): void {
         unset($all[$key]);
-        if (!empty($all['*']['times'])) array_pop($all['*']['times']);
+        if (!$trusted && !empty($all['*']['times'])) array_pop($all['*']['times']);
     }, true);
+}
+
+/* ---------- dôveryhodné zariadenie a CSRF prihlásenia ---------- */
+
+/** Podpis zariadenia, kde sa už tréner prihlásil; kľúč = hash hesla → zmena hesla/e-mailu ho zneplatní. */
+function auth_trust_value(): string
+{
+    $hash = auth_hash();
+    return $hash === '' ? '' : hash_hmac('sha256', 'trusted|' . auth_user(), $hash);
+}
+
+function auth_is_trusted(?array $cookies = null): bool
+{
+    $v = auth_trust_value();
+    $c = ($cookies ?? $_COOKIE)[TRUST_COOKIE] ?? '';
+    return $v !== '' && is_string($c) && hash_equals($v, $c);
+}
+
+function auth_cookie(string $name, string $value, int $lifetime): void
+{
+    if (headers_sent()) return;
+    setcookie($name, $value, ['expires' => $value === '' ? time() - 3600 : time() + $lifetime, 'path' => '/',
+        'secure' => request_is_https(), 'httponly' => true, 'samesite' => 'Strict']);
+}
+
+/** CSRF prihlasovacieho formulára cez cookie (double submit) — anonymný návštevník nepotrebuje reláciu. */
+function login_csrf_token(): string
+{
+    static $token = null;
+    if ($token !== null) return $token;
+    $c = $_COOKIE[LOGIN_CSRF_COOKIE] ?? '';
+    $token = is_string($c) && preg_match('/^[a-f0-9]{64}$/', $c) ? $c : bin2hex(random_bytes(32));
+    if ($token !== $c) auth_cookie(LOGIN_CSRF_COOKIE, $token, 3600 * 12);
+    return $token;
+}
+
+function login_csrf_check(mixed $posted, ?array $cookies = null): bool
+{
+    $c = ($cookies ?? $_COOKIE)[LOGIN_CSRF_COOKIE] ?? '';
+    return is_string($posted) && is_string($c) && preg_match('/^[a-f0-9]{64}$/', $c) === 1 && hash_equals($c, $posted);
 }
 
 /** Najviac LOGIN_MAX_ENTRIES klientov (ponechá najnovších) + globálny záznam '*'. */

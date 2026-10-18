@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-admin_header('E-mail a heslo');
+admin_header('Nastavenia — e-mail a heslo');
 ?>
 <?= isset($errors['form']) ? '<div class="flash flash-error">' . e($errors['form']) . '</div>' : '' ?>
 <form method="post" class="a-form a-narrow">

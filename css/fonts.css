@@ -199,3 +199,14 @@
   src: url(../assets/fonts/noto-sans-kr-700-subset.woff2) format('woff2');
   unicode-range: U+592a, U+ad8c, U+b3c4, U+b760, U+b77d, U+bb34, U+c0ac, U+c0c9, U+c18c, U+c2dd, U+c54c, U+c5f0, U+c9c4, U+ccb4, U+d0dc, U+d30c, U+d5d8;
 }
+
+/* Vlajky ako emoji (🇸🇰 🇰🇷 …) — Windows ich v emoji písme nemá a zobrazí len písmená „SK“.
+   Twemoji Country Flags (grafika Twemoji © Twitter, CC-BY 4.0; balík country-flag-emoji-polyfill, MIT).
+   Platí len pre znaky vlajok (unicode-range), ostatný text sa nemení. */
+@font-face {
+  font-family: 'Twemoji Country Flags';
+  font-style: normal;
+  font-display: swap;
+  src: url(../assets/fonts/twemoji-country-flags.woff2) format('woff2');
+  unicode-range: U+1F1E6-1F1FF, U+1F3F4, U+E0062-E0063, U+E0065, U+E0067, U+E006C, U+E006E, U+E0073-E0074, U+E0077, U+E007F;
+}

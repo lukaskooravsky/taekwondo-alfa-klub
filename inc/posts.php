@@ -61,10 +61,12 @@ function post_update(string $id, array $in, array|false|null $image): ?array
 {
     $f = post_clean($in);
     $old = null;
-    $post = store_update('posts', 'posts', function (array &$posts) use ($id, $f, $image, &$old): ?array {
+    $oldHtml = '';
+    $post = store_update('posts', 'posts', function (array &$posts) use ($id, $f, $image, &$old, &$oldHtml): ?array {
         foreach ($posts as $i => $p) {
             if ($p['id'] !== $id) continue;
             $old = $p['image'];
+            $oldHtml = $p['excerpt'] . $p['body'];
             $p = array_merge($p, $f, ['updated' => now_iso()]);
             if ($image === false) $p['image'] = null;
             elseif (is_array($image)) $p['image'] = ['full' => $image['full'], 'thumb' => $image['thumb']];
@@ -74,6 +76,7 @@ function post_update(string $id, array $in, array|false|null $image): ?array
         return null;
     });
     if ($post !== null && $image !== null) post_delete_files($old);
+    if ($post !== null) rich_gc_images(rich_images($oldHtml));   // fotky vymazané z textu
     return $post;
 }
 
@@ -91,6 +94,7 @@ function post_delete(string $id): bool
     });
     if ($removed === null) return false;
     post_delete_files($removed['image']);
+    rich_gc_images(rich_images($removed['excerpt'] . $removed['body']));
     return true;
 }
 
