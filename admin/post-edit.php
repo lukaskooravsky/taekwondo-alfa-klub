@@ -62,7 +62,7 @@ admin_header($post ? 'Upraviť aktualitu' : 'Nová aktualita');
 ?>
 <p class="a-back"><a href="posts.php">← Všetky aktuality</a><?php if ($post): ?> · <a href="../aktualita.php?id=<?= e(rawurlencode($post['id'])) ?>" target="_blank">Pozrieť na webe ↗</a><?php endif; ?></p>
 <?= isset($errors['form']) ? '<div class="flash flash-error">' . e($errors['form']) . '</div>' : '' ?>
-<form method="post" enctype="multipart/form-data" class="a-form" data-unsaved>
+<form method="post" enctype="multipart/form-data" class="a-form" data-unsaved="<?= $errors ? 'dirty' : '' ?>">
   <?= csrf_field() ?>
   <?php if ($post): ?><input type="hidden" name="id" value="<?= e($post['id']) ?>"><?php endif; ?>
   <input type="hidden" name="rich" value="1"><!-- textarea vždy obsahuje HTML (aj bez JS editora) -->

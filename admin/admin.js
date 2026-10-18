@@ -78,6 +78,45 @@
       if (bmp.close) bmp.close();
     }
   }
+  /*
+   * Fotky sa posielajú ako JSON {full, thumb} v base64 — PHP pri tom nepotrebuje dočasný priečinok hostingu
+   * (na Webglobe je nezapisovateľný a klasické nahratie súboru tam zlyhá). Telo musí byť pod 2 MB (UPLOAD_JSON_MAX).
+   */
+  const JSON_MAX = 1400000; // bajtov fotiek (base64 pridá ~33 %)
+  function blobToB64(blob) {
+    return new Promise(function (resolve, reject) {
+      const r = new FileReader();
+      r.onload = function () { resolve(String(r.result).split(",")[1] || ""); };
+      r.onerror = function () { reject(new Error("Fotku sa nepodarilo načítať.")); };
+      r.readAsDataURL(blob);
+    });
+  }
+  async function photoPayload(file) {
+    let pair = null;
+    if (canDecode) { try { pair = await makePair(file); } catch (e) { pair = null; } }
+    if (pair) {
+      if (pair.full.size + pair.thumb.size > JSON_MAX) throw new Error("Fotka je po zmenšení stále príliš veľká — skús inú.");
+      return { full: await blobToB64(pair.full), thumb: await blobToB64(pair.thumb), preview: pair.thumb, size: pair.full.size };
+    }
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
+      throw new Error("Fotku „" + file.name + "“ tento prehliadač nevie spracovať (napr. HEIC) — ulož ju ako JPG a skús znova.");
+    }
+    if (file.size > JSON_MAX) throw new Error("Fotka je príliš veľká a prehliadač ju nevie zmenšiť — ulož ju menšiu (do 1 MB).");
+    return { full: await blobToB64(file), preview: file, size: file.size };   // zmenší server
+  }
+  async function postJson(url, data) {
+    let res;
+    try {
+      res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data), credentials: "same-origin" });
+    } catch (e) {
+      throw new Error("Chyba pripojenia.");
+    }
+    let out = null;
+    try { out = await res.json(); } catch (e) { out = null; }
+    if (!res.ok || !out || !out.ok) throw new Error((out && out.error) || "Nahrávanie zlyhalo (" + res.status + ").");
+    return out;
+  }
+
   function setFiles(input, files) {
     const dt = new DataTransfer();
     files.forEach(function (f) { dt.items.add(f); });
@@ -102,24 +141,35 @@
       if (blob) preview.src = previewUrl;
     }
 
+    let refIn = form.querySelector("input[name=image_ref]");
+    if (!refIn) {
+      refIn = document.createElement("input");
+      refIn.type = "hidden";
+      refIn.name = "image_ref";
+      form.appendChild(refIn);
+    }
+    const csrfVal = (form.querySelector("input[name=csrf]") || {}).value || "";
     input.addEventListener("change", function () {
       setFiles(fullIn, []);
       setFiles(thumbIn, []);
-      input.name = origName; // pri novom výbere znova posielať originál, kým nie je zmenšený
+      refIn.value = "";
+      input.name = origName; // pri novom výbere znova posielať originál, kým nie je nahratý
       showPreview(null);
       const file = input.files[0];
       if (!file) { status.textContent = ""; return; }
-      status.textContent = "Pripravujem fotku…";
-      busy = makePair(file).then(function (pair) {
-        setFiles(fullIn, [pair.full]);
-        setFiles(thumbIn, [pair.thumb]);
-        // výber ostane viditeľný v poli, len sa originál neodošle (bez name sa pole neposiela)
-        input.removeAttribute("name");
-        showPreview(pair.thumb);
-        status.textContent = "Fotka pripravená (" + Math.round(pair.full.size / 1024) + " KB).";
-      }).catch(function () {
-        input.name = origName;
-        status.textContent = "Fotku sa nepodarilo zmenšiť v prehliadači — odošle sa pôvodná (max 5 MB).";
+      status.textContent = "Nahrávam fotku…";
+      status.classList.remove("a-err");
+      busy = (async function () {
+        const p = await photoPayload(file);
+        const out = await postJson("api/post-image.php", { csrf: csrfVal, full: p.full, thumb: p.thumb });
+        refIn.value = out.ref;
+        input.removeAttribute("name");   // výber ostane viditeľný, súbor sa už neposiela znova
+        showPreview(p.preview);
+        status.textContent = "Fotka nahratá (" + Math.round(p.size / 1024) + " KB) — ulož aktualitu.";
+      })().catch(function (e) {
+        input.name = origName;           // záloha: klasické odoslanie s formulárom (na bežných hostingoch funguje)
+        status.textContent = e.message || "Fotku sa nepodarilo nahrať.";
+        status.classList.add("a-err");
       }).finally(function () { busy = null; });
     });
 
@@ -155,30 +205,8 @@
     });
 
     async function uploadOne(file) {
-      const fd = new FormData();
-      fd.append("csrf", csrf);
-      fd.append("album", box.dataset.album);
-      let pair = null;
-      if (canDecode) {
-        try { pair = await makePair(file); } catch (e) { pair = null; }
-      }
-      if (pair) {
-        fd.append("full", pair.full);
-        fd.append("thumb", pair.thumb);
-      } else {
-        fd.append("full", file); // zmenší server
-      }
-      let res;
-      try {
-        res = await fetch(box.dataset.endpoint, { method: "POST", body: fd, credentials: "same-origin" });
-      } catch (e) {
-        throw new Error("Chyba pripojenia.");
-      }
-      let data = null;
-      try { data = await res.json(); } catch (e) { data = null; }
-      if (!res.ok || !data || !data.ok) {
-        throw new Error((data && data.error) || "Nahrávanie zlyhalo (" + res.status + ").");
-      }
+      const p = await photoPayload(file);
+      await postJson(box.dataset.endpoint, { csrf: csrf, album: box.dataset.album, full: p.full, thumb: p.thumb });
     }
 
     function warnLeave(e) { e.preventDefault(); e.returnValue = ""; }
@@ -298,7 +326,7 @@
 
   /* ---------- neuložené zmeny: pred odchodom zo stránky sa prehliadač opýta ---------- */
   document.querySelectorAll("form[data-unsaved]").forEach(function (form) {
-    let dirty = false;
+    let dirty = form.dataset.unsaved === "dirty";   // po chybe vo formulári sú zmeny stále neuložené
     form.addEventListener("input", function () { dirty = true; });
     form.addEventListener("change", function () { dirty = true; });
     form.addEventListener("rich-change", function () { dirty = true; }); // zmena v editore (Quill)
@@ -368,12 +396,12 @@
   const RICH_BACKGROUNDS = ["#5c4a1f", "#3a2e14", "#4a1f1f", "#1f3d2a", "#1a3247", "#3b2449", "#2a2a31", "#4d3b10"];
   // emoji po kategóriách [ikona záložky, názov, zoznam]
   const EMOJI = [
-    ["🥋", "Taekwondo", "🥋 🙇 🙇‍♂️ 🙇‍♀️ 🦵 🦶 👊 🤜 🤛 ✊ ✋ 🖐️ 🤚 💪 🤼 🤼‍♂️ 🤼‍♀️ 🥷 🤸 🧘 🎽 🥊 🛡️ ⚔️ 🐉 🐯 🦅 🌀 💥 ⚡ 🔥 🎯 ⏱️ 🏅 🥇 🥈 🥉 🏆 🎖️ ⚪ 🟡 🟢 🔵 🔴 ⚫ 🇰🇷 🇸🇰 🧒 👧 👦 🧑‍🏫 📣 📅 🏟️"],
-    ["⚽", "Šport", "🥋 🥊 🤸 🤼 🏋️ 🧘 🏃 🤾 ⛹️ 🚴 🏊 🧗 🤺 🥅 ⚽ 🏀 🏐 🎾 🏓 🏸 ⛸️ 🎿 🏂 🛹 🥏 🎯 ⏱️ 🧭 🦵 🦶 💪 🫀 🧠 🥤 🍌"],
+    ["🥋", "Taekwondo", "🥋 🙇 🙇‍♂️ 🙇‍♀️ 🦵 🦶 👊 🤜 🤛 ✊ ✋ 🖐️ 🤚 💪 🤼 🤼‍♂️ 🤼‍♀️ 🤸 🧘 🎽 🥊 🛡️ ⚔️ 🐉 🐯 🦅 🌀 💥 ⚡ 🔥 🎯 ⏱️ 🏅 🥇 🥈 🥉 🏆 🎖️ ⚪ 🟡 🟢 🔵 🔴 ⚫ 🇰🇷 🇸🇰 🧒 👧 👦 📣 📅 🏟️"],
+    ["⚽", "Šport", "🥋 🥊 🤸 🤼 🏋️ 🧘 🏃 🤾 ⛹️ 🚴 🏊 🧗 🤺 🥅 ⚽ 🏀 🏐 🎾 🏓 🏸 ⛸️ 🎿 🏂 🛹 🥏 🎯 ⏱️ 🧭 🦵 🦶 💪 🧠 🥤 🍌"],
     ["🏆", "Úspech", "🏆 🥇 🥈 🥉 🏅 🎖️ 🎗️ 🏵️ 👑 💯 🔝 ✅ ☑️ ✔️ 🎯 📈 🚀 ⭐ 🌟 ✨ 💫 🔥 ⚡ 💥 🎉 🎊 🥳 🎈 🎁 🍾 🥂"],
-    ["👏", "Ľudia a gestá", "👏 🙌 👍 👎 👊 🤜 🤛 ✊ ✌️ 🤞 🤟 🤘 👌 🤙 👋 🙏 🤝 💁 🙋 🙆 🙅 🤷 👨‍👩‍👧‍👦 👪 🧒 👦 👧 🧑 👨 👩 🧑‍🏫 👨‍🏫 👩‍🏫 🧑‍🎓 🥷 🧑‍⚕️ 👮"],
-    ["😀", "Tváre", "😀 😃 😄 😁 😆 😅 😂 🤣 😊 🙂 😉 😍 🥰 😘 🤩 😎 🤗 🤔 🤨 😐 😮 😯 😲 🥺 😢 😭 😤 😡 🤯 😳 🥵 🥶 😴 🤒 🤕 😇 🤠 🥳 😬 🙃 😜 🤪 🫡 🫶"],
-    ["❤️", "Srdcia", "❤️ 🧡 💛 💚 💙 💜 🤎 🖤 🤍 ❤️‍🔥 💕 💞 💓 💗 💖 💘 💝 💌 💯"],
+    ["👏", "Ľudia a gestá", "👏 🙌 👍 👎 👊 🤜 🤛 ✊ ✌️ 🤞 🤟 🤘 👌 🤙 👋 🙏 🤝 💁 🙋 🙆 🙅 🤷 👨‍👩‍👧‍👦 👪 🧒 👦 👧 🧑 👨 👩 👨‍🏫 👩‍🏫 👮"],
+    ["😀", "Tváre", "😀 😃 😄 😁 😆 😅 😂 🤣 😊 🙂 😉 😍 🥰 😘 🤩 😎 🤗 🤔 🤨 😐 😮 😯 😲 🥺 😢 😭 😤 😡 🤯 😳 🥵 🥶 😴 🤒 🤕 😇 🤠 🥳 😬 🙃 😜 🤪"],
+    ["❤️", "Srdcia", "❤️ 🧡 💛 💚 💙 💜 🤎 🖤 🤍 💕 💞 💓 💗 💖 💘 💝 💌 💯"],
     ["📅", "Čas a miesto", "📅 🗓️ 📆 ⏰ ⏱️ ⏳ ⌛ 🕐 🕒 🕔 🕕 🕖 🕗 📍 📌 🗺️ 🧭 🏫 🏟️ 🏠 🏢 🏛️ 🏰 ⛺ 🏖️ 🏔️ 🌍 🌎 🌏"],
     ["📣", "Oznamy", "📣 📢 🔔 🔕 📯 📝 ✏️ 🖊️ 📋 📎 📞 📱 ✉️ 📧 📨 💬 🗨️ 💭 ℹ️ ⚠️ ❗ ❕ ❓ ❔ ‼️ ⁉️ 🆕 🆓 🆗 🔜 🔗 📸 📷 🎥 📹 🎬 🎤 🎵 🎶 📰 📖 📚 🎓 💡 💰 💶 🎟️ 🎫"],
     ["☀️", "Príroda a počasie", "☀️ 🌤️ ⛅ 🌥️ 🌦️ 🌧️ ⛈️ 🌩️ ❄️ ☃️ ⛄ 🌨️ 💨 🌪️ 🌈 ☔ 🌊 🔥 🌙 ⭐ 🌸 🌼 🌻 🌷 🍀 🌿 🌲 🍂 🍁 🐉 🐯 🦅 🐻 🐺 🦁"],
@@ -671,21 +699,13 @@
       let index = range ? range.index : quill.getLength();
       for (let i = 0; i < files.length; i++) {
         say("Nahrávam fotku " + (i + 1) + " z " + files.length + "…");
-        const fd = new FormData();
-        fd.append("csrf", csrfIn.value);
-        let pair = null;
-        if (canDecode) { try { pair = await makePair(files[i]); } catch (e) { pair = null; } }
-        if (pair) { fd.append("full", pair.full); fd.append("thumb", pair.thumb); }
-        else if (/^image\/(jpeg|png|webp)$/.test(files[i].type)) fd.append("full", files[i]); // zmenší server
-        else { say("Fotku „" + files[i].name + "“ tento prehliadač nevie spracovať (napr. HEIC) — ulož ju ako JPG a skús znova.", true); continue; }
         let data = null;
         try {
-          const res = await fetch(API.image, { method: "POST", body: fd, credentials: "same-origin" });
-          try { data = await res.json(); } catch (e) { data = null; }
-          if (!res.ok || !data || !data.ok) throw new Error((data && data.error) || "Nahrávanie zlyhalo (" + res.status + ").");
+          const p = await photoPayload(files[i]);
+          data = await postJson(API.image, { csrf: csrfIn.value, full: p.full, thumb: p.thumb });
         } catch (e) {
           say(e.message || "Chyba pripojenia.", true);
-          return;
+          continue;
         }
         quill.insertEmbed(index, "image", "../" + data.src, "user");
         index++;

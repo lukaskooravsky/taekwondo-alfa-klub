@@ -67,13 +67,17 @@ function post_update(string $id, array $in, array|false|null $image, ?string $st
 {
     $f = post_clean($in);
     if ($status !== null) $f['status'] = $status === 'draft' ? 'draft' : 'published';
+    $today = date('Y-m-d');
     $old = null;
     $oldHtml = '';
-    $post = store_update('posts', 'posts', function (array &$posts) use ($id, $f, $image, &$old, &$oldHtml): ?array {
+    $post = store_update('posts', 'posts', function (array &$posts) use ($id, $f, $image, &$old, &$oldHtml, $today): ?array {
         foreach ($posts as $i => $p) {
             if ($p['id'] !== $id) continue;
             $old = $p['image'];
             $oldHtml = $p['excerpt'] . $p['body'];
+            // koncept sa zverejňuje: ak tréner dátum nemenil (= deň vytvorenia), dostane dnešný dátum
+            if (is_draft($p) && ($f['status'] ?? '') === 'published' && $f['date'] < $today
+                && $f['date'] === substr((string)$p['created'], 0, 10)) $f['date'] = $today;
             $p = array_merge($p, $f, ['updated' => now_iso()]);
             if ($image === false) $p['image'] = null;
             elseif (is_array($image)) $p['image'] = post_image_record($image);
@@ -124,7 +128,44 @@ function post_delete_files(?array $image): void
 /** Fotka z formulára aktuality: najprv dvojica zmenšená v prehliadači, inak originál (zmenší server). */
 function post_image_from_request(): ?array
 {
+    $ref = post_image_ref(input_str($_POST['image_ref'] ?? ''));
+    if ($ref !== null) return $ref;
     $base = new_id('p');
     return upload_from_request('image_full', 'image_thumb', 'posts', $base)
         ?? upload_from_request('image', null, 'posts', $base);
+}
+
+/**
+ * Vopred nahratá fotka (admin/api/post-image.php): „posts/p_x.webp|posts/p_x_t.webp“. Overí cesty, existenciu súborov
+ * a že ju nepoužíva iná aktualita (zmazanie jednej by inak rozbilo druhú). null = žiadna/neplatná.
+ */
+function post_image_ref(string $ref): ?array
+{
+    if ($ref === '' || !preg_match('~^(posts/(p_[a-z0-9]{6,32})\.(jpg|png|webp))\|(posts/\2_t\.(jpg|png|webp))$~D', $ref, $m)) return null;
+    [$full, $thumb] = [$m[1], $m[4]];
+    if (!is_file(upload_path($full)) || !is_file(upload_path($thumb))) return null;
+    foreach (posts_all() as $p) {
+        if (($p['image']['full'] ?? '') === $full) return null;
+    }
+    $size = @getimagesize(upload_path($full));
+    return ['full' => $full, 'thumb' => $thumb] + ($size ? ['w' => $size[0], 'h' => $size[1]] : []);
+}
+
+/** Vopred nahraté titulné fotky, ktoré sa nikdy neuložili (zrušená úprava) — po platnosti prihlásenia do koša. */
+function posts_sweep_staged(?int $now = null): void
+{
+    $limit = ($now ?? time()) - SESSION_LIFETIME - 86400;
+    try {
+        $used = [];
+        foreach (posts_all() as $p) {
+            if (!empty($p['image'])) array_push($used, $p['image']['full'], $p['image']['thumb']);
+        }
+    } catch (StoreException $e) {
+        error_log($e->getMessage());
+        return;
+    }
+    foreach (glob(uploads_dir() . '/posts/p_*.*') ?: [] as $f) {
+        $rel = 'posts/' . basename($f);
+        if (preg_match(UPLOAD_REL_RE, $rel) && !in_array($rel, $used, true) && (int)@filemtime($f) < $limit) upload_delete($rel);
+    }
 }

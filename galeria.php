@@ -21,12 +21,13 @@ if ($album) {
     $desc = rich_text($album['description'] ?? '');
     $page = ['title' => $album['title'] . ' — Galéria', 'path' => 'galeria.php?album=' . rawurlencode($album['id']),
         'description' => ($desc !== '' ? $desc . ' ' : '') . 'Fotky z albumu ' . $album['title'] . ' — ' . SITE_NAME . '.',
-        'image' => $cover ? upload_url($cover['full']) : SEO_DEFAULT_IMAGE];
+        'image' => $cover ? upload_url($cover['full']) : SEO_DEFAULT_IMAGE, 'noindex' => is_draft($album)];
 } else {
     $page = ['title' => 'Galéria', 'description' => 'Fotky z tréningov, skúšok a súťaží klubu ALFA Taekwondo Bratislava.'];
 }
 require __DIR__ . '/inc/layout-header.php';
 ?>
+<?php if ($album && is_draft($album)): ?><div class="draft-flag">Koncept — návštevníci album nevidia. <a href="admin/album.php?id=<?= e(rawurlencode($album['id'])) ?>">Zverejniť v administrácii</a></div><?php endif; ?>
 
   <section class="page-hero">
     <span class="kr-bg" aria-hidden="true">사진</span>

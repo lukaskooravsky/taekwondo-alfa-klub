@@ -106,3 +106,30 @@ test('kôš: 30 dní sa počíta od zmazania, nie od nahratia fotky', function (
     eq(0, upload_trash_purge(), 'čerstvo zmazaná ostane v koši');
     eq(1, count(glob(upload_trash_dir() . '/*__posts__p_trash2.png')));
 });
+
+test('nahratie cez JSON (base64) bez dočasného priečinka PHP', function () {
+    ensure_storage();
+    $png = base64_encode((string)file_get_contents(fixture_png(tmp('j.png'))));
+    $_SERVER['CONTENT_TYPE'] = 'application/json';
+    $f = upload_temp_from_b64($png);
+    ok(str_starts_with($f['tmp_name'], data_dir() . '/tmp/'), 'vlastný tmp v data/');
+    $r = upload_store_pair($f, upload_temp_from_b64($png), 'inline', 'i_jsontest', false);
+    eq('inline/i_jsontest.png', $r['full']);
+    ok(is_file(upload_path('inline/i_jsontest_t.png')));
+    eq(null, upload_temp_from_b64(''));
+    throws(fn() => upload_temp_from_b64('%%%nie-base64%%%'), UploadException::class);
+    unset($_SERVER['CONTENT_TYPE']);
+});
+
+test('vopred nahratá titulná fotka: platný odkaz prejde, cudzí/neexistujúci/obsadený nie', function () {
+    ensure_storage();
+    $r = upload_store_pair(fake_file(fixture_png(tmp('r1.png'))), fake_file(fixture_png(tmp('r2.png'))), 'posts', 'p_refaaa', false);
+    $ref = $r['full'] . '|' . $r['thumb'];
+    eq($r['full'], post_image_ref($ref)['full']);
+    eq(null, post_image_ref('posts/p_refaaa.png|posts/p_iny000_t.png'), 'náhľad iného súboru');
+    eq(null, post_image_ref('albums/a_xxxxxx/f_refaaa.png|albums/a_xxxxxx/f_refaaa_t.png'), 'iný priečinok');
+    eq(null, post_image_ref('posts/p_neniee.png|posts/p_neniee_t.png'), 'neexistuje');
+    eq(null, post_image_ref('../data/auth.json|x'));
+    post_create(sample_post(), post_image_ref($ref));
+    eq(null, post_image_ref($ref), 'už ju používa iná aktualita');
+});

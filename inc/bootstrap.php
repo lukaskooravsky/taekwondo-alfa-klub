@@ -35,6 +35,7 @@ function ensure_storage(): void
         data_dir() . '/backup' => null,
         data_dir() . '/sessions' => null,
         data_dir() . '/trash' => null,   // kôš zmazaných fotiek (chráni ho data/.htaccess)
+        data_dir() . '/tmp' => null,     // dočasné súbory nahrávania (priečinok PHP hostingu môže byť nezapisovateľný)
         uploads_dir() => null, // PHP v uploads/ blokuje koreňový .htaccess (Options/RemoveHandler tu môžu dať chybu 500)
         uploads_dir() . '/posts' => null,
         uploads_dir() . '/inline' => null,

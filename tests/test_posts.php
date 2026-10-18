@@ -122,3 +122,11 @@ test('koncept aktuality: nie je verejný, stav sa mení len tlačidlom, Enter st
     unset($p['status']);
     ok(!is_draft($p), 'staré dáta bez stavu = zverejnené');
 });
+
+test('zverejnenie konceptu: nezmenený starý dátum → dnešný, zmenený ručne ostane', function () {
+    $d = post_create(sample_post(['date' => '2026-01-05']), null, 'draft');
+    store_update('posts', 'posts', function (array &$posts): void { $posts[0]['created'] = '2026-01-05T10:00:00+01:00'; });
+    eq(date('Y-m-d'), post_update($d['id'], sample_post(['date' => '2026-01-05']), null, 'published')['date'], 'dnešný');
+    $e = post_create(sample_post(['date' => '2026-01-05']), null, 'draft');
+    eq('2025-12-24', post_update($e['id'], sample_post(['date' => '2025-12-24']), null, 'published')['date'], 'ručne zadaný ostane');
+});

@@ -202,9 +202,70 @@ function maintenance_daily(?int $now = null): bool
     foreach (glob(data_dir() . '/backup/*-pred-zmazanim-*.json') ?: [] as $f) {
         if ((int)@filemtime($f) < $limit) @unlink($f);
     }
+    if (function_exists('posts_sweep_staged')) posts_sweep_staged($now);
+    foreach (glob(data_dir() . '/tmp/up_*') ?: [] as $f) {           // zvyšky po prerušenom nahrávaní
+        if ((int)@filemtime($f) < $now - 86400) @unlink($f);
+    }
     // starší kôš priamo v uploads/.trash (verzia z 2026-10-18) — dobehnúť a zmazať
     foreach (glob(uploads_dir() . '/.trash/*__*') ?: [] as $f) {
         if (is_file($f) && (int)@filemtime($f) < $limit) @unlink($f);
     }
     return true;
+}
+
+/*
+ * Nahrávanie bez PHP upload_tmp_dir: niektoré hostingy (Webglobe) majú dočasný priečinok PHP nezapisovateľný
+ * (UPLOAD_ERR_NO_TMP_DIR) — klasický multipart upload tam nefunguje vôbec. Admin preto posiela fotky ako JSON
+ * {full: base64, thumb: base64}; telo do 2 MB drží PHP v pamäti. Súbory si zapíšeme do vlastného data/tmp.
+ */
+const UPLOAD_JSON_MAX = 1900000;   // bajtov tela (pod 2 MB — inak by PHP potreboval dočasný súbor)
+
+function request_is_json(): bool
+{
+    return str_starts_with(strtolower((string)($_SERVER['CONTENT_TYPE'] ?? '')), 'application/json');
+}
+
+/** Vstup API: JSON telo alebo klasický $_POST. */
+function api_input(): array
+{
+    static $in = null;
+    if ($in !== null) return $in;
+    if (!request_is_json()) return $in = $_POST;
+    $raw = (string)file_get_contents('php://input', false, null, 0, UPLOAD_JSON_MAX + 1);
+    if (strlen($raw) > UPLOAD_JSON_MAX) throw new UploadException('Fotka je príliš veľká — skús menšiu.');
+    $data = json_decode($raw, true);
+    return $in = is_array($data) ? $data : [];
+}
+
+/** base64 z JSON → dočasný súbor v data/tmp (nie v priečinku hostingu); null = pole chýba. */
+function upload_temp_from_b64(mixed $b64): ?array
+{
+    if (!is_string($b64) || $b64 === '') return null;
+    $bytes = base64_decode($b64, true);
+    if ($bytes === false || $bytes === '') throw new UploadException('Fotku sa nepodarilo nahrať, skús znova.');
+    if (strlen($bytes) > UPLOAD_MAX_BYTES) throw new UploadException('Fotka je príliš veľká (max 5 MB).');
+    $dir = data_dir() . '/tmp';
+    if (!is_dir($dir)) @mkdir($dir, 0775, true);
+    $path = $dir . '/up_' . bin2hex(random_bytes(8));
+    if (@file_put_contents($path, $bytes) !== strlen($bytes)) {
+        @unlink($path);
+        throw new UploadException('Fotku sa nepodarilo uložiť, skús znova.');
+    }
+    return ['name' => 'foto', 'type' => '', 'tmp_name' => $path, 'error' => UPLOAD_ERR_OK, 'size' => strlen($bytes)];
+}
+
+/** Fotka z API: JSON (full + thumb ako base64) alebo multipart polia full/thumb. null = žiadna fotka. */
+function upload_from_api(string $subdir, string $base): ?array
+{
+    if (!request_is_json()) return upload_from_request('full', 'thumb', $subdir, $base);
+    $in = api_input();
+    $full = upload_temp_from_b64($in['full'] ?? null);
+    $thumb = null;
+    try {
+        if ($full === null) return null;
+        $thumb = upload_temp_from_b64($in['thumb'] ?? null);
+        return upload_store_pair($full, $thumb, $subdir, $base, false);
+    } finally {
+        foreach ([$full, $thumb] as $f) if ($f) @unlink($f['tmp_name']);
+    }
 }
