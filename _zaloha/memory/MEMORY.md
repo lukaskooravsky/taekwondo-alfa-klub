@@ -4,4 +4,5 @@
 - [Používateľ Lukáš](user-lukas.md) — pushuje ako lukaskooravsky; DusanOravsky = otcov účet
 - [Ukladaj priebežne](feedback-ukladaj-priebezne.md) — commit+push a pamäť po každom kroku; na konci git+FTP+docs+záloha pamäte
 - [Review na 0/0/0/0](feedback-review-nulove.md) — spec, plán aj hotový web kriticky revidovať až na nuly
+- [Webglobe PHP tmp](reference-webglobe-php-tmp.md) — tmp nezapisovateľný: relácie aj uploady treba riešiť cez vlastný data/
 - [Lokálne PHP](reference-local-php.md) — prenosné PHP 8.3 v C:\Users\lukas\tools\php83 (winget chcel UAC)

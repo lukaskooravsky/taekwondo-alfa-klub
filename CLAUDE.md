@@ -21,6 +21,13 @@ Web pre klub **ALFA Taekwondo Club Bratislava** (ITF Taekwon-Do): verejné strá
   musia sedieť s `admin/admin.js`.**
 - SEO/AI: `inc/seo.php` (canonical, Open Graph, schema.org SportsClub/NewsArticle), `robots.php`, `sitemap.php`,
   `llms.php`, `rss.php` (cez rewrite v `.htaccess` ako `/robots.txt`, `/sitemap.xml`, `/llms.txt`).
+- **Koncepty:** aktuality aj albumy majú `status` (`draft` / `published`, chýbajúci = zverejnené). Verejne len
+  `posts_public()` / `albums_public()`; koncept vidí cez priamu adresu len prihlásený tréner (`admin_viewer()`, pásik + noindex).
+  Tlačidlá: prvé bez `name` = ponechať stav (Enter nikdy nezverejní), `name=publish` / `name=draft`. Nový album = koncept.
+- **Nahrávanie fotiek ide cez JSON (base64), nie multipart:** Webglobe má `upload_tmp_dir` nezapisovateľný (UPLOAD_ERR_NO_TMP_DIR)
+  a nedá sa to zmeniť v `.user.ini`. Prehliadač fotku zmenší (WebP/JPEG) a pošle JSON do `admin/api/*` (`upload_from_api`,
+  telo pod 2 MB — inak by PHP potreboval dočasný súbor); súbory idú cez vlastný `data/tmp`. Titulná fotka aktuality sa nahrá
+  vopred (`api/post-image.php`) a formulár pošle len `image_ref`. Multipart ostal ako záloha pre bežné hostingy.
 - Bezpečnosť: bcrypt, rate-limit (5 pokusov/IP, globálny strop 50 — dôveryhodné zariadenie ho obíde), CSRF (prihlásenie
   cez cookie, inde cez reláciu), vlastný session handler (`AlfaSessionHandler` — Webglobe vnucuje nezapisovateľný
   `session.save_path`), bezpečnostné hlavičky `send_security_headers()`, HTTPS pre admin.
@@ -46,7 +53,8 @@ js/main.js      menu, scroll-reveal, lightbox (klávesnica, šípky), formuláre
 assets/         obrázky, fonty, vendor/quill
 seed/           ukážkový obsah pre inštaláciu
 tests/run.php   testy (php tests/run.php [filter])
-tools/          new-install-token.php
+tools/          new-install-token.php; e2e/ = testy v prehliadači (Chrome cez DevTools, viď tools/e2e/README.md)
+NAVOD-PRE-TRENERA.md  návod na administráciu pre trénera
 ```
 
 ## Dizajn (premenné v `css/style.css`)
@@ -65,14 +73,19 @@ tools/          new-install-token.php
 - **Rozvrh**: tabuľka `.schedule` v `o-nas.php` a `index.php`.
 - **Fotky stránok**: `assets/` (hlavná akčná fotka `assets/extrakt.jpg`, 966×760). Disciplíny: `assets/disc-*.jpg`
   (inline `style="background-image:url('assets/…')"` v `index.php`).
-- Po zmene: testy, commit + push, nahrať zmenené súbory cez FTP (`NASADENIE.md` časť 8).
+- Po zmene: `php tests/run.php` **a** pri zmene adminu aj `node tools/e2e/e2e.mjs` (kliky v prehliadači), commit + push,
+  nahrať zmenené súbory cez FTP (`NASADENIE.md` časť 8). Pri zmene ovládania aktualizuj `NAVOD-PRE-TRENERA.md`.
+- **Pozor:** Quill má `.ql-container`/`.ql-editor` `height:100%` — v grid formulári to editor natiahne cez tlačidlá
+  (neviditeľne ich prekryje). V `admin.css` je `height:auto`; po zmenách CSS over `tools/e2e/probe-buttons.mjs`.
+- Emoji v editore: len také, ktoré zobrazí aj Windows 10 (Unicode ≤ 12; napr. 🥷 🫡 🫶 sú štvorčeky).
 
 ## Čo ešte treba doriešiť (pred ostrým spustením)
 - [ ] Reálne tréningové fotky, **logo v priehľadnom PNG**; zmazať ukážkové aktuality/album v admine.
 - [ ] Skontrolovať texty (Čo je taekwondo, Pásy, O nás) a stránku Ochrana osobných údajov (doplniť IČO/sídlo klubu, ak existuje).
 - [ ] Ostrá doména + hosting → `NASADENIE.md` časť 10 (`SITE_URL`, `SITE_INDEX = true`, Search Console, Firemný profil Google).
 - [ ] Vypnúť GitHub Pages, zlúčiť `cms-admin` do `main`.
-- [x] Admin (aktuality, galéria, editor, filter), SEO/AI, GDPR stránka, bezpečnosť — hotové (2026-10-18).
+- [x] Admin (aktuality, galéria, editor, filter, koncepty), SEO/AI, GDPR stránka, bezpečnosť — hotové (2026-10-18/19),
+      6 kôl nezávislej kritickej revízie (posledné 0/0/0/3, opravené) + end-to-end test naživo (22/22).
 
 ## Fakty o klube (aktuálne v obsahu a v `inc/site.php`)
 - Tréner: **Ľubomír Závodný**, IV. Dan čierny pás, Majster Európy.

@@ -30,6 +30,8 @@ Overené na: Webglobe (dočasná ukážka `alfa.oravsky.sk`, PHP 8.4, nginx pred
 5. Prihlásenie: `https://<doména>/admin/`. Token sa sám zmaže.
 
 ## 5. Kontroly po nasadení
+Najspoľahlivejšie: end-to-end test v prehliadači `node tools/e2e/e2e.mjs https://<doména> cookies.txt <foto.jpg>`
+(postup v `tools/e2e/README.md`) — vytvorí koncept, zverejní ho s fotkou, album s fotkou, a všetko zas zmaže. Ručne:
 - `https://<doména>/data/auth.json`, `/data/posts.json` → **403 alebo 404** (v `data/` je aj kôš zmazaných fotiek `data/trash/`).
   Ak vráti **200** (nginx servíruje súbory priamo): vytvor priečinok `alfa-data` **o úroveň vyššie** ako koreň webu, presuň doň obsah `data/` a `data/` zmaž.
 - `/inc/auth.php`, `/install-token.php` → **403**; `http://…/admin/` → presmeruje na `https://`.
@@ -39,6 +41,9 @@ Overené na: Webglobe (dočasná ukážka `alfa.oravsky.sk`, PHP 8.4, nginx pred
 ## 6. Riešenie problémov
 - **Chyba 500 hneď po nahratí** — zakomentuj (`#`) v `.htaccess` riadky `Options -Indexes` a `AddDefaultCharset UTF-8`; inak pozri chybový log hostingu.
 - **„Príliš veľa presmerovaní“ na /admin/** — proxy neoznamuje HTTPS. Zakomentuj 4 riadky bloku „Admin a inštalácia len cez HTTPS“ v `.htaccess`; ak nepomôže, v `inc/bootstrap.php` vo `require_https()` daj na začiatok `return;`.
+- **Fotky sa nenahrajú („Fotku sa nepodarilo nahrať“)** — admin posiela fotky ako JSON a ukladá ich cez vlastný `data/tmp`,
+  takže nepotrebuje dočasný priečinok PHP (Webglobe ho má nezapisovateľný). Skontroluj, že `data/` a `uploads/` sú zapisovateľné.
+  Fotka po zmenšení musí byť pod ~1,4 MB (bežne má 100–500 kB).
 - **„Platnosť formulára vypršala“ pri každom odoslaní** — relácie sa neukladajú. Web ich ukladá sám do `data/sessions` (nezávisle od nastavení hostingu); skontroluj, že `data/` je zapisovateľný.
 - **Certifikát pre subdoménu** — vo Webglobe: Hosting → Web → Subdomény (vytvoriť) a SSL certifikáty (vystaviť aj pre subdoménu); trvá pár minút.
 
