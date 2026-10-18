@@ -2,6 +2,7 @@
 declare(strict_types=1);
 // Nahratie fotky vloženej do textu v editore (aktualita, popis albumu) → uploads/inline/
 require __DIR__ . '/../../inc/bootstrap.php';
+send_security_headers(true);
 auth_start_session();
 header('Content-Type: application/json; charset=utf-8');
 

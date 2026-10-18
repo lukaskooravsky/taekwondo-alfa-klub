@@ -61,8 +61,10 @@ function render_post_article(array $p): string
 
 function render_gallery_figure(array $photo, string $alt): string
 {
-    return '<figure class="reveal"><img src="' . e(upload_url($photo['thumb'])) . '" data-full="' . e(upload_url($photo['full']))
-        . '" alt="' . e($alt) . '" loading="lazy"></figure>';
+    $size = !empty($photo['w']) && !empty($photo['h'])
+        ? ' width="' . (int)$photo['w'] . '" height="' . (int)$photo['h'] . '"' : '';
+    return '<figure class="reveal"><a href="' . e(upload_url($photo['full'])) . '" data-lightbox aria-label="' . e($alt) . ' — zväčšiť fotku">'
+        . '<img src="' . e(upload_url($photo['thumb'])) . '"' . $size . ' alt="' . e($alt) . '" loading="lazy"></a></figure>';
 }
 
 function render_album_tile(array $a): string

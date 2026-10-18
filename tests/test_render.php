@@ -18,10 +18,11 @@ test('post_image použije náhľad z uploads', function () {
         post_image(['image' => ['full' => 'posts/p_a.webp', 'thumb' => 'posts/p_a_t.webp']]));
 });
 
-test('render_gallery_figure: náhľad + data-full pre lightbox', function () {
-    $html = render_gallery_figure(['full' => 'albums/a_x/f_1.webp', 'thumb' => 'albums/a_x/f_1_t.webp'], 'Album "1"');
+test('render_gallery_figure: náhľad v odkaze na plnú fotku (lightbox, klávesnica, bez JS)', function () {
+    $html = render_gallery_figure(['full' => 'albums/a_x/f_1.webp', 'thumb' => 'albums/a_x/f_1_t.webp', 'w' => 1600, 'h' => 900], 'Album "1"');
     ok(str_contains($html, 'src="uploads/albums/a_x/f_1_t.webp"'));
-    ok(str_contains($html, 'data-full="uploads/albums/a_x/f_1.webp"'));
+    ok(str_contains($html, '<a href="uploads/albums/a_x/f_1.webp" data-lightbox'), $html);
+    ok(str_contains($html, 'width="1600" height="900"'), 'rozmery proti posunu stránky');
     ok(str_contains($html, 'alt="Album &quot;1&quot;"'));
 });
 

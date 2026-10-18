@@ -140,11 +140,38 @@ function upload_from_request(string $fullField, ?string $thumbField, string $sub
     return upload_store_pair($full, $thumbField !== null ? upload_field($thumbField) : null, $subdir, $base);
 }
 
+const UPLOAD_TRASH_DAYS = 30;
+
+function upload_trash_dir(): string { return uploads_dir() . '/.trash'; }
+
+/**
+ * „Zmazaná“ fotka ide do koša uploads/.trash (zvonku neprístupný) a natrvalo zmizne po UPLOAD_TRASH_DAYS dňoch.
+ * Po obnove zálohy data/backup/*.json sa dá vrátiť (NASADENIE.md). Názov v koši: <čas>__<cesta s __ namiesto />.
+ */
+function upload_trash_file(string $path, string $rel): void
+{
+    $trash = upload_trash_dir();
+    if (!is_dir($trash)) @mkdir($trash, 0775, true);
+    $to = $trash . '/' . date('Ymd-His') . '__' . str_replace('/', '__', $rel);
+    if (!is_dir($trash) || !@rename($path, $to)) @unlink($path);    // bez koša aspoň zmazať
+    if (random_int(1, 20) === 1) upload_trash_purge();
+}
+
+function upload_trash_purge(?int $now = null): int
+{
+    $limit = ($now ?? time()) - UPLOAD_TRASH_DAYS * 86400;
+    $n = 0;
+    foreach (glob(upload_trash_dir() . '/*__*') ?: [] as $f) {
+        if (is_file($f) && (int)@filemtime($f) < $limit && @unlink($f)) $n++;
+    }
+    return $n;
+}
+
 function upload_delete(?string $rel): void
 {
     if ($rel === null || !preg_match(UPLOAD_REL_RE, $rel)) return;
     $path = upload_path($rel);
-    if (is_file($path)) @unlink($path);
+    if (is_file($path)) upload_trash_file($path, $rel);
 }
 
 function upload_delete_dir(string $albumId): void
@@ -152,6 +179,8 @@ function upload_delete_dir(string $albumId): void
     if (!preg_match('~^a_[a-z0-9]{6,32}$~D', $albumId)) return;
     $dir = upload_path("albums/$albumId");
     if (!is_dir($dir)) return;
-    foreach (glob("$dir/*") ?: [] as $f) @unlink($f);
+    foreach (glob("$dir/*") ?: [] as $f) {
+        if (is_file($f)) upload_trash_file($f, "albums/$albumId/" . basename($f));
+    }
     @rmdir($dir);
 }

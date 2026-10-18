@@ -27,12 +27,12 @@ require __DIR__ . '/inc/layout-header.php';
         <p class="hero-claim">Bojové umenie na rozvoj sily, kondície a obratnosti.</p>
         <p class="lead">Klub ALFA privíta deti aj dospelých — od úplných začiatočníkov po pokročilých. Tréningy vedie <strong class="text-gold">Ľubomír Závodný</strong>, IV. Dan čierny pás a Majster Európy.</p>
         <div class="hero-actions">
-          <a class="btn btn-primary" href="kontakty.html#prihlaska">Príď na skúšobnú hodinu →</a>
+          <a class="btn btn-primary" href="kontakty.php#prihlaska">Príď na skúšobnú hodinu →</a>
           <a class="btn btn-ghost" href="#rozvrh">Rozvrh tréningov</a>
         </div>
       </div>
       <figure class="hero-figure">
-        <img src="assets/extrakt.png" alt="Tréning taekwonda v klube ALFA">
+        <img src="assets/extrakt.jpg" width="966" height="760" alt="Tréning taekwonda v klube ALFA">
       </figure>
     </div>
   </section>
@@ -139,7 +139,7 @@ require __DIR__ . '/inc/layout-header.php';
   <section style="background:var(--ink-2);border-block:1px solid var(--line);">
     <div class="container split">
       <div class="split-media reveal">
-        <img src="assets/extrakt.png" alt="Ľubomír Závodný">
+        <img src="assets/extrakt.jpg" width="966" height="760" alt="Ľubomír Závodný">
       </div>
       <div class="reveal">
         <span class="eyebrow">Tréner</span>
@@ -150,7 +150,7 @@ require __DIR__ . '/inc/layout-header.php';
           <li>Tréningy pre deti aj dospelých, začiatočníkov aj pokročilých</li>
           <li>Príprava na skúšky technických stupňov a súťaže</li>
         </ul>
-        <div style="margin-top:2rem;"><a class="btn btn-ghost" href="o-nas.html">Viac o klube →</a></div>
+        <div style="margin-top:2rem;"><a class="btn btn-ghost" href="o-nas.php">Viac o klube →</a></div>
       </div>
     </div>
   </section>
@@ -225,7 +225,7 @@ require __DIR__ . '/inc/layout-header.php';
     <div class="container cta-inner reveal">
       <h2>Príď si to vyskúšať</h2>
       <p>Prvá tréningová hodina je zdarma a nezáväzne. Stačí vyplniť prihlášku a ozveme sa ti.</p>
-      <a class="btn btn-primary" href="kontakty.html#prihlaska">Prihlásiť sa na skúšobnú hodinu →</a>
+      <a class="btn btn-primary" href="kontakty.php#prihlaska">Prihlásiť sa na skúšobnú hodinu →</a>
     </div>
   </section>
 

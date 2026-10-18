@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require __DIR__ . '/inc/bootstrap.php';
 require_https();
+send_security_headers(true);
 header('X-Robots-Tag: noindex, nofollow');
 
 function install_stop(string $msg): never

@@ -1,31 +1,10 @@
-<!DOCTYPE html>
-<html lang="sk">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kontakt &amp; prihláška — ALFA Taekwondo Club Bratislava</title>
-  <meta name="description" content="Kontakt na klub ALFA Taekwondo Bratislava a prihláška na skúšobnú hodinu zdarma. ZŠ Holíčska 50, tel. 0911 818 815.">
-  <link rel="stylesheet" href="css/fonts.css">
-  <script>document.documentElement.className += " js";</script>
-  <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-  <header class="site-header">
-    <div class="container nav">
-      <a class="brand" href="index.php"><img src="assets/logo-mark.jpg" alt="ALFA Taekwondo"><span class="brand-txt"><b>ALFA</b><span>Taekwondo · Bratislava</span></span></a>
-      <button class="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
-      <ul class="nav-links">
-        <li><a href="index.php">Domov</a></li>
-        <li><a href="co-je-taekwondo.html">Čo je taekwondo</a></li>
-        <li><a href="pasy.html">Pásy</a></li>
-        <li><a href="aktuality.php">Aktuality</a></li>
-        <li><a href="galeria.php">Galéria</a></li>
-        <li><a href="o-nas.html">O nás</a></li>
-        <li><a href="kontakty.html">Kontakt</a></li>
-        <li class="nav-cta"><a class="btn btn-primary" href="#prihlaska">Skúšobná hodina</a></li>
-      </ul>
-    </div>
-  </header>
+<?php
+declare(strict_types=1);
+require __DIR__ . '/inc/bootstrap.php';
+
+$page = ['title' => 'Kontakt &amp; prihláška', 'description' => 'Kontakt na klub ALFA Taekwondo Bratislava a prihláška na skúšobnú hodinu zdarma. ZŠ Holíčska 50, tel. 0911 818 815.'];
+require __DIR__ . '/inc/layout-header.php';
+?>
 
   <section class="page-hero">
     <span class="kr-bg" aria-hidden="true">연락</span>
@@ -55,11 +34,11 @@
       <div class="form-card reveal">
         <h3>Napíš nám</h3>
         <p>Odpovieme ti čo najskôr.</p>
-        <form data-demo>
+        <form data-demo method="post" action="mailto:<?= e(CLUB['email']) ?>?subject=Spr%C3%A1va%20z%20webu" enctype="text/plain">
           <div class="field"><label for="c-meno">Meno a priezvisko</label><input id="c-meno" name="meno" type="text" required></div>
           <div class="field"><label for="c-email">E-mail</label><input id="c-email" name="email" type="email" required></div>
           <div class="field"><label for="c-sprava">Správa</label><textarea id="c-sprava" name="sprava" required></textarea></div>
-          <label class="checkbox"><input type="checkbox" required> Súhlasím so spracovaním osobných údajov za účelom vybavenia mojej správy. <a href="#gdpr" style="color:var(--gold-2)">Viac</a></label>
+          <label class="checkbox"><input type="checkbox" required> Beriem na vedomie, ako klub spracúva moje údaje (len na odpoveď na správu). <a href="ochrana-osobnych-udajov.php" style="color:var(--gold-2)">Ochrana osobných údajov</a></label>
           <button class="btn btn-primary" type="submit">Odoslať správu</button>
         </form>
       </div>
@@ -75,7 +54,7 @@
         <p class="lead">Vyplň krátku prihlášku a my sa ti ozveme s termínom prvej tréningovej hodiny — úplne zadarmo.</p>
       </div>
       <div class="form-card reveal" style="max-width:720px;">
-        <form data-demo="prihlaska">
+        <form data-demo="prihlaska" method="post" action="mailto:<?= e(CLUB['email']) ?>?subject=Prihl%C3%A1%C5%A1ka%20na%20sk%C3%BA%C5%A1obn%C3%BA%20hodinu" enctype="text/plain">
           <div class="field"><label for="p-meno">Meno a priezvisko cvičenca</label><input id="p-meno" name="meno" type="text" required></div>
           <div class="field row2">
             <div><label for="p-prekoho">Prihlasujem</label>
@@ -98,24 +77,12 @@
             <div><label for="p-email">E-mail</label><input id="p-email" name="email" type="email" required></div>
           </div>
           <div class="field"><label for="p-sprava">Poznámka (nepovinné)</label><textarea id="p-sprava" name="sprava" placeholder="Napr. vek dieťaťa, doterajšie skúsenosti…"></textarea></div>
-          <label class="checkbox"><input type="checkbox" required> Súhlasím so spracovaním osobných údajov za účelom prihlásenia na tréning. Pri deťoch prihlášku podáva rodič/zákonný zástupca. <a href="#gdpr" style="color:var(--gold-2)">Viac</a></label>
+          <label class="checkbox"><input type="checkbox" required> Beriem na vedomie, ako klub spracúva údaje z prihlášky. Pri deťoch prihlášku podáva rodič/zákonný zástupca. <a href="ochrana-osobnych-udajov.php" style="color:var(--gold-2)">Ochrana osobných údajov</a></label>
           <button class="btn btn-primary" type="submit">Prihlásiť sa na skúšobnú hodinu →</button>
-          <p class="form-note" id="gdpr">Vaše údaje použijeme iba na kontaktovanie ohľadom tréningu. Neposkytujeme ich tretím stranám. (Znenie zásad ochrany osobných údajov doplníme pri spustení webu.)</p>
+          <p class="form-note" id="gdpr">Údaje použijeme iba na kontaktovanie ohľadom tréningu a neposkytujeme ich ďalej. Podrobnosti: <a href="ochrana-osobnych-udajov.php" style="color:var(--gold-2)">ochrana osobných údajov</a>.</p>
         </form>
       </div>
     </div>
   </section>
 
-  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-grid">
-        <div><a class="brand" href="index.php"><img src="assets/logo-wordmark.jpg" alt="ALFA Taekwondo Bratislava"></a><p class="f-about">Klub ITF Taekwon-Do v Bratislave pod vedením Ľubomíra Závodného. Bojové umenie na rozvoj sily, kondície a obratnosti.</p></div>
-        <div class="footer-col"><h4>Web</h4><ul><li><a href="co-je-taekwondo.html">Čo je taekwondo</a></li><li><a href="pasy.html">Pásy</a></li><li><a href="aktuality.php">Aktuality</a></li><li><a href="galeria.php">Galéria</a></li><li><a href="o-nas.html">O nás</a></li></ul></div>
-        <div class="footer-col"><h4>Kontakt</h4><ul><li><a href="tel:+421911818815">0911 818 815</a></li><li><a href="mailto:lub.zavodny1@gmail.com">lub.zavodny1@gmail.com</a></li><li>ZŠ Holíčska 50, Bratislava</li><li><a href="#prihlaska">Skúšobná hodina</a></li></ul></div>
-      </div>
-      <div class="footer-bottom"><span>© <span data-year>2026</span> ALFA Taekwondo Club Bratislava · <span class="kr">태권도</span></span><span>ITF Taekwon-Do Slovakia</span></div>
-    </div>
-  </footer>
-  <script src="js/main.js"></script>
-</body>
-</html>
+<?php require __DIR__ . '/inc/layout-footer.php';

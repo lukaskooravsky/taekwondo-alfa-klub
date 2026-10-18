@@ -1,4 +1,4 @@
-/* ALFA Taekwondo — náčrt (demo) — interakcie */
+/* ALFA Taekwondo — interakcie (menu, animácie, galéria, formuláre) */
 (function () {
   "use strict";
 
@@ -6,16 +6,19 @@
   const toggle = document.querySelector(".nav-toggle");
   const links = document.querySelector(".nav-links");
   if (toggle && links) {
-    toggle.addEventListener("click", function () {
-      const open = links.classList.toggle("show");
+    function setMenu(open) {
+      links.classList.toggle("show", open);
       toggle.classList.toggle("open", open);
       toggle.setAttribute("aria-expanded", open ? "true" : "false");
-    });
+    }
+    toggle.setAttribute("aria-controls", "nav-links");
+    links.id = "nav-links";
+    toggle.addEventListener("click", function () { setMenu(!links.classList.contains("show")); });
     links.querySelectorAll("a").forEach(function (a) {
-      a.addEventListener("click", function () {
-        links.classList.remove("show");
-        toggle.classList.remove("open");
-      });
+      a.addEventListener("click", function () { setMenu(false); });
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && links.classList.contains("show")) { setMenu(false); toggle.focus(); }
     });
   }
 
@@ -25,6 +28,7 @@
   document.querySelectorAll(".nav-links a").forEach(function (a) {
     if (a.getAttribute("href") === navKey) {
       a.classList.add("active");
+      a.setAttribute("aria-current", "page");
     }
   });
 
@@ -46,22 +50,56 @@
   if (gallery) {
     const box = document.createElement("div");
     box.className = "lightbox";
-    box.innerHTML = '<button class="close" aria-label="Zavrieť">&times;</button><img alt="">';
+    box.setAttribute("role", "dialog");
+    box.setAttribute("aria-modal", "true");
+    box.setAttribute("aria-label", "Fotka");
+    box.innerHTML = '<button class="close" aria-label="Zavrieť">&times;</button>' +
+      '<button class="lb-nav lb-prev" aria-label="Predchádzajúca fotka">&#8249;</button><img alt="">' +
+      '<button class="lb-nav lb-next" aria-label="Ďalšia fotka">&#8250;</button>';
     document.body.appendChild(box);
     const boxImg = box.querySelector("img");
     const close = box.querySelector(".close");
+    // odkazy na plnú veľkosť fotky — fungujú aj bez JS a klávesnicou (Enter)
+    const items = Array.from(gallery.querySelectorAll("a[data-lightbox]"));
+    let current = -1, opener = null;
 
-    gallery.querySelectorAll("img").forEach(function (img) {
-      img.addEventListener("click", function () {
-        boxImg.src = img.getAttribute("data-full") || img.src;
-        boxImg.alt = img.alt;
-        box.classList.add("open");
-      });
+    function show(i) {
+      current = (i + items.length) % items.length;
+      const img = items[current].querySelector("img");
+      boxImg.src = items[current].getAttribute("href");
+      boxImg.alt = img ? img.alt : "";
+    }
+    function open(i) {
+      opener = document.activeElement;
+      show(i);
+      box.classList.add("open");
+      close.focus();
+    }
+    function hide() {
+      if (!box.classList.contains("open")) return;
+      box.classList.remove("open");
+      if (opener) opener.focus();
+    }
+    items.forEach(function (a, i) {
+      a.addEventListener("click", function (e) { e.preventDefault(); open(i); });
     });
-    function hide() { box.classList.remove("open"); }
+    box.querySelector(".lb-prev").addEventListener("click", function () { show(current - 1); });
+    box.querySelector(".lb-next").addEventListener("click", function () { show(current + 1); });
+    if (items.length < 2) box.querySelectorAll(".lb-nav").forEach(function (b) { b.hidden = true; });
     close.addEventListener("click", hide);
     box.addEventListener("click", function (e) { if (e.target === box) hide(); });
-    document.addEventListener("keyup", function (e) { if (e.key === "Escape") hide(); });
+    document.addEventListener("keydown", function (e) {
+      if (!box.classList.contains("open")) return;
+      if (e.key === "Escape") hide();
+      else if (e.key === "ArrowLeft") show(current - 1);
+      else if (e.key === "ArrowRight") show(current + 1);
+      else if (e.key === "Tab") {                       // fokus ostane v okne
+        const f = Array.from(box.querySelectorAll("button:not([hidden])"));
+        const idx = f.indexOf(document.activeElement);
+        e.preventDefault();
+        f[(idx + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
+      }
+    });
   }
 
   /* ---- Formuláre → e-mail (mailto:) ---- */

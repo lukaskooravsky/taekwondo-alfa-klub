@@ -53,7 +53,7 @@ body::before {
     radial-gradient(900px 500px at -10% 20%, rgba(200,160,78,0.06), transparent 55%);
 }
 
-img { max-width: 100%; display: block; }
+img { max-width: 100%; height: auto; display: block; }
 a { color: inherit; text-decoration: none; }
 
 /* --------- Typografia --------- */
@@ -213,10 +213,11 @@ section { padding-block: clamp(4rem, 9vw, 7.5rem); position: relative; }
     border-bottom: 1px solid var(--line);
     padding: 0.5rem var(--gutter) 1.2rem;
     transform: translateY(-120%);
-    transition: transform .3s ease;
+    visibility: hidden;                 /* zatvorené menu nie je v poradí tabulátora ani pre čítačky */
+    transition: transform .3s ease, visibility 0s .3s;
     z-index: 40;
   }
-  .nav-links.show { transform: translateY(0); }
+  .nav-links.show { transform: translateY(0); visibility: visible; transition: transform .3s ease; }
   /* display:block → padding aj spodná čiara sa počítajú z celej šírky položky,
      takže oddeľovač je pod textom a neprechádza cezeň */
   .nav-links a { display: block; padding: 0.9rem 0.4rem; border-bottom: 1px solid var(--line); font-size: 1.15rem; }
@@ -302,7 +303,7 @@ section { padding-block: clamp(4rem, 9vw, 7.5rem); position: relative; }
     position: absolute; inset: 0; z-index: 0;
     /* cover = celoplošný podmaz od kraja po kraj (ako Pezinok); stred obrázka
        (kopajúca akcia + zlaté „A") ostáva, ITF odznaky z rohu sa orežú */
-    background: url("../assets/extrakt.png") center 38% / cover no-repeat;
+    background: url("../assets/extrakt.jpg") center 38% / cover no-repeat;
     background-color: var(--ink);
   }
   /* stmavenie – hore ľahšie (vidno kopajúcich), za textom výraznejšie kvôli čitateľnosti */
@@ -757,3 +758,13 @@ section { padding-block: clamp(4rem, 9vw, 7.5rem); position: relative; }
 .rich .ql-align-right img { margin-left: auto; }
 .rich .ql-align-justify { text-align: justify; }
 .rich [style*="background-color"] { padding: 0 0.15em; border-radius: 2px; }
+.pager { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: center; margin-top: 2.4rem; color: var(--muted); }
+
+.gallery a[data-lightbox] { display: block; height: 100%; }
+.gallery a[data-lightbox]:focus-visible { outline: 2px solid var(--gold-2); outline-offset: 2px; }
+.lightbox .lb-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 48px; height: 64px; font-size: 2.6rem; line-height: 1;
+  color: var(--bone); background: rgba(0, 0, 0, .45); border: 1px solid var(--line); cursor: pointer; }
+.lightbox .lb-prev { left: 12px; }
+.lightbox .lb-next { right: 12px; }
+.lightbox .lb-nav[hidden] { display: none; }
+.lightbox button:focus-visible { outline: 2px solid var(--gold-2); outline-offset: 2px; }

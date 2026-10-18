@@ -84,3 +84,17 @@ test('upload_field ignoruje chýbajúce a prázdne polia', function () {
     eq(null, upload_field('chyba'));
     ok(is_array(upload_field('b')));
 });
+
+test('zmazaná fotka ide do koša a po 30 dňoch sa vymaže', function () {
+    ensure_storage();
+    ok(str_contains((string)file_get_contents(upload_trash_dir() . '/.htaccess'), 'Require all denied'));
+    $r = upload_store_pair(fake_file(fixture_png(tmp('a.png'))), fake_file(fixture_png(tmp('b.png'))), 'posts', 'p_trash1', false);
+    upload_delete($r['full']);
+    ok(!is_file(upload_path($r['full'])), 'z webu preč');
+    $inTrash = glob(upload_trash_dir() . '/*__posts__p_trash1.png');
+    eq(1, count($inTrash), 'v koši');
+    eq(0, upload_trash_purge(), 'čerstvé ostanú');
+    touch($inTrash[0], time() - (UPLOAD_TRASH_DAYS + 1) * 86400);
+    eq(1, upload_trash_purge());
+    ok(is_file(upload_trash_dir() . '/.htaccess'), '.htaccess koša ostane');
+});

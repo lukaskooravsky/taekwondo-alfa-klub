@@ -3,6 +3,7 @@ declare(strict_types=1);
 // Náhľad v admine: text presne tak, ako ho server uloží (po vyčistení cez rich_clean).
 // mode=inline|full → jedno pole; mode=post → karta do zoznamu + celý článok aktuality.
 require __DIR__ . '/../../inc/bootstrap.php';
+send_security_headers(true);
 auth_start_session();
 header('Content-Type: application/json; charset=utf-8');
 

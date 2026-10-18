@@ -15,9 +15,15 @@ if ($albumId !== '' && (!$album || !$album['photos'])) {
     not_found('Tento album neexistuje alebo je prázdny.', 'galeria.php', '← Všetky albumy');
 }
 
-$page = $album
-    ? ['title' => $album['title'] . ' — Galéria', 'description' => 'Fotky z albumu ' . $album['title'] . ' — ALFA Taekwondo Club Bratislava.']
-    : ['title' => 'Galéria', 'description' => 'Fotky z tréningov, skúšok a súťaží klubu ALFA Taekwondo Bratislava.'];
+if ($album) {
+    $cover = album_cover($album);
+    $desc = rich_text($album['description'] ?? '');
+    $page = ['title' => $album['title'] . ' — Galéria', 'path' => 'galeria.php?album=' . rawurlencode($album['id']),
+        'description' => ($desc !== '' ? $desc . ' ' : '') . 'Fotky z albumu ' . $album['title'] . ' — ' . SITE_NAME . '.',
+        'image' => $cover ? upload_url($cover['full']) : SEO_DEFAULT_IMAGE];
+} else {
+    $page = ['title' => 'Galéria', 'description' => 'Fotky z tréningov, skúšok a súťaží klubu ALFA Taekwondo Bratislava.'];
+}
 require __DIR__ . '/inc/layout-header.php';
 ?>
 

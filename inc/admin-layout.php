@@ -95,8 +95,8 @@ function admin_header(string $title, bool $nav = true): void
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
   <title><?= e($title) ?> — Admin ALFA</title>
-  <link rel="stylesheet" href="../css/fonts.css">
-  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="<?= e(asset('css/fonts.css', '../')) ?>">
+  <link rel="stylesheet" href="<?= e(asset('admin/admin.css', '../')) ?>">
 </head>
 <body>
 <header class="a-top">
@@ -123,10 +123,10 @@ function admin_footer(bool $rich = false): void
     ?>
 </main>
 <?php if ($rich): ?>
-<link rel="stylesheet" href="../assets/vendor/quill/quill.snow.css">
-<script src="../assets/vendor/quill/quill.js"></script>
+<link rel="stylesheet" href="<?= e(asset('assets/vendor/quill/quill.snow.css', '../')) ?>">
+<script src="<?= e(asset('assets/vendor/quill/quill.js', '../')) ?>"></script>
 <?php endif; ?>
-<script src="admin.js"></script>
+<script src="<?= e(asset('admin/admin.js', '../')) ?>"></script>
 </body>
 </html>
 <?php

@@ -11,6 +11,12 @@ RewriteBase /
 RewriteRule ^index\.html$ ./ [R=301,L]
 RewriteRule ^aktuality\.html$ aktuality.php [R=301,L]
 RewriteRule ^galeria\.html$ galeria.php [R=301,L]
+RewriteRule ^(co-je-taekwondo|pasy|o-nas|kontakty)\.html$ $1.php [R=301,L]
+
+# SEO a AI: generované súbory (zoznam stránok, pravidlá pre roboty, prehľad pre AI asistentov)
+RewriteRule ^robots\.txt$ robots.php [L]
+RewriteRule ^sitemap\.xml$ sitemap.php [L]
+RewriteRule ^llms\.txt$ llms.php [L]
 
 # Admin a inštalácia len cez HTTPS (Websupport má pred Apache nginx → X-Forwarded-Proto; localhost = vývoj)
 RewriteCond %{HTTPS} !=on
@@ -18,9 +24,26 @@ RewriteCond %{HTTP:X-Forwarded-Proto} !=https
 RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)(:[0-9]+)?$
 RewriteRule ^(admin(/|$)|install\.php) https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 
+# Cache v prehliadači: CSS/JS majú v adrese ?v=<čas zmeny> (asset() v inc/bootstrap.php), fotky v uploads/ sa nemenia
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType text/javascript "access plus 1 year"
+  ExpiresByType font/woff2 "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 30 days"
+  ExpiresByType image/png "access plus 30 days"
+  ExpiresByType image/webp "access plus 30 days"
+  ExpiresByType image/svg+xml "access plus 30 days"
+</IfModule>
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+</IfModule>
+
 # Interné súbory nie sú pre verejnosť
 RewriteRule ^(data|inc|tests|tools|seed|docs|_zaloha)(/|$) - [F,L]
 RewriteRule ^install-token\.php$ - [F,L]
 RewriteRule ^uploads/.*\.(php[0-9]?|phtml|phar)$ - [F,L]
+RewriteRule ^uploads/\.trash(/|$) - [F,L]
 RewriteRule (^|/)\.(git|user\.ini|htaccess) - [F,L]
 RewriteRule \.md$ - [F,L]

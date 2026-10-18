@@ -10,7 +10,8 @@ try {
 }
 if (!$post) not_found('Táto aktualita neexistuje alebo bola zmazaná.', 'aktuality.php', '← Všetky aktuality');
 
-$page = ['title' => $post['title'], 'description' => post_excerpt_text($post)];
+$page = ['title' => $post['title'], 'description' => post_excerpt_text($post), 'type' => 'article',
+    'path' => 'aktualita.php?id=' . rawurlencode($post['id']), 'image' => post_image($post)['full'], 'jsonld' => [post_jsonld($post)]];
 require __DIR__ . '/inc/layout-header.php';
 ?>
 

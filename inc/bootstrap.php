@@ -37,6 +37,7 @@ function ensure_storage(): void
         uploads_dir() => null, // PHP v uploads/ blokuje koreňový .htaccess (Options/RemoveHandler tu môžu dať chybu 500)
         uploads_dir() . '/posts' => null,
         uploads_dir() . '/inline' => null,
+        uploads_dir() . '/.trash' => "Require all denied\n", // kôš zmazaných fotiek
         uploads_dir() . '/albums' => null,
     ];
     foreach ($dirs as $dir => $htaccess) {
@@ -47,6 +48,16 @@ function ensure_storage(): void
             file_put_contents("$dir/.htaccess", $htaccess);
         }
     }
+}
+
+/**
+ * Cesta k CSS/JS s verziou podľa času zmeny (?v=…) — prehliadač ich smie dlho cachovať (.htaccess)
+ * a po nasadení novej verzie si ich aj tak stiahne znova. $path je relatívna ku koreňu webu.
+ */
+function asset(string $path, string $prefix = ''): string
+{
+    $mtime = @filemtime(ROOT . '/' . $path);
+    return $prefix . $path . ($mtime ? '?v=' . $mtime : '');
 }
 
 /** HTTPS priamo alebo cez proxy hostingu (Websupport má pred Apache nginx). */
@@ -67,6 +78,21 @@ function is_local_host(?array $server = null): bool
     return preg_match('/^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/D', $host) === 1;
 }
 
+/**
+ * Bezpečnostné hlavičky. Verejný web smie byť v rámci vlastného webu (náhľad v admine), admin nikde (clickjacking).
+ * HSTS len cez HTTPS — prehliadač si zapamätá, že web ide vždy šifrovane.
+ */
+function send_security_headers(bool $admin = false): void
+{
+    if (headers_sent()) return;
+    header('X-Content-Type-Options: nosniff');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+    header('Permissions-Policy: camera=(), microphone=(), geolocation=()');
+    header('X-Frame-Options: ' . ($admin ? 'DENY' : 'SAMEORIGIN'));
+    header("Content-Security-Policy: frame-ancestors " . ($admin ? "'none'" : "'self'") . "; base-uri 'self'; object-src 'none'");
+    if (request_is_https()) header('Strict-Transport-Security: max-age=31536000');
+}
+
 /** Admin a install len cez HTTPS (lokálny vývoj na localhost je výnimka). */
 function require_https(): void
 {
@@ -84,4 +110,5 @@ require_once __DIR__ . '/posts.php';
 require_once __DIR__ . '/albums.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/render.php';
+require_once __DIR__ . '/seo.php';
 require_once __DIR__ . '/install.php';

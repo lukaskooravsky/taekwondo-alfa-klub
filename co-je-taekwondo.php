@@ -1,31 +1,10 @@
-<!DOCTYPE html>
-<html lang="sk">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Čo je taekwondo — ALFA Taekwondo Club Bratislava</title>
-  <meta name="description" content="Čo je ITF Taekwon-Do: kórejské bojové umenie, jeho filozofia, princípy a čo tréning rozvíja u detí aj dospelých.">
-  <link rel="stylesheet" href="css/fonts.css">
-  <script>document.documentElement.className += " js";</script>
-  <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-  <header class="site-header">
-    <div class="container nav">
-      <a class="brand" href="index.php"><img src="assets/logo-mark.jpg" alt="ALFA Taekwondo"><span class="brand-txt"><b>ALFA</b><span>Taekwondo · Bratislava</span></span></a>
-      <button class="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
-      <ul class="nav-links">
-        <li><a href="index.php">Domov</a></li>
-        <li><a href="co-je-taekwondo.html">Čo je taekwondo</a></li>
-        <li><a href="pasy.html">Pásy</a></li>
-        <li><a href="aktuality.php">Aktuality</a></li>
-        <li><a href="galeria.php">Galéria</a></li>
-        <li><a href="o-nas.html">O nás</a></li>
-        <li><a href="kontakty.html">Kontakt</a></li>
-        <li class="nav-cta"><a class="btn btn-primary" href="kontakty.html#prihlaska">Skúšobná hodina</a></li>
-      </ul>
-    </div>
-  </header>
+<?php
+declare(strict_types=1);
+require __DIR__ . '/inc/bootstrap.php';
+
+$page = ['title' => 'Čo je taekwondo', 'description' => 'Čo je ITF Taekwon-Do: kórejské bojové umenie, jeho filozofia, princípy a čo tréning rozvíja u detí aj dospelých.'];
+require __DIR__ . '/inc/layout-header.php';
+?>
 
   <section class="page-hero">
     <span class="kr-bg" aria-hidden="true">태권도</span>
@@ -45,7 +24,7 @@
         <p class="lead">Náš klub sa venuje <strong class="text-gold">ITF Taekwon-Do</strong> (International Taekwon-Do Federation) — pôvodnej, tradičnej forme založenej generálom Choi Hong Hi. Kladie dôraz na precíznu techniku, silu vychádzajúcu z pohybu celého tela a na charakterový rozvoj cvičenca.</p>
         <p class="lead" style="margin-top:1rem;">Na tréningoch sa venujeme technikám rúk a nôh, formám (tul), sebaobrane, kondícii aj rešpektu voči sebe a ostatným.</p>
       </div>
-      <div class="split-media reveal"><img src="assets/extrakt.png" alt="Taekwondo tréning"></div>
+      <div class="split-media reveal"><img src="assets/extrakt.jpg" width="966" height="760" alt="Taekwondo tréning"></div>
     </div>
   </section>
 
@@ -78,20 +57,8 @@
         <div class="card reveal"><h3>Začiatočníci</h3><p>Začíname od úplných základov. Nepotrebuješ žiadnu prípravu — len chuť hýbať sa.</p></div>
         <div class="card reveal"><h3>Pokročilí</h3><p>Zdokonaľovanie techniky, príprava na skúšky pásov a súťaže pod odborným vedením.</p></div>
       </div>
-      <div style="margin-top:2.6rem;"><a class="btn btn-primary" href="kontakty.html#prihlaska">Vyskúšaj prvú hodinu zdarma →</a></div>
+      <div style="margin-top:2.6rem;"><a class="btn btn-primary" href="kontakty.php#prihlaska">Vyskúšaj prvú hodinu zdarma →</a></div>
     </div>
   </section>
 
-  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-grid">
-        <div><a class="brand" href="index.php"><img src="assets/logo-wordmark.jpg" alt="ALFA Taekwondo Bratislava"></a><p class="f-about">Klub ITF Taekwon-Do v Bratislave pod vedením Ľubomíra Závodného. Bojové umenie na rozvoj sily, kondície a obratnosti.</p></div>
-        <div class="footer-col"><h4>Web</h4><ul><li><a href="co-je-taekwondo.html">Čo je taekwondo</a></li><li><a href="pasy.html">Pásy</a></li><li><a href="aktuality.php">Aktuality</a></li><li><a href="galeria.php">Galéria</a></li><li><a href="o-nas.html">O nás</a></li></ul></div>
-        <div class="footer-col"><h4>Kontakt</h4><ul><li><a href="tel:+421911818815">0911 818 815</a></li><li><a href="mailto:lub.zavodny1@gmail.com">lub.zavodny1@gmail.com</a></li><li>ZŠ Holíčska 50, Bratislava</li><li><a href="kontakty.html#prihlaska">Skúšobná hodina</a></li></ul></div>
-      </div>
-      <div class="footer-bottom"><span>© <span data-year>2026</span> ALFA Taekwondo Club Bratislava · <span class="kr">태권도</span></span><span>ITF Taekwon-Do Slovakia</span></div>
-    </div>
-  </footer>
-  <script src="js/main.js"></script>
-</body>
-</html>
+<?php require __DIR__ . '/inc/layout-footer.php';
