@@ -29,6 +29,7 @@ function admin_filter_params(): array
         'q' => mb_substr(trim(input_str($_GET['q'] ?? '')), 0, 100),
         'year' => preg_match('/^\d{4}$/', $y = input_str($_GET['rok'] ?? '')) ? $y : '',
         'flag' => in_array($f = input_str($_GET['stav'] ?? ''), ['0', '1'], true) ? $f : '',
+        'status' => in_array($s = input_str($_GET['zverejnenie'] ?? ''), ['published', 'draft'], true) ? $s : '',
         'sort' => in_array($sort, ['new', 'old', 'az'], true) ? $sort : 'new',
     ];
 }
@@ -42,10 +43,12 @@ function admin_filter_bar(array $f, array $years, array $flags, int $shown, int 
     $opt = fn(string $v, string $label, string $cur) => '<option value="' . e($v) . '"' . ($v === $cur ? ' selected' : '') . '>' . e($label) . '</option>';
     $yearOpts = $opt('', 'Všetky roky', $f['year']);
     foreach ($years as $y) $yearOpts .= $opt((string)$y, (string)$y, $f['year']);
-    $active = $f['q'] !== '' || $f['year'] !== '' || $f['flag'] !== '' || $f['sort'] !== 'new';
+    $active = $f['q'] !== '' || $f['year'] !== '' || $f['flag'] !== '' || $f['status'] !== '' || $f['sort'] !== 'new';
     return '<form class="a-filter" method="get" role="search" data-filter>'
         . '<label class="a-filter-q"><span class="a-sr">Hľadať</span>'
         . '<input type="search" name="q" value="' . e($f['q']) . '" placeholder="' . e($placeholder) . '" autocomplete="off" enterkeyhint="search"></label>'
+        . '<label><span class="a-sr">Zverejnenie</span><select name="zverejnenie">' . $opt('', 'Zverejnené aj koncepty', $f['status'])
+        . $opt('published', 'Len zverejnené', $f['status']) . $opt('draft', 'Len koncepty', $f['status']) . '</select></label>'
         . '<label><span class="a-sr">Rok</span><select name="rok">' . $yearOpts . '</select></label>'
         . '<label><span class="a-sr">' . e($flags[0]) . '</span><select name="stav">'
         . $opt('', $flags[0] . ': všetky', $f['flag']) . $opt('1', $flags[1], $f['flag']) . $opt('0', $flags[2], $f['flag']) . '</select></label>'

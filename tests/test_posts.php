@@ -109,3 +109,16 @@ test('titulná fotka aktuality si pamätá rozmery a karta ich vypíše', functi
     ok(str_contains(render_post_card($p), 'width="1600" height="900"'));
     ok(str_contains(render_post_article($p), 'width="1600" height="900"'));
 });
+
+test('koncept aktuality: nie je verejný, stav sa mení len tlačidlom, Enter stav ponechá', function () {
+    $d = post_create(sample_post(['title' => 'Koncept']), null, 'draft');
+    $p = post_create(sample_post(['title' => 'Verejná']), null);
+    ok(is_draft($d) && !is_draft($p));
+    eq(['Verejná'], array_column(posts_public(), 'title'));
+    eq(2, count(posts_all()), 'admin vidí oba');
+    eq('draft', post_update($d['id'], sample_post(['title' => 'Koncept 2']), null, status_from_request([]))['status'], 'Uložiť = ponechať');
+    eq('published', post_update($d['id'], sample_post(), null, status_from_request(['publish' => '1']))['status']);
+    eq('draft', post_update($d['id'], sample_post(), null, status_from_request(['draft' => '1']))['status']);
+    unset($p['status']);
+    ok(!is_draft($p), 'staré dáta bez stavu = zverejnené');
+});

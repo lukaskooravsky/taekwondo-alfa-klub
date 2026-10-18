@@ -15,9 +15,9 @@ try {
 $f = admin_filter_params();
 $items = array_map(fn(array $p): array => [
     'fold' => text_fold($p['title'] . ' ' . post_excerpt_text($p) . ' ' . (!empty($p['rich']) ? rich_text($p['body']) : $p['body'])),
-    'year' => substr($p['date'], 0, 4), 'flag' => empty($p['image']) ? '0' : '1', 'date' => $p['date'], 'title' => $p['title'], 'row' => $p,
+    'year' => substr($p['date'], 0, 4), 'flag' => empty($p['image']) ? '0' : '1', 'date' => $p['date'], 'title' => $p['title'], 'status' => is_draft($p) ? 'draft' : 'published', 'row' => $p,
 ], $posts);
-$shown = admin_filter($items, $f['q'], $f['year'], $f['flag'], $f['sort']);
+$shown = admin_filter($items, $f['q'], $f['year'], $f['flag'], $f['sort'], $f['status']);
 $years = array_values(array_unique(array_column($items, 'year')));
 
 admin_header('Aktuality');
@@ -32,9 +32,9 @@ admin_header('Aktuality');
 <ul class="a-list" data-filter-list>
   <?php $shownIds = array_column(array_column($shown, 'row'), 'id');
   foreach (admin_filter($items, '', '', '', $f['sort']) as $it): $p = $it['row']; $img = post_image($p); ?>
-  <li class="a-item" data-fold="<?= e($it['fold']) ?>" data-year="<?= e($it['year']) ?>" data-flag="<?= e($it['flag']) ?>" data-date="<?= e($p['date']) ?>" data-title="<?= e(text_fold($p['title'])) ?>"<?= in_array($p['id'], $shownIds, true) ? '' : ' hidden' ?>>
+  <li class="a-item" data-fold="<?= e($it['fold']) ?>" data-year="<?= e($it['year']) ?>" data-flag="<?= e($it['flag']) ?>" data-date="<?= e($p['date']) ?>" data-title="<?= e(text_fold($p['title'])) ?>" data-status="<?= is_draft($p) ? 'draft' : 'published' ?>"<?= in_array($p['id'], $shownIds, true) ? '' : ' hidden' ?>>
     <img src="../<?= e($img['thumb']) ?>" alt="">
-    <div class="a-item-txt"><b><?= e($p['title']) ?></b><span><?= e(format_date_sk($p['date'])) ?></span></div>
+    <div class="a-item-txt"><b><?= e($p['title']) ?><?= is_draft($p) ? ' <span class="a-badge">Koncept</span>' : '' ?></b><span><?= e(format_date_sk($p['date'])) ?></span></div>
     <div class="a-item-act">
       <a class="a-btn" href="post-edit.php?id=<?= e(rawurlencode($p['id'])) ?>">Upraviť</a>
       <form method="post" action="post-delete.php" data-confirm="Naozaj? Klikni znova">

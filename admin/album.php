@@ -22,8 +22,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         switch ($_POST['action'] ?? '') {
             case 'rename':
-                album_update($album['id'], $_POST);
-                flash('Uložené.', 'ok', '../galeria.php?album=' . rawurlencode($album['id']));
+                $saved = album_update($album['id'], $_POST, status_from_request($_POST));
+                if ($saved && is_draft($saved)) flash('Uložené ako koncept — na webe sa zatiaľ nezobrazuje.');
+                elseif ($saved && !$saved['photos']) flash('Zverejnené — na webe sa ukáže, keď doň pridáš fotky.');
+                else flash('Uložené a zverejnené.', 'ok', '../galeria.php?album=' . rawurlencode($album['id']));
                 break;
             case 'cover':
                 album_set_cover($album['id'], $photoId) ? flash('Titulná fotka nastavená.') : flash('Fotka sa nenašla.', 'error');
@@ -83,7 +85,16 @@ admin_header($album['title']);
     <label>Dátum<input type="date" name="date" value="<?= e($album['date']) ?>" required></label>
     <div class="a-field"><span>Popis albumu <small>(nepovinný, zobrazí sa nad fotkami)</small></span>
       <textarea name="description" rows="5" data-rich="full" aria-label="Popis albumu"><?= e($album['description'] ?? '') ?></textarea></div>
-    <div class="a-actions"><button class="a-btn a-btn-primary">Uložiť</button></div>
+    <p class="a-status"><?= is_draft($album) ? '<span class="a-badge">Koncept</span> Na webe sa zatiaľ nezobrazuje.' : '<span class="a-badge a-badge-ok">Zverejnené</span>' . ($album['photos'] ? ' Je na webe.' : ' Na webe sa ukáže, keď pridáš fotky.') ?></p>
+    <div class="a-actions">
+      <?php if (is_draft($album)): ?>
+      <button class="a-btn">Uložiť koncept</button>
+      <button class="a-btn a-btn-primary" name="publish" value="1">Zverejniť album</button>
+      <?php else: ?>
+      <button class="a-btn a-btn-primary">Uložiť</button>
+      <button class="a-btn" name="draft" value="1">Skryť z webu (do konceptov)</button>
+      <?php endif; ?>
+    </div>
   </form>
 </section>
 

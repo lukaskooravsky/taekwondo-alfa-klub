@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     admin_post_only('albums.php');
     try {
         $a = album_create($_POST);
-        flash('Album vytvorený. Pridaj doň fotky.');
+        flash('Album vytvorený ako koncept. Pridaj fotky a dole ho zverejni.');
         redirect('album.php?id=' . rawurlencode($a['id']));
     } catch (ValidationException $e) {
         $errors = $e->errors;
@@ -32,9 +32,9 @@ try {
 $f = admin_filter_params();
 $items = array_map(fn(array $a): array => [
     'fold' => text_fold($a['title'] . ' ' . rich_text($a['description'] ?? '')),
-    'year' => substr($a['date'], 0, 4), 'flag' => $a['photos'] ? '1' : '0', 'date' => $a['date'], 'title' => $a['title'], 'row' => $a,
+    'year' => substr($a['date'], 0, 4), 'flag' => $a['photos'] ? '1' : '0', 'date' => $a['date'], 'title' => $a['title'], 'status' => is_draft($a) ? 'draft' : 'published', 'row' => $a,
 ], $albums);
-$shown = admin_filter($items, $f['q'], $f['year'], $f['flag'], $f['sort']);
+$shown = admin_filter($items, $f['q'], $f['year'], $f['flag'], $f['sort'], $f['status']);
 $years = array_values(array_unique(array_column($items, 'year')));
 
 admin_header('Galéria');
@@ -58,9 +58,9 @@ admin_header('Galéria');
 <ul class="a-list" data-filter-list>
   <?php $shownIds = array_column(array_column($shown, 'row'), 'id');
   foreach (admin_filter($items, '', '', '', $f['sort']) as $it): $a = $it['row']; $cover = album_cover($a); ?>
-  <li class="a-item" data-fold="<?= e($it['fold']) ?>" data-year="<?= e($it['year']) ?>" data-flag="<?= e($it['flag']) ?>" data-date="<?= e($a['date']) ?>" data-title="<?= e(text_fold($a['title'])) ?>"<?= in_array($a['id'], $shownIds, true) ? '' : ' hidden' ?>>
+  <li class="a-item" data-fold="<?= e($it['fold']) ?>" data-year="<?= e($it['year']) ?>" data-flag="<?= e($it['flag']) ?>" data-date="<?= e($a['date']) ?>" data-title="<?= e(text_fold($a['title'])) ?>" data-status="<?= is_draft($a) ? 'draft' : 'published' ?>"<?= in_array($a['id'], $shownIds, true) ? '' : ' hidden' ?>>
     <img src="../<?= e($cover ? upload_url($cover['thumb']) : PLACEHOLDER_IMAGE) ?>" alt="">
-    <div class="a-item-txt"><b><?= e($a['title']) ?></b><span><?= e(format_date_sk($a['date'])) ?> · <?= e(sk_plural(count($a['photos']), 'fotka', 'fotky', 'fotiek')) ?></span></div>
+    <div class="a-item-txt"><b><?= e($a['title']) ?><?= is_draft($a) ? ' <span class="a-badge">Koncept</span>' : '' ?></b><span><?= e(format_date_sk($a['date'])) ?> · <?= e(sk_plural(count($a['photos']), 'fotka', 'fotky', 'fotiek')) ?></span></div>
     <div class="a-item-act"><a class="a-btn" href="album.php?id=<?= e(rawurlencode($a['id'])) ?>">Otvoriť</a></div>
   </li>
   <?php endforeach; ?>

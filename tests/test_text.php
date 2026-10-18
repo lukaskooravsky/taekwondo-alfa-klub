@@ -57,3 +57,13 @@ test('text_fold a admin_filter', function () {
     eq([2, 1, 3], $rows(admin_filter($items, '', '', '', 'old')));
     eq([], admin_filter($items, 'nič', '', '', 'new'));
 });
+
+test('admin_filter: stav zverejnenia', function () {
+    $items = [
+        ['fold' => 'a', 'year' => '2026', 'flag' => '1', 'date' => '2026-01-01', 'title' => 'A', 'status' => 'draft', 'row' => 1],
+        ['fold' => 'b', 'year' => '2026', 'flag' => '1', 'date' => '2026-01-02', 'title' => 'B', 'status' => 'published', 'row' => 2],
+    ];
+    eq([1], array_column(admin_filter($items, '', '', '', 'new', 'draft'), 'row'));
+    eq([2], array_column(admin_filter($items, '', '', '', 'new', 'published'), 'row'));
+    eq(2, count(admin_filter($items, '', '', '', 'new')));
+});

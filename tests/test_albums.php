@@ -23,6 +23,9 @@ test('album_create, album_get, zoradenie a verejný zoznam', function () {
     eq(['Nový', 'Starý'], array_column(albums_all(), 'title'));
     eq([], albums_public(), 'prázdne albumy nie sú verejné');
     add_sample_photo($a['id'], 'f_aaaaa1');
+    eq('draft', $a['status'], 'nový album je koncept');
+    eq([], albums_public(), 'koncept s fotkami ešte nie je verejný');
+    album_update($a['id'], ['title' => 'Starý', 'date' => '2025-01-01'], 'published');
     eq(['Starý'], array_column(albums_public(), 'title'));
     eq('Nový', album_get($b['id'])['title']);
     eq(null, album_get('a_nieje00'));

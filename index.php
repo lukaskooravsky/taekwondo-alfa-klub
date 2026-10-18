@@ -3,7 +3,7 @@ declare(strict_types=1);
 require __DIR__ . '/inc/bootstrap.php';
 
 try {
-    $latestPosts = array_slice(posts_all(), 0, 3);
+    $latestPosts = array_slice(posts_public(), 0, 3);
     $albums = albums_public();
 } catch (StoreException $e) {
     error_log($e->getMessage());

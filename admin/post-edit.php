@@ -27,17 +27,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         post_clean($_POST);                       // najprv text, aby pri chybe neostala osirelá fotka
         $image = post_image_from_request();
         $change = $image ?? (!empty($_POST['remove_image']) ? false : null);
+        $status = status_from_request($_POST);
         if ($post) {
-            $saved = post_update($post['id'], $_POST, $change);
+            $saved = post_update($post['id'], $_POST, $change, $status);
             if ($saved === null) {                // medzitým zmazaná (napr. v inej karte)
                 post_delete_files($image);
                 flash('Aktualita sa nenašla.', 'error');
                 redirect('posts.php');
             }
         } else {
-            $saved = post_create($_POST, $image);
+            $saved = post_create($_POST, $image, $status ?? 'draft');   // nová aktualita: bez „Zverejniť“ ostane konceptom
         }
-        flash('Uložené.', 'ok', '../aktualita.php?id=' . rawurlencode($saved['id']));
+        flash(is_draft($saved) ? 'Uložené ako koncept — na webe sa zatiaľ nezobrazuje.' : 'Uložené a zverejnené.',
+            'ok', '../aktualita.php?id=' . rawurlencode($saved['id']));
         redirect('posts.php');
     } catch (ValidationException $e) {
         $errors = $e->errors;
@@ -85,8 +87,17 @@ admin_header($post ? 'Upraviť aktualitu' : 'Nová aktualita');
     <textarea name="excerpt" rows="3" data-rich="inline" data-max="300" aria-label="Krátky úvod"><?= e($values['excerpt']) ?></textarea></div>
   <div class="a-field"><span>Celý text</span> <?= field_error($errors, 'body') ?>
     <textarea name="body" rows="12" data-rich="full" aria-label="Celý text"><?= e($values['body']) ?></textarea></div>
+  <?php $draft = !$post || is_draft($post); ?>
+  <p class="a-status"><?= $draft ? '<span class="a-badge">Koncept</span> Na webe sa zatiaľ nezobrazuje.' : '<span class="a-badge a-badge-ok">Zverejnené</span> Je na webe.' ?></p>
   <div class="a-actions">
+    <?php /* prvé tlačidlo = Enter v políčku → len uloží v súčasnom stave, nikdy nezverejní omylom */ ?>
+    <?php if ($draft): ?>
+    <button class="a-btn"><?= $post ? 'Uložiť koncept' : 'Uložiť ako koncept' ?></button>
+    <button class="a-btn a-btn-primary" name="publish" value="1">Zverejniť</button>
+    <?php else: ?>
     <button class="a-btn a-btn-primary">Uložiť</button>
+    <button class="a-btn" name="draft" value="1">Skryť z webu (do konceptov)</button>
+    <?php endif; ?>
     <button type="button" class="a-btn" data-post-preview hidden>Náhľad aktuality</button>
     <a class="a-btn" href="posts.php">Zrušiť</a>
   </div>

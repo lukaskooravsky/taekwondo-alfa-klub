@@ -768,3 +768,6 @@ section { padding-block: clamp(4rem, 9vw, 7.5rem); position: relative; }
 .lightbox .lb-next { right: 12px; }
 .lightbox .lb-nav[hidden] { display: none; }
 .lightbox button:focus-visible { outline: 2px solid var(--gold-2); outline-offset: 2px; }
+
+.draft-flag { background: var(--gold); color: #14100a; text-align: center; padding: .55rem 1rem; font-weight: 600; }
+.draft-flag a { color: #14100a; text-decoration: underline; }

@@ -16,7 +16,7 @@ echo '- Skúšobná hodina: ', site_abs('kontakty.php#prihlaska'), "\n\n";
 echo "## Stránky\n\n";
 foreach (seo_pages() as [$path, $name, $desc]) echo "- [$name](", site_abs($path), "): $desc\n";
 try {
-    $posts = array_slice(posts_all(), 0, 10);
+    $posts = array_slice(posts_public(), 0, 10);
     if ($posts) {
         echo "\n## Najnovšie aktuality\n\n";
         foreach ($posts as $p) {

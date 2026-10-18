@@ -249,3 +249,10 @@ html.a-noscroll, html.a-noscroll body { overflow: hidden; }
 }
 
 .a-back { margin: -.4rem 0 1rem; color: var(--muted-2); }
+
+/* koncept / zverejnené */
+.a-badge { display: inline-block; padding: .1rem .5rem; border-radius: 999px; font-size: .78rem; font-weight: 600; letter-spacing: .02em;
+  background: rgba(200, 160, 78, .16); color: var(--gold-2); border: 1px solid rgba(200, 160, 78, .4); vertical-align: middle; }
+.a-badge-ok { background: rgba(95, 179, 122, .14); color: var(--ok); border-color: rgba(95, 179, 122, .4); }
+.a-status { color: var(--muted-2); font-size: .92rem; }
+.a-item .a-badge { margin-left: .4rem; }

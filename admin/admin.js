@@ -127,7 +127,18 @@
       if (!busy) return;
       e.preventDefault();
       status.textContent = "Chvíľu počkaj, fotka sa ešte pripravuje…";
-      busy.then(function () { form.requestSubmit ? form.requestSubmit() : form.submit(); }); // Safari < 16 nemá requestSubmit
+      const submitter = e.submitter || null; // Zverejniť / Do konceptov sa nesmie stratiť
+      busy.then(function () {
+        if (form.requestSubmit) form.requestSubmit(submitter);
+        else {                                            // Safari < 16 nemá requestSubmit
+          if (submitter && submitter.name) {
+            const h = document.createElement("input");
+            h.type = "hidden"; h.name = submitter.name; h.value = submitter.value;
+            form.appendChild(h);
+          }
+          form.submit();
+        }
+      });
     });
   });
   /* ---- Hromadné nahrávanie do albumu (po jednej fotke, s priebehom) ---- */
@@ -229,11 +240,12 @@
     let timer = null;
     function apply() {
       const q = form.elements.q.value, year = form.elements.rok.value, flag = form.elements.stav.value, sort = form.elements.zoradit.value;
+      const pub = form.elements.zverejnenie ? form.elements.zverejnenie.value : "";
       const words = fold(q).split(" ").filter(Boolean);
       let shown = 0;
       items.forEach(function (li) {
         const ok = words.every(function (w) { return li.dataset.fold.indexOf(w) >= 0; }) &&
-          (!year || li.dataset.year === year) && (!flag || li.dataset.flag === flag);
+          (!year || li.dataset.year === year) && (!flag || li.dataset.flag === flag) && (!pub || li.dataset.status === pub);
         li.hidden = !ok;
         if (ok) shown++;
       });
@@ -245,13 +257,14 @@
       sorted.forEach(function (li) { list.appendChild(li); });
       count.textContent = "Zobrazené " + shown + " z " + items.length;
       if (empty) empty.hidden = shown > 0;
-      const active = q.trim() !== "" || year || flag || sort !== "new";
+      const active = q.trim() !== "" || year || flag || pub || sort !== "new";
       if (reset) reset.hidden = !active;
       // filter ostane v adrese (späť, obnovenie stránky, záložka)
       const params = new URLSearchParams();
       if (q.trim()) params.set("q", q.trim());
       if (year) params.set("rok", year);
       if (flag) params.set("stav", flag);
+      if (pub) params.set("zverejnenie", pub);
       if (sort !== "new") params.set("zoradit", sort);
       const qs = params.toString();
       history.replaceState(null, "", location.pathname + (qs ? "?" + qs : ""));
@@ -265,7 +278,7 @@
       e.preventDefault();
       form.reset();
       form.elements.q.value = "";
-      ["rok", "stav"].forEach(function (n) { form.elements[n].value = ""; });
+      ["rok", "stav", "zverejnenie"].forEach(function (n) { if (form.elements[n]) form.elements[n].value = ""; });
       form.elements.zoradit.value = "new";
       apply();
       form.elements.q.focus();

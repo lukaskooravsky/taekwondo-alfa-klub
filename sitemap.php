@@ -7,7 +7,7 @@ header('Content-Type: application/xml; charset=utf-8');
 $urls = [];
 foreach (seo_pages() as [$path]) $urls[] = [site_abs($path), null];
 try {
-    foreach (posts_all() as $p) $urls[] = [site_abs('aktualita.php?id=' . rawurlencode($p['id'])), substr((string)($p['updated'] ?? $p['date']), 0, 10)];
+    foreach (posts_public() as $p) $urls[] = [site_abs('aktualita.php?id=' . rawurlencode($p['id'])), substr((string)($p['updated'] ?? $p['date']), 0, 10)];
     foreach (albums_public() as $a) $urls[] = [site_abs('galeria.php?album=' . rawurlencode($a['id'])), substr((string)($a['updated'] ?? $a['date']), 0, 10)];
 } catch (StoreException $e) {
     error_log($e->getMessage());

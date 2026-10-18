@@ -7,7 +7,7 @@ if (!SITE_INDEX) header('X-Robots-Tag: noindex');
 
 $x = fn(string $s): string => htmlspecialchars($s, ENT_XML1 | ENT_QUOTES, 'UTF-8');
 try {
-    $posts = array_slice(posts_all(), 0, 20);
+    $posts = array_slice(posts_public(), 0, 20);
 } catch (StoreException $e) {
     error_log($e->getMessage());
     $posts = [];

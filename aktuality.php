@@ -3,7 +3,7 @@ declare(strict_types=1);
 require __DIR__ . '/inc/bootstrap.php';
 
 try {
-    $posts = posts_all();
+    $posts = posts_public();
 } catch (StoreException $e) {
     error_log($e->getMessage());
     $posts = [];

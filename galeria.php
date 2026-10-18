@@ -11,6 +11,7 @@ try {
     $album = null;
     $albums = [];
 }
+if ($album && is_draft($album) && !admin_viewer()) $album = null;
 if ($albumId !== '' && (!$album || !$album['photos'])) {
     not_found('Tento album neexistuje alebo je prázdny.', 'galeria.php', '← Všetky albumy');
 }

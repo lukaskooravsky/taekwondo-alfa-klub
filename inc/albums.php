@@ -23,10 +23,10 @@ function albums_all(): array
     return $albums;
 }
 
-/** Albumy na verejný web — len tie, ktoré majú aspoň jednu fotku. */
+/** Albumy na verejný web — zverejnené a s aspoň jednou fotkou. */
 function albums_public(): array
 {
-    return array_values(array_filter(albums_all(), fn(array $a): bool => $a['photos'] !== []));
+    return array_values(array_filter(albums_all(), fn(array $a): bool => $a['photos'] !== [] && !is_draft($a)));
 }
 
 function album_get(string $id): ?array
@@ -38,10 +38,12 @@ function album_get(string $id): ?array
     return null;
 }
 
-function album_create(array $in): array
+/** Nový album je koncept — tréner doň nahrá fotky a zverejní ho, keď je hotový. */
+function album_create(array $in, string $status = 'draft'): array
 {
     $now = now_iso();
-    $album = ['id' => new_id('a')] + album_clean($in) + ['cover' => null, 'photos' => [], 'created' => $now, 'updated' => $now];
+    $album = ['id' => new_id('a')] + album_clean($in)
+        + ['status' => $status === 'published' ? 'published' : 'draft', 'cover' => null, 'photos' => [], 'created' => $now, 'updated' => $now];
     store_update('albums', 'albums', function (array &$albums) use ($album): void { $albums[] = $album; });
     return $album;
 }
@@ -62,9 +64,10 @@ function album_modify(string $id, callable $fn, mixed $missing = null): mixed
     });
 }
 
-function album_update(string $id, array $in): ?array
+function album_update(string $id, array $in, ?string $status = null): ?array
 {
     $f = album_clean($in);
+    if ($status !== null) $f['status'] = $status === 'draft' ? 'draft' : 'published';
     $oldDesc = '';
     $album = album_modify($id, function (array &$a) use ($f, &$oldDesc): array {
         $oldDesc = $a['description'] ?? '';

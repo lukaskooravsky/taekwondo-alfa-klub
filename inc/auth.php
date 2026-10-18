@@ -263,6 +263,16 @@ function auth_is_logged_in(): bool
     return $version !== '' && hash_equals($version, (string)($_SESSION['pw'] ?? ''));
 }
 
+/** Je návštevník verejnej stránky prihlásený tréner? (koncepty) Reláciu otvorí len ak má cookie adminu. */
+function admin_viewer(): bool
+{
+    if (!isset($_COOKIE['alfa_admin']) || !is_string($_COOKIE['alfa_admin'])) return false;
+    auth_start_session();
+    $ok = auth_is_logged_in();
+    session_write_close();
+    return $ok;
+}
+
 function auth_require(): void
 {
     auth_start_session();

@@ -35,6 +35,12 @@ function posts_all(): array
     return $posts;
 }
 
+/** Aktuality na verejný web — bez konceptov. */
+function posts_public(): array
+{
+    return array_values(array_filter(posts_all(), fn(array $p): bool => !is_draft($p)));
+}
+
 function post_get(string $id): ?array
 {
     if (!valid_id($id, 'p')) return null;
@@ -44,10 +50,10 @@ function post_get(string $id): ?array
     return null;
 }
 
-function post_create(array $in, ?array $image): array
+function post_create(array $in, ?array $image, string $status = 'published'): array
 {
     $now = now_iso();
-    $post = ['id' => new_id('p')] + post_clean($in) + [
+    $post = ['id' => new_id('p')] + post_clean($in) + ['status' => $status === 'draft' ? 'draft' : 'published'] + [
         'image' => $image ? post_image_record($image) : null,
         'created' => $now,
         'updated' => $now,
@@ -56,10 +62,11 @@ function post_create(array $in, ?array $image): array
     return $post;
 }
 
-/** $image: null = ponechať, false = odstrániť, array = nahradiť. Staré súbory sa mažú až po zápise dát. */
-function post_update(string $id, array $in, array|false|null $image): ?array
+/** $image: null = ponechať, false = odstrániť, array = nahradiť; $status: null = ponechať. Staré súbory sa mažú až po zápise dát. */
+function post_update(string $id, array $in, array|false|null $image, ?string $status = null): ?array
 {
     $f = post_clean($in);
+    if ($status !== null) $f['status'] = $status === 'draft' ? 'draft' : 'published';
     $old = null;
     $oldHtml = '';
     $post = store_update('posts', 'posts', function (array &$posts) use ($id, $f, $image, &$old, &$oldHtml): ?array {
