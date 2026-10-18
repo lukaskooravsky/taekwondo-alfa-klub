@@ -2,7 +2,7 @@
 declare(strict_types=1);
 require __DIR__ . '/inc/bootstrap.php';
 
-$page = ['title' => 'Kontakt &amp; prihláška', 'description' => 'Kontakt na klub ALFA Taekwondo Bratislava a prihláška na skúšobnú hodinu zdarma. ZŠ Holíčska 50, tel. 0911 818 815.'];
+$page = ['title' => 'Kontakt & prihláška', 'description' => 'Kontakt na klub ALFA Taekwondo Bratislava a prihláška na skúšobnú hodinu zdarma. ZŠ Holíčska 50, tel. 0911 818 815.'];
 require __DIR__ . '/inc/layout-header.php';
 ?>
 

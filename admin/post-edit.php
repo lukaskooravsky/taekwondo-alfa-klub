@@ -62,6 +62,7 @@ admin_header($post ? 'Upraviť aktualitu' : 'Nová aktualita');
 <form method="post" enctype="multipart/form-data" class="a-form">
   <?= csrf_field() ?>
   <?php if ($post): ?><input type="hidden" name="id" value="<?= e($post['id']) ?>"><?php endif; ?>
+  <input type="hidden" name="rich" value="1"><!-- textarea vždy obsahuje HTML (aj bez JS editora) -->
   <label>Nadpis <?= field_error($errors, 'title') ?>
     <input name="title" value="<?= e($values['title']) ?>" maxlength="150" required></label>
   <label>Dátum <?= field_error($errors, 'date') ?>

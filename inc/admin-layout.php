@@ -98,7 +98,7 @@ function admin_header(string $title, bool $nav = true): void
   <link rel="stylesheet" href="<?= e(asset('css/fonts.css', '../')) ?>">
   <link rel="stylesheet" href="<?= e(asset('admin/admin.css', '../')) ?>">
 </head>
-<body>
+<body data-site-css="<?= e(asset('css/style.css')) ?>" data-site-fonts="<?= e(asset('css/fonts.css')) ?>">
 <header class="a-top">
   <a class="a-brand" href="index.php"><img src="../assets/logo-mark.jpg" alt=""><span>ALFA admin</span></a>
   <?php if ($nav): ?>

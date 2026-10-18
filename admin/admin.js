@@ -374,8 +374,8 @@
       '<button type="button" class="a-btn">Zavrieť (Esc)</button></div><iframe title="Náhľad"></iframe>';
     dlg.querySelector("iframe").srcdoc = '<!DOCTYPE html><html lang="sk"><head><meta charset="utf-8">' +
       '<base href="' + new URL("../", location.href).href + '" target="_blank">' +
-      '<meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="css/fonts.css">' +
-      '<link rel="stylesheet" href="css/style.css"><style>.reveal{opacity:1!important;transform:none!important}' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="' + (document.body.dataset.siteFonts || "css/fonts.css") + '">' +
+      '<link rel="stylesheet" href="' + (document.body.dataset.siteCss || "css/style.css") + '"><style>.reveal{opacity:1!important;transform:none!important}' +
       '.a-pv-label{font:600 .8rem/1 var(--font-display);letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin:2rem 0 1rem}' +
       '</style></head><body>' + content + "</body></html>";
     function close() {
@@ -472,6 +472,7 @@
   // fotky sa ukladajú ako uploads/…, v admine (/admin/) sa musia zobraziť cez ../uploads/…
   const toEditor = function (html) { return html.replace(/(<img[^>]+src=")uploads\//g, "$1../uploads/"); };
   const toStored = function (html) { return html.replace(/(<img[^>]+src=")(?:\.\.\/)+uploads\//g, "$1uploads/"); };
+  const INLINE_IMG = /^(?:https?:\/\/[^/]+)?(?:\.\.)?\/?uploads\/(inline\/i_[a-z0-9]{6,32}\.(?:jpg|png|webp))$/;
   function youtubeId(url) {
     const m = String(url).trim().match(/^https?:\/\/(?:www\.|m\.)?(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:[^#]*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})(?:[?&#/].*)?$/);
     return m ? m[1] : null;
@@ -548,6 +549,20 @@
         history: { delay: 800, maxStack: 200, userOnly: true },
         uploader: inline ? { mimetypes: [] } : { handler: function (range, files) { uploadImages(range, files); } }
       }
+    });
+    // vložené (Ctrl+V) fotky a videá: povolené sú len vlastné fotky z editora a YouTube — iné by server pri uložení zahodil
+    const Delta = Quill.import("delta");
+    quill.clipboard.addMatcher("IMG", function (node, delta) {
+      const m = (node.getAttribute("src") || "").match(INLINE_IMG);
+      if (m && !inline) return new Delta().insert({ image: "../uploads/" + m[1] });
+      say("Fotky z iných stránok sa nedajú vložiť — ulož si fotku do počítača a vlož ju tlačidlom 🖼 alebo pretiahnutím.", true);
+      return new Delta();
+    });
+    quill.clipboard.addMatcher("IFRAME", function (node) {
+      const id = youtubeId(node.getAttribute("src") || "");
+      if (id && !inline) return new Delta().insert({ video: "https://www.youtube-nocookie.com/embed/" + id });
+      say("Vložiť sa dá len video z YouTube (tlačidlo 🎞).", true);
+      return new Delta();
     });
     if (ta.value.trim() !== "") quill.clipboard.dangerouslyPasteHTML(toEditor(ta.value));
     quill.history.clear();

@@ -1,115 +1,87 @@
-# ALFA Taekwondo Club Bratislava — web (náčrt / demo)
+# ALFA Taekwondo Club Bratislava — web
 
-Statický web pre klub **ALFA Taekwondo Club Bratislava** (ITF Taekwon-Do).
-Zatiaľ ide o **náčrt (demo)** — obsah aj fotky sú ukážkové, formuláre nie sú
-naostro napojené. Slúži na to, aby si to tréner pozrel a schválil.
+Web pre klub **ALFA Taekwondo Club Bratislava** (ITF Taekwon-Do): verejné stránky + administrácia aktualít a galérie pre trénera.
 
-## 🌐 Naživo (GitHub Pages)
-**https://lukaskooravsky.github.io/taekwondo-alfa-klub/**
-Repozitár: `lukaskooravsky/taekwondo-alfa-klub` (vetva `main`, Pages: main / root).
+## 🌐 Kde beží
+- **Dočasná ukážka (plne funkčná):** https://alfa.oravsky.sk — Lukášov Webglobe hosting, FTP `public_html/_sub/alfa/`,
+  PHP 8.4. `SITE_INDEX = false` (neindexuje sa). Admin: `/admin/`.
+- **Ostrý web:** nasadí sa na trénerov hosting/doménu podľa `NASADENIE.md` časť 10 (Brian alebo Lukáš).
+- Stará statická verzia: GitHub Pages z vetvy `main` (https://lukaskooravsky.github.io/taekwondo-alfa-klub/) — po ostrom spustení vypnúť.
+- Repozitár `lukaskooravsky/taekwondo-alfa-klub`, vývoj na vetve **`cms-admin`**.
 
 ## Technológie
-- **HTML + CSS + JS + PHP** (bez frameworku, bez databázy, bez buildu). Aktuality a galéria sa
-  spravujú cez admin `/admin/` (prihlásenie **e-mail + heslo**) a ukladajú do `data/*.json` + `uploads/` — tie nie sú v gite.
-- Hosting: **Brianov zdieľaný hosting** (pôvodný plán Websupport; PHP 8.1+, Apache .htaccess). Nasadenie: `NASADENIE.md`.
-- Lokálne spustenie: `php -S localhost:8000`, testy: `php tests/run.php`. PHP 8.3 je prenosné
-  v `C:\Users\lukas\tools\php83` (v PATH cez `~/.bashrc`; v neinteraktívnom shelli treba
-  `export PATH="/c/Users/lukas/tools/php83:$PATH"`). `php -S` ignoruje `.htaccess`.
-- Test admina z mobilu cez wifi: `ALFA_DEV_LAN=1 php -S 0.0.0.0:8001` → `http://<IP-PC>:8001/admin/`
-  (bez premennej admin mimo localhostu presmeruje na HTTPS).
-- Heslo: aspoň 8 znakov, veľké + malé písmeno, číslica, špeciálny znak, bez časti e-mailu pred @
-  (`auth_password_error` v `inc/auth.php` + živá kontrola v `admin/admin.js`). Lokálne testovacie
-  prihlásenie je len v lokálnom `data/auth.json` (nie v gite).
-- Návrh: `docs/superpowers/specs/2026-10-12-cms-admin-design.md`.
-- Fonty sú **self-hostované** v `assets/fonts/` (načítané cez `css/fonts.css`) —
-  bez volania Google (kvôli GDPR aj spoľahlivému renderu).
-- `.nojekyll` vypína spracovanie cez Jekyll (aby Pages servírovalo súbory 1:1).
+- **PHP 8.1+ bez frameworku, bez databázy, bez buildu** + CSS + vanilla JS. Všetky stránky sú PHP so spoločným
+  layoutom `inc/layout-header.php` / `inc/layout-footer.php` (menu, kontakty v pätičke, SEO) — **meníš na jednom mieste**.
+  Staré `*.html` adresy presmeruje `.htaccess` (301).
+- Dáta: `data/*.json` (aktuality, albumy, heslo, zálohy v `data/backup/`, relácie v `data/sessions/`), fotky `uploads/`
+  (`posts/`, `albums/a_*/`, `inline/` = fotky v texte, `.trash/` = kôš 30 dní). **Nie sú v gite.**
+- Nastavenia na jednom mieste: `inc/site.php` — `SITE_URL`, `SITE_INDEX`, `SITE_DEMO`, `CLUB` (fakty o klube pre SEO/AI).
+- Editor textu: **Quill 2.0.3** (`assets/vendor/quill/`, self-hosted). Server čistí HTML v `inc/rich.php` (whitelist značiek,
+  písiem, farieb, fotky len z `uploads/inline`, video len YouTube → youtube-nocookie). **Palety a písma v `inc/rich.php`
+  musia sedieť s `admin/admin.js`.**
+- SEO/AI: `inc/seo.php` (canonical, Open Graph, schema.org SportsClub/NewsArticle), `robots.php`, `sitemap.php`,
+  `llms.php`, `rss.php` (cez rewrite v `.htaccess` ako `/robots.txt`, `/sitemap.xml`, `/llms.txt`).
+- Bezpečnosť: bcrypt, rate-limit (5 pokusov/IP, globálny strop 50 — dôveryhodné zariadenie ho obíde), CSRF (prihlásenie
+  cez cookie, inde cez reláciu), vlastný session handler (`AlfaSessionHandler` — Webglobe vnucuje nezapisovateľný
+  `session.save_path`), bezpečnostné hlavičky `send_security_headers()`, HTTPS pre admin.
+- CSS/JS sa načítavajú cez `asset()` s `?v=<čas zmeny>` (cache bez starých verzií).
+- Fonty **self-hostované** v `assets/fonts/` (`css/fonts.css`) vrátane `twemoji-country-flags.woff2` (vlajky ako emoji na Windows).
+- Lokálne: `php -S localhost:8000` (ignoruje `.htaccess`), testy: `php tests/run.php [filter]`. PHP 8.3 je v
+  `C:\Users\lukas\tools\php83` (v neinteraktívnom shelli `export PATH="/c/Users/lukas/tools/php83:$PATH"`).
+- Admin z mobilu cez wifi: `ALFA_DEV_LAN=1 php -S 0.0.0.0:8001` → `http://<IP-PC>:8001/admin/`.
+- Heslo: aspoň 8 znakov, veľké + malé písmeno, číslica, špeciálny znak, bez časti e-mailu pred @.
+- Návrh pôvodného adminu: `docs/superpowers/specs/2026-10-12-cms-admin-design.md`.
 
 ## Štruktúra
 ```
-co-je-taekwondo.html  Čo je taekwondo
-pasy.html             Pásy (systém stupňov gup/dan)
-o-nas.html            O nás (tréner + rozvrh)
-kontakty.html         Kontakt + prihláška na skúšobnú hodinu
-css/style.css         hlavný štýl (dizajnové premenné hore)
-css/fonts.css         @font-face pravidlá (self-hosted)
-js/main.js            menu, scroll-reveal, lightbox, obsluha formulárov
-assets/               obrázky + fonty
-index.php             Domov (3 najnovšie aktuality + fotky z najnovšieho albumu)
-aktuality.php         Aktuality (z data/posts.json)
-aktualita.php?id=…    Detail aktuality
-galeria.php           Galéria — albumy; ?album=… fotky albumu (lightbox)
-inc/                  PHP logika (store, posts, albums, upload, auth, render, layout, site.php = SITE_DEMO)
-admin/                administrácia (login, aktuality, albumy, upload API)
-install.php           prvé nastavenie hesla (len s tokenom z tools/new-install-token.php)
-tools/                new-install-token.php — spúšťa sa lokálne
-tests/run.php         testy (php tests/run.php [filter])
+index.php, co-je-taekwondo.php, pasy.php, o-nas.php, kontakty.php, ochrana-osobnych-udajov.php
+aktuality.php (12/strana), aktualita.php?id=…, galeria.php (?album=…)
+robots.php, sitemap.php, llms.php, rss.php     SEO a AI (generované)
+inc/            site.php (nastavenia), bootstrap.php, layout-*, render.php, seo.php, rich.php, posts.php,
+                albums.php, upload.php, auth.php, store.php, text.php, admin-layout.php, install.php
+admin/          prihlásenie, aktuality (filter/hľadanie), galéria, Nastavenia (e-mail/heslo),
+                api/upload.php (fotky albumu), api/inline-image.php (fotky v texte), api/preview.php (náhľad)
+css/style.css   hlavný štýl (premenné hore), css/fonts.css
+js/main.js      menu, scroll-reveal, lightbox (klávesnica, šípky), formuláre → mailto
+assets/         obrázky, fonty, vendor/quill
+seed/           ukážkový obsah pre inštaláciu
+tests/run.php   testy (php tests/run.php [filter])
+tools/          new-install-token.php
 ```
 
 ## Dizajn (premenné v `css/style.css`)
-- Farby: čierna `#0a0a0c`, zlatá `#c8a04e` / `#e6bd6a`, kosť/biela `#f3efe6`.
-- Text: nadpisy biele, telový/sekundárny text `--muted` (`#c3bdb1` — zosvetlené 2026-09-24
-  kvôli čitateľnosti sivej na čiernom pozadí; predtým `#9c968a` bolo slabo vidno na mobile),
-  najtlmenejšie `--muted-2` (`#948e83`). Pri zmene farby textu drž kontrast na čiernom.
+- Farby: čierna `#0a0a0c`, zlatá `#c8a04e` / `#e6bd6a`, kosť/biela `#f3efe6`; text `--muted` `#c3bdb1`
+  (zosvetlené kvôli čitateľnosti na mobile), `--muted-2` `#948e83`. Pri zmene farby textu drž kontrast na čiernom.
 - Fonty: **Saira Condensed** (nadpisy), **Barlow** (text), **Noto Sans KR** (kórejské akcenty 태권도).
-- Uhlové rezy cez `--cut` (clip-path).
+- Uhlové rezy cez `--cut` (clip-path). Mobil: hero má fotku na pozadí (`.hero-bg`, ≤820px).
+
+> ⚠️ **Kórejské znaky:** fonty sú *subsety* (태권도, 무도, 太, …). Nový KR znak sa zobrazí ako □ — nepoužívaj ich
+> v nových sekciách, alebo regeneruj subset cez `pyftsubset`.
 
 ## Ako upraviť obsah
-Uprav príslušný `.html` súbor a **daj na git** (viď nižšie) — Pages sa prebuduje
-sám do 1–2 minút.
-- **Aktuality a galéria**: spravuje tréner v `/admin/`. V kóde sa nemenia. Na GitHub Pages
-  (bez PHP) sa nezobrazujú — fungujú až na Websupporte.
-- **Rozvrh**: tabuľka `.schedule` v `o-nas.html` a `index.php`.
-- **Kontakty a menu**: telefón/e-mail/adresa a odkazy menu sú v pätičke/hlavičke každej `.html` stránky
-  **a zároveň** v `inc/layout-header.php` + `inc/layout-footer.php` (PHP stránky) — meň oboje. Kontakt aj na `kontakty.html`.
-- **Fotky**: nahraj do `assets/` a v HTML zmeň `src`. Hlavná akčná fotka je `assets/extrakt.png`.
-- **Hero na mobile**: má fotku na pozadí za textom (`.hero-bg` v `css/style.css`, len ≤820px,
-  so stmavením kvôli čitateľnosti). Teraz používa `assets/extrakt.png`; zmeníš v `.hero-bg`.
-- **Disciplíny** (`index.php`, sekcia `#discipliny`): 4 karty (Tul, Matsogi, Wi-ryok, Teuki).
-  Fotka každej je inline `style="background-image:url('assets/disc-*.jpg')"` (nie cez CSS premennú —
-  relatívna URL v premennej sa rieši voči `css/` a fotka by sa nenačítala): `disc-tul.jpg`,
-  `disc-matsogi.jpg`, `disc-wiryok.jpg`, `disc-teuki.jpg`. Kým chýbajú, je tam tmavý placeholder.
-
-> ⚠️ **Kórejské znaky:** fonty sú self-hostované *subsety* — obsahujú len znaky reálne
-> použité v obsahu (태권도, 무도, 太). Nový KR znak sa zobrazí ako prázdny štvorček (□).
-> V nových sekciách preto KR akcenty nepoužívaj (alebo regeneruj subset cez `pyftsubset`).
+- **Aktuality a galéria**: tréner v `/admin/` (formátovaný text, fotky aj pretiahnutím, YouTube, emoji, náhľad).
+- **Texty stránok**: príslušný `*.php` v koreni. **Menu a pätička**: `inc/layout-header.php` / `inc/layout-footer.php`.
+- **Fakty o klube** (adresa, tréningy, kontakt pre Google/AI): `inc/site.php` `CLUB` — a zároveň texty stránok.
+- **Rozvrh**: tabuľka `.schedule` v `o-nas.php` a `index.php`.
+- **Fotky stránok**: `assets/` (hlavná akčná fotka `assets/extrakt.jpg`, 966×760). Disciplíny: `assets/disc-*.jpg`
+  (inline `style="background-image:url('assets/…')"` v `index.php`).
+- Po zmene: testy, commit + push, nahrať zmenené súbory cez FTP (`NASADENIE.md` časť 8).
 
 ## Čo ešte treba doriešiť (pred ostrým spustením)
-- [ ] Reálne tréningové fotky (nahradiť ukážkové), **logo v priehľadnom PNG**.
-- [x] Formuláre (kontakt + prihláška) odosielajú cez `mailto:` na `lub.zavodny1@gmail.com`
-      (obsluha v `js/main.js`). Do budúcna sa dá prejsť na FormSubmit/Formspree bez `mailto:`.
-- [ ] Zásady ochrany osobných údajov (GDPR), súhlasy vrátane detí (rodič).
-- [ ] Vlastná doména (zatiaľ nekúpená) — potom nastaviť v Pages (CNAME).
-- [ ] Skontrolovať/upraviť texty (Čo je taekwondo, Pásy, O nás — teraz sú to návrhy).
-- [x] Admin na aktuality a galériu (PHP, `/admin/`) — hotový na vetve `cms-admin`.
-- [ ] Nasadiť podľa `NASADENIE.md` — robí to **Brian** (programátor, vlastný zdieľaný hosting); Ľubo kupuje len
-      doménu. Brianovi sa posiela odkaz na vetvu `cms-admin` na GitHube (Gmail ZIP s .js/.php blokuje).
-      Potom vypnúť Pages a zlúčiť `cms-admin` do `main`.
-- [ ] Pred ostrým spustením `SITE_DEMO = false` v `inc/site.php` + odstrániť demo pásik zo `.html`.
+- [ ] Reálne tréningové fotky, **logo v priehľadnom PNG**; zmazať ukážkové aktuality/album v admine.
+- [ ] Skontrolovať texty (Čo je taekwondo, Pásy, O nás) a stránku Ochrana osobných údajov (doplniť IČO/sídlo klubu, ak existuje).
+- [ ] Ostrá doména + hosting → `NASADENIE.md` časť 10 (`SITE_URL`, `SITE_INDEX = true`, Search Console, Firemný profil Google).
+- [ ] Vypnúť GitHub Pages, zlúčiť `cms-admin` do `main`.
+- [x] Admin (aktuality, galéria, editor, filter), SEO/AI, GDPR stránka, bezpečnosť — hotové (2026-10-18).
 
-## Fakty o klube (aktuálne v obsahu)
+## Fakty o klube (aktuálne v obsahu a v `inc/site.php`)
 - Tréner: **Ľubomír Závodný**, IV. Dan čierny pás, Majster Európy.
 - Miesto: **ZŠ Holíčska 50, Bratislava — Petržalka**.
-- Tréningy: **Utorok a Štvrtok, 16:30–19:30** — začiatočníci 16:30–17:30, stredne pokročilí 17:30–18:30,
-  pokročilí a dospelí 18:30–19:30 (zmenené 2026-10-12).
+- Tréningy: **Utorok a Štvrtok, 16:30–19:30** — začiatočníci 16:30–17:30, stredne pokročilí 17:30–18:30, pokročilí a dospelí 18:30–19:30.
 - Kontakt: 0911 818 815, lub.zavodny1@gmail.com.
 
-## Nasadenie / práca s gitom
-Repozitár patrí účtu **lukaskooravsky**. Lokálna kópia: `C:\Users\lukas\projekty\taekwondo-alfa-klub`
-(root repa = web, žiadny podpriečinok `site/`).
-
-Na tomto počítači je `gh` prihlásené ako **lukaskooravsky** (HTTPS + git credential helper),
-takže push je bežný:
-```
-git push origin main
-```
-GitHub Pages sa prebuduje do 1–2 minút.
-
-Ak by prihlásenie vypršalo:
-```
-gh auth login -h github.com -w
-gh auth setup-git -h github.com
-```
-
-> Staré postupy (push cez HTTPS token v URL, účet DusanOravsky so suspendovaným SSH)
-> už neplatia. Tokeny nedávaj do URL ani do `.git/config`.
+## Git a nasadenie
+- `gh` je prihlásené ako **lukaskooravsky** → bežný `git push origin cms-admin`. Tokeny nedávaj do URL ani `.git/config`.
+- FTP Webglobe: `curl --ssl-reqd --resolve ftp.nameserver.sk:21:195.181.251.39 -u '<login>:<heslo>' -T súbor
+  ftp://ftp.nameserver.sk/public_html/_sub/alfa/<cesta>` (certifikát FTP je na `*.nameserver.sk`, preto `--resolve`).
+  Heslo nikdy neukladaj do repa.

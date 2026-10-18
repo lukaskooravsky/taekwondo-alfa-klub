@@ -3,6 +3,7 @@ declare(strict_types=1);
 require __DIR__ . '/_init.php';
 
 if (auth_is_logged_in()) redirect('index.php');
+$csrf = login_csrf_token(); // nastaví cookie — musí byť pred výstupom HTML (pri output_buffering=0)
 
 $error = auth_hash() === '' || auth_user() === '' ? 'Administrácia ešte nemá nastavený e-mail a heslo — spusti inštaláciu (NASADENIE.md).' : '';
 $user = '';
@@ -29,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 admin_header('Prihlásenie', false);
 ?>
 <form method="post" class="a-form a-narrow">
-  <input type="hidden" name="csrf" value="<?= e(login_csrf_token()) ?>">
+  <input type="hidden" name="csrf" value="<?= e($csrf) ?>">
   <?php if ($error): ?><div class="flash flash-error"><?= e($error) ?></div><?php endif; ?>
   <label>E-mail<input type="email" name="user" value="<?= e($user) ?>" required autofocus autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="254"></label>
   <label>Heslo<input type="password" name="password" required autocomplete="current-password"></label>

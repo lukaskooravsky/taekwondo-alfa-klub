@@ -1,79 +1,81 @@
-# Nasadenie webu ALFA Taekwondo na Websupport
+# Nasadenie webu ALFA Taekwondo
 
-## 1. Čo treba na Websupporte nastaviť (WebAdmin)
-- **PHP 8.3 alebo novšie:** WebAdmin → doména → Web → Upraviť → PHP verzia → Uložiť
-  (prejaví sa do ~15 minút). PHP 8.1 a staršie je za príplatok — netreba.
-- **HTTPS:** Let's Encrypt certifikát a presmerovanie HTTP → HTTPS robí Websupport automaticky;
-  skontroluj, že `https://tvoja-domena.sk` ide bez varovania.
-- **SFTP prístup:** WebAdmin → FTP účty (prihlasovacie údaje, adresa servera). SSH netreba.
-- Databáza **netreba**. Rozšírenia `fileinfo`, `mbstring`, `gd` sú bežne zapnuté — overí to inštalácia.
+Web je **PHP bez databázy** (PHP 8.1+, Apache s `.htaccess`). Obsah od trénera (aktuality, albumy, heslo) je v `data/`,
+fotky v `uploads/` — tieto priečinky **nie sú v gite** a žijú len na hostingu.
+
+Overené na: Webglobe (dočasná ukážka `alfa.oravsky.sk`, PHP 8.4, nginx pred Apache). Pôvodný plán: Websupport.
+
+## 1. Požiadavky na hosting
+- PHP **8.1 alebo novšie**, rozšírenia `fileinfo`, `mbstring`, `json`; odporúčané `gd` (zmenšovanie fotiek) a `dom` (formátovaný text). Inštalácia ich overí sama.
+- Apache s povoleným `.htaccess` (mod_rewrite; mod_expires a mod_headers sú voliteľné).
+- **HTTPS certifikát** (Let's Encrypt) pre doménu aj subdoménu — admin bez HTTPS nefunguje.
+- FTP/SFTP prístup. Databáza **netreba**.
 
 ## 2. Nahratie súborov
-1. Stiahni z GitHubu ZIP vetvy **`cms-admin`** (Code → Download ZIP pri zvolenej vetve).
-   Do `main` sa vetva zlúči až **po** vypnutí GitHub Pages (viď časť 10) — Pages nevie PHP
-   a bez `index.html` by tam ostala prázdna stránka.
-2. Cez SFTP (napr. WinSCP, FileZilla) nahraj **obsah** priečinka do koreňa webu
-   (na Websupporte priečinok webu domény, napr. `/web/`).
-   Netreba nahrávať: `.git/`, `docs/`, `tests/`, `_zaloha/`.
-3. Ak web nebeží v koreni domény ale v podpriečinku, uprav v `.htaccess` riadok `RewriteBase /`.
+1. Stiahni z GitHubu vetvu **`cms-admin`** (Code → Download ZIP), alebo si nechaj pripraviť ZIP.
+2. Cez (S)FTP nahraj **obsah** priečinka do koreňa webu (vrátane skrytých `.htaccess` a `.user.ini` — vo FileZille zapni zobrazovanie skrytých súborov).
+   Netreba nahrávať: `.git/`, `docs/`, `tests/`, `_zaloha/`, `CLAUDE.md`.
+3. Web musí bežať v **koreni** domény alebo subdomény (napr. Webglobe: subdoména `alfa` = priečinok `public_html/_sub/alfa`).
 
-## 3. Prvé spustenie (nastavenie hesla)
-1. Na svojom počítači v priečinku repa spusti:
-   `php tools/new-install-token.php tvoja-domena.sk`
-   Vznikne súbor `install-token.php` a vypíše sa odkaz `https://tvoja-domena.sk/install.php?token=…`.
-2. Nahraj `install-token.php` cez SFTP do koreňa webu (vedľa `install.php`).
-3. Otvor vypísaný odkaz. Skontroluj riadok **„Tvoja zistená IP adresa“** — má sedieť s tým, čo ukáže
-   napr. vyhľadanie „what is my ip“. (Ak ukazuje `127.0.0.1` alebo `10.…`, blokácia zlých hesiel by
-   platila pre všetkých naraz — daj vedieť programátorovi.)
-   Over aj, že sa adresa nedá podvrhnúť (na svojom počítači, s odkazom z kroku 1):
-   `curl -s -H 'X-Real-IP: 1.2.3.4' -H 'X-Forwarded-For: 1.2.3.4' "<odkaz>" | grep -o 'zistená IP adresa: <b>[^<]*'`
-   Nesmie vypísať `1.2.3.4`. Ak vypíše, nepokračuj a daj vedieť programátorovi.
-4. Zadaj prihlasovací e-mail a heslo pre trénera (heslo aspoň 8 znakov, veľké aj malé písmeno, číslica a špeciálny znak). Ukážkový obsah môžeš nechať nahrať a neskôr ho zmazať.
-5. Presmeruje ťa na prihlásenie do `https://tvoja-domena.sk/admin/`. Token sa sám zmazal —
-   ak by `install-token.php` na serveri ostal, zmaž ho cez SFTP.
+## 3. Nastavenie v kóde (`inc/site.php`)
+- `SITE_URL` — verejná adresa bez lomky na konci (napr. `https://www.alfataekwondo.sk`). Používa sa v sitemap, canonical, náhľadoch pre Facebook a v dátach pre Google/AI.
+- `SITE_INDEX` — `false` = vyhľadávače a AI web neindexujú (dočasná ukážka). **Na ostrej doméne `true`.**
+- `CLUB` — fakty o klube (adresa, tréningy, kontakt) pre Google a AI. Pri zmene uprav aj texty stránok.
 
-## 4. Kontroly po nasadení
-- `https://tvoja-domena.sk/data/posts.json`, `…/data/auth.json` a `…/data/backup/` → **403 alebo 404**
-  (dáta a hash hesla nie sú verejné).
-  **Ak niektorý vráti 200** (súbory servíruje priamo nginx a `.htaccess` sa neuplatní): cez SFTP vytvor
-  priečinok `alfa-data` **o úroveň vyššie ako koreň webu** (vedľa priečinka webu, nie v ňom), presuň doň
-  celý obsah `data/` a priečinok `data/` zmaž. Web potom automaticky ukladá dáta tam (mimo dosahu
-  prehliadača). Kontrolu zopakuj.
-- `https://tvoja-domena.sk/inc/auth.php` a `https://tvoja-domena.sk/install-token.php` → **403**.
-- `http://tvoja-domena.sk/admin/` → presmeruje na `https://…`.
-- Domov, Aktuality, Galéria sa načítajú a fotky sa zobrazia.
-- V `inc/site.php` je pred ostrým spustením `SITE_DEMO = false` (zmizne pásik „Náhľad webu“);
-  pásik odstráň aj zo statických `.html` stránok.
+## 4. Prvé spustenie (nastavenie e-mailu a hesla)
+1. Na počítači v priečinku repa: `php tools/new-install-token.php <doména>` → vznikne `install-token.php` a vypíše sa odkaz `https://<doména>/install.php?token=…`.
+2. Nahraj `install-token.php` do koreňa webu.
+3. Otvor odkaz. Skontroluj riadok **„Tvoja zistená IP adresa“** (má sedieť s „what is my ip“).
+4. Zadaj e-mail a heslo trénera (aspoň 8 znakov, veľké aj malé písmeno, číslica, špeciálny znak). Ukážkový obsah je voliteľný.
+5. Prihlásenie: `https://<doména>/admin/`. Token sa sám zmaže.
 
-## 5. Chyba 500 hneď po nahratí
-Takmer vždy ide o riadok v `.htaccess`, ktorý hosting nepovolí. Skús dočasne zakomentovať (`#`)
-riadky `Options -Indexes` a `AddDefaultCharset UTF-8`. Ak to nepomôže, pozri chybový log
-vo WebAdmine (Logy).
+## 5. Kontroly po nasadení
+- `https://<doména>/data/auth.json`, `/data/posts.json`, `/uploads/.trash/` → **403 alebo 404**.
+  Ak vráti **200** (nginx servíruje súbory priamo): vytvor priečinok `alfa-data` **o úroveň vyššie** ako koreň webu, presuň doň obsah `data/` a `data/` zmaž.
+- `/inc/auth.php`, `/install-token.php` → **403**; `http://…/admin/` → presmeruje na `https://`.
+- Domov, Aktuality, Galéria, Kontakt sa načítajú; `/robots.txt`, `/sitemap.xml`, `/llms.txt` vrátia text.
+- Prihlásenie do adminu prejde (nehlási „Platnosť formulára vypršala“).
 
-## 5a. „Príliš veľa presmerovaní“ (ERR_TOO_MANY_REDIRECTS) na /admin/ alebo install.php
-Proxy hostingu neoznamuje PHP, že stránka ide cez HTTPS. Dočasne zakomentuj (`#`) 4 riadky bloku
-„Admin a inštalácia len cez HTTPS“ v `.htaccess`. Ak to nepomôže, v `inc/bootstrap.php` vo funkcii
-`require_https()` pridaj na začiatok `return;` (HTTPS aj tak vynucuje Websupport sám) a daj vedieť
-programátorovi.
+## 6. Riešenie problémov
+- **Chyba 500 hneď po nahratí** — zakomentuj (`#`) v `.htaccess` riadky `Options -Indexes` a `AddDefaultCharset UTF-8`; inak pozri chybový log hostingu.
+- **„Príliš veľa presmerovaní“ na /admin/** — proxy neoznamuje HTTPS. Zakomentuj 4 riadky bloku „Admin a inštalácia len cez HTTPS“ v `.htaccess`; ak nepomôže, v `inc/bootstrap.php` vo `require_https()` daj na začiatok `return;`.
+- **„Platnosť formulára vypršala“ pri každom odoslaní** — relácie sa neukladajú. Web ich ukladá sám do `data/sessions` (nezávisle od nastavení hostingu); skontroluj, že `data/` je zapisovateľný.
+- **Certifikát pre subdoménu** — vo Webglobe: Hosting → Web → Subdomény (vytvoriť) a SSL certifikáty (vystaviť aj pre subdoménu); trvá pár minút.
 
-## 6. Čo zálohovať
-Obsah od trénera je **len na hostingu**, nie v gite:
-- `data/` (alebo `../alfa-data/`, ak si dáta presunul podľa časti 4) — aktuality, albumy, heslo (`auth.json`, zahashované) + automatické zálohy v `data/backup/`
-- `uploads/` — fotky
+## 7. Zálohy a obnova
+- Zálohuj `data/` (alebo `../alfa-data/`) a `uploads/` — raz za čas ich stiahni cez FTP. Hosting robí aj vlastné denné zálohy.
+- Pri každom uložení vzniká záloha v `data/backup/` (napr. `posts-20261012-181500-ab12cd.json`). Poškodený `data/posts.json` / `albums.json` nahraď najnovšou zálohou.
+- **Zmazané fotky** sa 30 dní držia v koši `uploads/.trash/` ako `<čas>__posts__p_abc.webp` — pri obnove zálohy ich presuň späť (`__` → `/`, napr. do `uploads/posts/p_abc.webp`).
 
-Websupport robí denné zálohy; navyše si raz za čas tieto priečinky stiahni cez SFTP.
-
-## 7. Aktualizácia kódu webu
-Nahraj zmenené súbory cez SFTP. **Nikdy neprepisuj ani nemaž** `data/` (resp. `../alfa-data/`) a `uploads/`.
-
-## 8. Obnova zo zálohy
-Ak sa `data/posts.json` alebo `data/albums.json` poškodí, admin to ohlási (alebo `../alfa-data/`, ak si dáta presunul podľa časti 4). Skopíruj najnovší súbor
-z `data/backup/` (napr. `posts-20261012-181500-ab12cd.json`) späť ako `data/posts.json`.
+## 8. Aktualizácia kódu
+Nahraj zmenené súbory cez FTP. **Nikdy neprepisuj ani nemaž** `data/`, `../alfa-data/` a `uploads/`.
+CSS a JS majú v adrese verziu (`?v=…`), takže návštevníci po nahratí hneď dostanú novú verziu.
 
 ## 9. Zabudnutý e-mail alebo heslo
-Zmaž cez SFTP `data/auth.json` (alebo `../alfa-data/`, ak si dáta presunul podľa časti 4) a zopakuj časť 3 (nový token). Ukážkový obsah vtedy nezaškrtávaj —
-existujúce dáta by sa aj tak neprepísali.
+Zmaž cez FTP `data/auth.json` a zopakuj časť 4 (nový token). Existujúce aktuality a fotky ostanú.
 
-## 10. Doména a GitHub Pages
-Doménu kúp/nasmeruj vo Websupporte (WebAdmin → doména → DNS). Starý web na GitHub Pages potom vypni
-(GitHub → Settings → Pages) a až potom zlúč vetvu `cms-admin` do `main`.
+---
+
+## 10. Presun z dočasnej ukážky na trénerov web (ostrá doména)
+
+Cieľ: web beží na trénerovom hostingu a vlastnej doméne, s obsahom, ktorý tréner medzitým pridal na ukážke.
+
+1. **Pripraviť hosting** podľa časti 1 (PHP 8.1+, HTTPS pre doménu aj `www`).
+2. **Nahrať kód** podľa časti 2.
+3. **V `inc/site.php`** nastaviť `SITE_URL` na novú doménu a `SITE_INDEX = true`; nahrať tento súbor.
+4. **Preniesť obsah** — z ukážky (`public_html/_sub/alfa/`) stiahnuť celé `data/` a `uploads/` (vrátane `data/auth.json`, takže e-mail a heslo trénera ostanú) a nahrať ich na nový hosting do koreňa webu.
+   Ak chce tréner začať načisto: obsah nepreniesť a spraviť časť 4 (nový token, bez ukážkového obsahu).
+5. **Skontrolovať** podľa časti 5 a prihlásiť sa do `https://<nová-doména>/admin/`.
+   Tréner sa na každom zariadení prihlási znova (nová doména = nové cookies).
+6. **Google a AI**:
+   - over `https://<doména>/robots.txt` (má obsahovať `Allow` a riadok `Sitemap:`) a `https://<doména>/sitemap.xml`;
+   - pridaj doménu do **Google Search Console** (overenie cez DNS záznam TXT u registrátora) a odošli `sitemap.xml`;
+   - založ/aktualizuj **Firemný profil Google** (Google Maps) s rovnakou adresou, telefónom a odkazom na web;
+   - voliteľne Bing Webmaster Tools (z neho čerpá aj ChatGPT vyhľadávanie) — dá sa importovať zo Search Console.
+7. **Ukážku vypnúť** — na `alfa.oravsky.sk` nahraj do koreňa len `.htaccess` s presmerovaním:
+   ```
+   RewriteEngine On
+   RewriteRule ^(.*)$ https://<nová-doména>/$1 [R=301,L]
+   ```
+   (alebo subdoménu vo Webglobe zmaž). Až potom zmaž jej `data/` a `uploads/`.
+8. **GitHub Pages** (stará statická verzia na `lukaskooravsky.github.io`) vypnúť: GitHub → Settings → Pages. Potom zlúčiť vetvu `cms-admin` do `main`.

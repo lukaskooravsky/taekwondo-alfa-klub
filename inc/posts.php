@@ -48,7 +48,7 @@ function post_create(array $in, ?array $image): array
 {
     $now = now_iso();
     $post = ['id' => new_id('p')] + post_clean($in) + [
-        'image' => $image ? ['full' => $image['full'], 'thumb' => $image['thumb']] : null,
+        'image' => $image ? post_image_record($image) : null,
         'created' => $now,
         'updated' => $now,
     ];
@@ -69,7 +69,7 @@ function post_update(string $id, array $in, array|false|null $image): ?array
             $oldHtml = $p['excerpt'] . $p['body'];
             $p = array_merge($p, $f, ['updated' => now_iso()]);
             if ($image === false) $p['image'] = null;
-            elseif (is_array($image)) $p['image'] = ['full' => $image['full'], 'thumb' => $image['thumb']];
+            elseif (is_array($image)) $p['image'] = post_image_record($image);
             $posts[$i] = $p;
             return $p;
         }
@@ -83,6 +83,7 @@ function post_update(string $id, array $in, array|false|null $image): ?array
 function post_delete(string $id): bool
 {
     if (!valid_id($id, 'p')) return false;
+    store_backup_before_delete('posts');
     $removed = store_update('posts', 'posts', function (array &$posts) use ($id): ?array {
         foreach ($posts as $i => $p) {
             if ($p['id'] === $id) {
@@ -96,6 +97,14 @@ function post_delete(string $id): bool
     post_delete_files($removed['image']);
     rich_gc_images(rich_images($removed['excerpt'] . $removed['body']));
     return true;
+}
+
+/** Záznam fotky aktuality (cesty + rozmery, ak sú známe). */
+function post_image_record(array $image): array
+{
+    $r = ['full' => $image['full'], 'thumb' => $image['thumb']];
+    if (!empty($image['w']) && !empty($image['h'])) $r += ['w' => (int)$image['w'], 'h' => (int)$image['h']];
+    return $r;
 }
 
 function post_delete_files(?array $image): void

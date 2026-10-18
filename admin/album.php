@@ -77,7 +77,7 @@ admin_header($album['title']);
 <section class="a-section">
   <h2>Nastavenia albumu</h2>
   <form method="post" class="a-form">
-    <?= csrf_field() ?><input type="hidden" name="action" value="rename">
+    <?= csrf_field() ?><input type="hidden" name="action" value="rename"><input type="hidden" name="rich" value="1">
     <label>Názov albumu<input name="title" value="<?= e($album['title']) ?>" maxlength="120" required></label>
     <label>Dátum<input type="date" name="date" value="<?= e($album['date']) ?>" required></label>
     <div class="a-field"><span>Popis albumu <small>(nepovinný, zobrazí sa nad fotkami)</small></span>

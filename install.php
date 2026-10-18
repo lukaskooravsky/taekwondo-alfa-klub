@@ -47,8 +47,8 @@ $remote = (string)($_SERVER['REMOTE_ADDR'] ?? '');
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
   <title>Inštalácia — Admin ALFA</title>
-  <link rel="stylesheet" href="css/fonts.css">
-  <link rel="stylesheet" href="admin/admin.css">
+  <link rel="stylesheet" href="<?= e(asset('css/fonts.css')) ?>">
+  <link rel="stylesheet" href="<?= e(asset('admin/admin.css')) ?>">
 </head>
 <body>
 <main class="a-main">
@@ -74,6 +74,6 @@ $remote = (string)($_SERVER['REMOTE_ADDR'] ?? '');
   </form>
   <?php endif; ?>
 </main>
-<script src="admin/admin.js"></script>
+<script src="<?= e(asset('admin/admin.js')) ?>"></script>
 </body>
 </html>

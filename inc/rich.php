@@ -152,10 +152,17 @@ function rich_color(string $v, array $palette = RICH_COLORS): ?string
 /** Fotka v texte: len z uploads/inline (v admine má cestu ../uploads/…), vždy s alt a lazy loading. */
 function rich_img(DOMElement $el): ?DOMElement
 {
-    $src = preg_replace('~^(?:\.\./)+~', '', trim($el->getAttribute('src')));
+    $src = trim($el->getAttribute('src'));
+    if (str_starts_with($src, SITE_URL . '/')) $src = substr($src, strlen(SITE_URL) + 1);   // skopírované z vlastného webu
+    $src = preg_replace('~^(?:\.\./)+|^/~', '', $src);
     if (!preg_match(RICH_IMG_RE, $src)) return null;
     $img = $el->ownerDocument->createElement('img');
     $img->setAttribute('src', $src);
+    $size = @getimagesize(uploads_dir() . '/' . substr($src, strlen('uploads/')));
+    if ($size) {
+        $img->setAttribute('width', (string)$size[0]);
+        $img->setAttribute('height', (string)$size[1]);
+    }
     $img->setAttribute('alt', mb_substr(trim($el->getAttribute('alt')), 0, 200));
     $img->setAttribute('loading', 'lazy');
     return $img;
@@ -227,6 +234,18 @@ function rich_gc_images(array $candidates): void
         upload_delete($rel);
         foreach (['jpg', 'png', 'webp'] as $ext) upload_delete(preg_replace('~\.(jpg|png|webp)$~', "_t.$ext", $rel));
     }
+}
+
+/** Fotky v uploads/inline staršie ako 2 dni, ktoré nepoužíva žiadna aktualita ani album (neuložený/zrušený text) → kôš. */
+function rich_sweep_inline(?int $now = null): void
+{
+    $limit = ($now ?? time()) - 2 * 86400;
+    $old = [];
+    foreach (glob(uploads_dir() . '/inline/i_*.*') ?: [] as $f) {
+        $name = basename($f);
+        if (preg_match('~^i_[a-z0-9]{6,32}\.(jpg|png|webp)$~D', $name) && (int)@filemtime($f) < $limit) $old[] = "inline/$name";
+    }
+    rich_gc_images($old);
 }
 
 /** Čistý text z HTML (dĺžka, meta description, kontrola prázdnoty). */

@@ -1,11 +1,13 @@
 <?php
 declare(strict_types=1);
-// robots.txt (cez .htaccess). SITE_INDEX=false → nič neindexovať (dočasná ukážka), inak povoliť aj AI vyhľadávače.
+// robots.txt (cez .htaccess). SITE_INDEX=false → noindex rieši meta/X-Robots-Tag (dočasná ukážka), inak sitemap a aj AI vyhľadávače.
 require __DIR__ . '/inc/bootstrap.php';
 header('Content-Type: text/plain; charset=utf-8');
 
 if (!SITE_INDEX) {
-    echo "User-agent: *\nDisallow: /\n";
+    // neblokovať — roboty musia stránky načítať, aby videli noindex (meta + X-Robots-Tag); zablokované URL by Google
+    // mohol zaradiť aj bez obsahu
+    echo "User-agent: *\nAllow: /\n";
     exit;
 }
 $disallow = "Disallow: /admin/\nDisallow: /install.php\n";

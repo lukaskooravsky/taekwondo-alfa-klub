@@ -13,6 +13,7 @@ final class ValidationException extends RuntimeException
 }
 
 const BACKUP_KEEP = 20;
+const BACKUP_DELETE_DAYS = 30;   // zálohy pred zmazaním — rovnako dlho ako kôš fotiek (UPLOAD_TRASH_DAYS)
 
 function new_id(string $prefix): string
 {
@@ -89,9 +90,26 @@ function store_backup(string $name): void
 {
     $dir = data_dir() . '/backup';
     copy(store_path($name), sprintf('%s/%s-%s-%s.json', $dir, $name, date('Ymd-His'), bin2hex(random_bytes(3))));
-    $files = glob("$dir/$name-*.json") ?: [];
+    $files = glob("$dir/$name-[0-9]*.json") ?: [];        // bez záloh pred zmazaním (tie majú vlastnú lehotu)
     usort($files, fn(string $a, string $b): int => filemtime($a) <=> filemtime($b) ?: strcmp($a, $b));
     foreach (array_slice($files, 0, max(0, count($files) - BACKUP_KEEP)) as $old) {
         unlink($old);
+    }
+}
+
+/**
+ * Záloha pred zmazaním aktuality/albumu/fotky: data/backup/<name>-pred-zmazanim-<čas>.json. Nerotuje sa s bežnými
+ * zálohami (tie by ju pri hromadnom nahrávaní fotiek rýchlo vytlačili), drží sa BACKUP_DELETE_DAYS dní.
+ */
+function store_backup_before_delete(string $name): void
+{
+    $file = store_path($name);
+    if (!is_file($file)) return;
+    $dir = data_dir() . '/backup';
+    if (!is_dir($dir)) @mkdir($dir, 0775, true);
+    @copy($file, sprintf('%s/%s-pred-zmazanim-%s-%s.json', $dir, $name, date('Ymd-His'), bin2hex(random_bytes(3))));
+    $limit = time() - BACKUP_DELETE_DAYS * 86400;
+    foreach (glob("$dir/$name-pred-zmazanim-*.json") ?: [] as $old) {
+        if ((int)@filemtime($old) < $limit) @unlink($old);
     }
 }

@@ -91,6 +91,7 @@ function send_security_headers(bool $admin = false): void
     header('X-Frame-Options: ' . ($admin ? 'DENY' : 'SAMEORIGIN'));
     header("Content-Security-Policy: frame-ancestors " . ($admin ? "'none'" : "'self'") . "; base-uri 'self'; object-src 'none'");
     if (request_is_https()) header('Strict-Transport-Security: max-age=31536000');
+    if (!SITE_INDEX || $admin) header('X-Robots-Tag: noindex, nofollow');
 }
 
 /** Admin a install len cez HTTPS (lokálny vývoj na localhost je výnimka). */

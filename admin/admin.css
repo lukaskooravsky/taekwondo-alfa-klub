@@ -211,7 +211,7 @@ html.a-noscroll, html.a-noscroll body { overflow: hidden; }
 .a-preview-modal iframe { flex: 1; width: 100%; border: 1px solid var(--line); border-radius: 0 0 12px 12px; background: var(--ink); }
 
 @media (max-width: 640px) {
-  .a-rich .ql-toolbar.ql-snow .ql-formats { padding: 0 2px; border-left: 0; }
+  .a-rich .ql-toolbar.ql-snow .ql-formats { padding: 0 2px; border-left: 0; flex-wrap: wrap; }
   .a-rich .ql-snow .ql-picker.ql-font { width: 118px; }
   .a-rich .ql-snow .ql-picker.ql-header, .a-rich .ql-snow .ql-picker.ql-size { width: 96px; }
   .a-rich .ql-editor { padding: 14px; }

@@ -102,3 +102,10 @@ test('stará aktualita bez rich ostáva prostý text', function () {
     unset($p['rich']); // dáta spred editora kľúč vôbec nemajú
     eq('Pozor &lt;b&gt;', post_excerpt_html($p));
 });
+
+test('titulná fotka aktuality si pamätá rozmery a karta ich vypíše', function () {
+    $p = post_create(sample_post(), ['full' => 'posts/p_abcdef.jpg', 'thumb' => 'posts/p_abcdef_t.jpg', 'w' => 1600, 'h' => 900]);
+    eq(['full' => 'posts/p_abcdef.jpg', 'thumb' => 'posts/p_abcdef_t.jpg', 'w' => 1600, 'h' => 900], $p['image']);
+    ok(str_contains(render_post_card($p), 'width="1600" height="900"'));
+    ok(str_contains(render_post_article($p), 'width="1600" height="900"'));
+});

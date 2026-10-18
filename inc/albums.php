@@ -78,6 +78,7 @@ function album_update(string $id, array $in): ?array
 function album_delete(string $id): bool
 {
     if (!valid_id($id, 'a')) return false;
+    store_backup_before_delete('albums');
     $desc = '';
     $found = store_update('albums', 'albums', function (array &$albums) use ($id, &$desc): bool {
         foreach ($albums as $i => $a) {
@@ -107,6 +108,7 @@ function album_add_photo(string $albumId, string $photoId, array $stored): ?arra
 
 function album_delete_photo(string $albumId, string $photoId): bool
 {
+    store_backup_before_delete('albums');
     $removed = album_modify($albumId, function (array &$a) use ($photoId): ?array {
         foreach ($a['photos'] as $i => $p) {
             if ($p['id'] === $photoId) {

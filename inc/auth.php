@@ -397,7 +397,10 @@ function auth_is_trusted(?array $cookies = null): bool
 
 function auth_cookie(string $name, string $value, int $lifetime): void
 {
-    if (headers_sent()) return;
+    if (headers_sent($file, $line)) {
+        error_log("Cookie $name sa nedá nastaviť — výstup už začal ($file:$line)");
+        return;
+    }
     setcookie($name, $value, ['expires' => $value === '' ? time() - 3600 : time() + $lifetime, 'path' => '/',
         'secure' => request_is_https(), 'httponly' => true, 'samesite' => 'Strict']);
 }

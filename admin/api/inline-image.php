@@ -18,6 +18,7 @@ if (!auth_is_logged_in()) json_out(401, ['ok' => false, 'error' => 'Prihlásenie
 if (empty($_POST) && (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) json_out(413, ['ok' => false, 'error' => 'Fotka je príliš veľká pre server (limit ' . ini_get('post_max_size') . ').']);
 if (!csrf_check($_POST['csrf'] ?? null)) json_out(403, ['ok' => false, 'error' => 'Platnosť stránky vypršala. Obnov ju a skús znova.']);
 
+if (random_int(1, 10) === 1) rich_sweep_inline();   // občas upratať fotky z neuložených textov
 try {
     $stored = upload_from_request('full', 'thumb', 'inline', new_id('i'));
     if ($stored === null) json_out(422, ['ok' => false, 'error' => 'Nevybral si žiadnu fotku.']);

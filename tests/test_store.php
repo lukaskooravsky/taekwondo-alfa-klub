@@ -60,3 +60,16 @@ test('ValidationException nesie chyby podľa polí', function () {
     eq(['title' => 'Doplň nadpis.'], $e->errors);
     eq('Doplň nadpis.', $e->getMessage());
 });
+
+test('záloha pred zmazaním prežije rotáciu bežných záloh a drží sa 30 dní', function () {
+    store_update('posts', 'posts', function (array &$p): void { $p[] = ['id' => 'p_aaaaaa']; });
+    store_update('posts', 'posts', function (array &$p): void { $p[] = ['id' => 'p_bbbbbb']; });
+    store_backup_before_delete('posts');
+    for ($i = 0; $i < BACKUP_KEEP + 5; $i++) store_update('posts', 'posts', function (array &$p) use ($i): void { $p[0]['n'] = $i; });
+    $pinned = glob(data_dir() . '/backup/posts-pred-zmazanim-*.json');
+    eq(1, count($pinned), 'záloha pred zmazaním ostala');
+    eq(BACKUP_KEEP, count(glob(data_dir() . '/backup/posts-[0-9]*.json')), 'bežné sa rotujú');
+    touch($pinned[0], time() - (BACKUP_DELETE_DAYS + 1) * 86400);
+    store_backup_before_delete('posts');
+    eq(1, count(glob(data_dir() . '/backup/posts-pred-zmazanim-*.json')), 'stará po 30 dňoch preč, nová je');
+});

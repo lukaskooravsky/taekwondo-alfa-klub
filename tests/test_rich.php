@@ -101,3 +101,18 @@ test('fotky z textu sa zmažú pri úprave a zmazaní aktuality aj albumu', func
     album_delete($a['id']);
     ok(!is_file(upload_path('inline/i_eeeeee.webp')), 'po zmazaní albumu');
 });
+
+test('fotka v texte: rozmery zo súboru, adresa vlastného webu → relatívna; upratanie neuložených', function () {
+    ensure_storage();
+    fixture_big_png(upload_path('inline/i_ffffff.png'), 40, 30);
+    eq('<p><img src="uploads/inline/i_ffffff.png" width="40" height="30" alt="" loading="lazy"></p>',
+        rich_clean('<p><img src="' . SITE_URL . '/uploads/inline/i_ffffff.png"></p>'));
+    eq('', rich_clean('<p><img src="https://cudzi.sk/uploads/inline/i_ffffff.png"></p>'), 'cudzia doména nie');
+    fixture_big_png(upload_path('inline/i_gggggg.png'), 10, 10);
+    touch(upload_path('inline/i_gggggg.png'), time() - 3 * 86400);
+    post_create(['title' => 'T', 'date' => '2026-01-01', 'excerpt' => 'u', 'rich' => '1', 'body' => '<p><img src="uploads/inline/i_ffffff.png"></p>'], null);
+    touch(upload_path('inline/i_ffffff.png'), time() - 3 * 86400);
+    rich_sweep_inline();
+    ok(!is_file(upload_path('inline/i_gggggg.png')), 'neuložená stará fotka preč');
+    ok(is_file(upload_path('inline/i_ffffff.png')), 'použitá ostane');
+});

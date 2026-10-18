@@ -28,12 +28,19 @@ function post_body_html(array $p): string
     return !empty($p['rich']) ? '<div class="rich">' . rich_clean($p['body']) . '</div>' : text_to_html($p['body']);
 }
 
+/** width/height pre <img> (pomer strán → prehliadač vyhradí miesto vopred). */
+function img_size_attrs(?array $image): string
+{
+    return !empty($image['w']) && !empty($image['h']) ? ' width="' . (int)$image['w'] . '" height="' . (int)$image['h'] . '"' : '';
+}
+
 function render_post_card(array $p): string
 {
     $img = post_image($p);
+    $size = img_size_attrs($p['image'] ?? null);
     $url = e('aktualita.php?id=' . rawurlencode($p['id']));
     return '<article class="post reveal">'
-        . '<a href="' . $url . '"><img class="post-img" src="' . e($img['thumb']) . '" alt="" loading="lazy"></a>'
+        . '<a href="' . $url . '"><img class="post-img" src="' . e($img['thumb']) . '"' . $size . ' alt="" loading="lazy"></a>'
         . '<div class="post-body">'
         . '<span class="date">' . e(format_date_sk($p['date'])) . '</span>'
         . '<h3><a href="' . $url . '">' . e($p['title']) . '</a></h3>'
@@ -52,7 +59,7 @@ function render_post_article(array $p): string
         . '<h1 class="h1-post">' . e($p['title']) . '</h1>'
         . '</div></section>'
         . '<section><div class="container article">'
-        . (!empty($p['image']) ? '<figure class="article-img"><img src="' . e($img['full']) . '" alt="' . e($p['title']) . '"></figure>' : '')
+        . (!empty($p['image']) ? '<figure class="article-img"><img src="' . e($img['full']) . '"' . img_size_attrs($p['image']) . ' alt="' . e($p['title']) . '"></figure>' : '')
         . '<p class="article-lead">' . post_excerpt_html($p) . '</p>'
         . '<div class="prose">' . post_body_html($p) . '</div>'
         . '<p style="margin-top:2.4rem;"><a class="btn btn-ghost" href="aktuality.php">← Všetky aktuality</a></p>'
