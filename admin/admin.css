@@ -81,3 +81,60 @@ h2 { font-size: 1.3rem; margin-bottom: 0.8rem; }
 .a-pw-rules li::before { content: "✗ "; color: var(--err); }
 .a-pw-rules li.is-ok { color: var(--muted); }
 .a-pw-rules li.is-ok::before { content: "✓ "; color: var(--ok); }
+
+/* Formátovací editor (Quill „snow“) v tmavom dizajne adminu */
+.a-rich { background: var(--ink-2); border: 1px solid var(--line); font-weight: 400; position: relative; }
+.a-rich:focus-within { outline: 2px solid var(--gold); outline-offset: 1px; }
+.a-rich .ql-toolbar.ql-snow { border: 0; border-bottom: 1px solid var(--line); background: var(--panel); font-family: var(--font-body); padding: 6px; }
+.a-rich .ql-container.ql-snow { border: 0; font: inherit; font-size: 1rem; color: var(--bone); }
+.a-rich .ql-editor { min-height: 260px; line-height: 1.55; }
+.a-rich-inline .ql-editor { min-height: 90px; }
+.a-rich .ql-editor.ql-blank::before { color: var(--muted-2); font-style: normal; }
+.a-rich .ql-editor a { color: var(--gold-2); }
+.a-rich .ql-editor h2, .a-rich .ql-editor h3 { font-family: var(--font-display); color: #fff; text-transform: none; letter-spacing: 0.02em; }
+.a-rich .ql-snow .ql-stroke { stroke: var(--muted); }
+.a-rich .ql-snow .ql-fill { fill: var(--muted); }
+.a-rich .ql-snow .ql-picker { color: var(--muted); }
+.a-rich .ql-snow button:hover .ql-stroke, .a-rich .ql-snow button.ql-active .ql-stroke,
+.a-rich .ql-snow .ql-picker-label:hover .ql-stroke, .a-rich .ql-snow .ql-picker-label.ql-active .ql-stroke { stroke: var(--gold-2); }
+.a-rich .ql-snow button:hover .ql-fill, .a-rich .ql-snow button.ql-active .ql-fill { fill: var(--gold-2); }
+.a-rich .ql-snow button:hover, .a-rich .ql-snow button.ql-active,
+.a-rich .ql-snow .ql-picker-label:hover, .a-rich .ql-snow .ql-picker-label.ql-active, .a-rich .ql-snow .ql-picker-item:hover,
+.a-rich .ql-snow .ql-picker-item.ql-selected { color: var(--gold-2); }
+.a-rich .ql-snow .ql-picker-options { background: var(--panel); border-color: var(--line) !important; z-index: 5; }
+.a-rich .ql-snow.ql-toolbar button, .a-rich .ql-snow .ql-toolbar button { width: 34px; height: 32px; padding: 4px 6px; }
+.a-rich .ql-snow .ql-picker { height: 32px; }
+.a-rich .ql-snow .ql-picker-label { display: flex; align-items: center; }
+.a-rich .ql-snow .ql-color-picker .ql-picker-item { width: 22px; height: 22px; border: 1px solid var(--line); }
+.a-rich .ql-snow .ql-color-picker .ql-picker-options { width: 142px; }
+.a-rich .ql-toolbar .ql-emoji { font-size: 18px; line-height: 1; }
+.a-rich .ql-snow .ql-tooltip { background: var(--panel); border-color: var(--line); color: var(--bone); box-shadow: 0 4px 16px #000a; z-index: 6; }
+.a-rich .ql-snow .ql-tooltip input[type=text] { background: var(--ink-2); border-color: var(--line); color: var(--bone); }
+.a-rich .ql-snow .ql-tooltip a { color: var(--gold-2); }
+.a-rich .ql-snow .ql-tooltip[data-mode=link]::before { content: "Adresa:"; }
+.a-rich .ql-snow .ql-tooltip::before { content: "Otvoriť:"; }
+.a-rich .ql-snow .ql-tooltip.ql-editing a.ql-action::after { content: "Uložiť"; }
+.a-rich .ql-snow .ql-tooltip a.ql-action::after { content: "Upraviť"; }
+.a-rich .ql-snow .ql-tooltip a.ql-remove::before { content: "Odstrániť"; }
+/* názvy písiem a veľkostí v rozbaľovačoch */
+.a-rich .ql-snow .ql-picker.ql-font { width: 150px; }
+.a-rich .ql-snow .ql-picker.ql-font .ql-picker-label::before, .a-rich .ql-snow .ql-picker.ql-font .ql-picker-item::before { content: "Barlow (web)"; }
+.a-rich .ql-snow .ql-picker.ql-font [data-value=saira]::before { content: "Saira (nadpisy)"; font-family: var(--font-display); }
+.a-rich .ql-snow .ql-picker.ql-font [data-value=georgia]::before { content: "Georgia (pätkové)"; font-family: Georgia, serif; }
+.a-rich .ql-snow .ql-picker.ql-font [data-value=arial]::before { content: "Arial"; font-family: Arial, sans-serif; }
+.a-rich .ql-snow .ql-picker.ql-font [data-value=courier]::before { content: "Courier (strojové)"; font-family: "Courier New", monospace; }
+.a-rich .ql-snow .ql-picker.ql-size { width: 110px; }
+.a-rich .ql-snow .ql-picker.ql-size .ql-picker-label::before, .a-rich .ql-snow .ql-picker.ql-size .ql-picker-item::before { content: "Normálne"; }
+.a-rich .ql-snow .ql-picker.ql-size [data-value=small]::before { content: "Malé"; }
+.a-rich .ql-snow .ql-picker.ql-size [data-value=large]::before { content: "Veľké"; }
+.a-rich .ql-snow .ql-picker.ql-size [data-value=huge]::before { content: "Obrovské"; }
+.a-rich .ql-editor .ql-font-saira { font-family: var(--font-display); }
+.a-rich .ql-editor .ql-font-georgia { font-family: Georgia, "Times New Roman", serif; }
+.a-rich .ql-editor .ql-font-arial { font-family: Arial, Helvetica, sans-serif; }
+.a-rich .ql-editor .ql-font-courier { font-family: "Courier New", Courier, monospace; }
+/* výber emoji */
+.a-emoji { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 2px; max-height: 220px; overflow-y: auto; padding: 6px; background: var(--panel); border-bottom: 1px solid var(--line); }
+.a-emoji[hidden] { display: none; }
+.a-emoji button { font-size: 22px; line-height: 1; min-height: 40px; background: none; border: 0; cursor: pointer; border-radius: 4px; }
+.a-emoji button:hover { background: var(--ink-2); }
+.a-rich-count { display: block; text-align: right; }

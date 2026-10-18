@@ -74,10 +74,15 @@ function admin_header(string $title, bool $nav = true): void
 <?php
 }
 
-function admin_footer(): void
+/** $rich = stránka má formátovací editor (Quill sa načíta len tam, kde treba). */
+function admin_footer(bool $rich = false): void
 {
     ?>
 </main>
+<?php if ($rich): ?>
+<link rel="stylesheet" href="../assets/vendor/quill/quill.snow.css">
+<script src="../assets/vendor/quill/quill.js"></script>
+<?php endif; ?>
 <script src="admin.js"></script>
 </body>
 </html>

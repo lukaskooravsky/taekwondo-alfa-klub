@@ -4,19 +4,26 @@ declare(strict_types=1);
 /** Očistí a overí vstup formulára aktuality. */
 function post_clean(array $in): array
 {
+    // rich=1 posiela editor v admine (HTML); bez neho (vypnutý JS, staré dáta) ide o prostý text
+    $rich = input_str($in['rich'] ?? '') === '1';
+    $excerpt = trim(input_str($in['excerpt'] ?? ''));
+    $body = trim(str_replace(["\r\n", "\r"], "\n", input_str($in['body'] ?? '')));
     $f = [
         'title' => trim(input_str($in['title'] ?? '')),
         'date' => trim(input_str($in['date'] ?? '')),
-        'excerpt' => trim(input_str($in['excerpt'] ?? '')),
-        'body' => trim(str_replace(["\r\n", "\r"], "\n", input_str($in['body'] ?? ''))),
+        'excerpt' => $rich ? rich_clean($excerpt, true) : $excerpt,
+        'body' => $rich ? rich_clean($body) : $body,
+        'rich' => $rich,
     ];
+    $excerptText = $rich ? rich_text($f['excerpt']) : $f['excerpt'];
+    $bodyText = $rich ? rich_text($f['body']) : $f['body'];
     $err = [];
     if ($f['title'] === '') $err['title'] = 'Doplň nadpis.';
     elseif (str_len($f['title']) > 150) $err['title'] = 'Nadpis môže mať najviac 150 znakov.';
     if (!valid_date($f['date'])) $err['date'] = 'Zadaj platný dátum.';
-    if ($f['excerpt'] === '') $err['excerpt'] = 'Doplň krátky úvod.';
-    elseif (str_len($f['excerpt']) > 300) $err['excerpt'] = 'Krátky úvod môže mať najviac 300 znakov.';
-    if (str_len($f['body']) > 20000) $err['body'] = 'Text je príliš dlhý (max 20 000 znakov).';
+    if ($excerptText === '') $err['excerpt'] = 'Doplň krátky úvod.';
+    elseif (str_len($excerptText) > 300) $err['excerpt'] = 'Krátky úvod môže mať najviac 300 znakov.';
+    if (str_len($bodyText) > 20000 || strlen($f['body']) > 200000) $err['body'] = 'Text je príliš dlhý (max 20 000 znakov).';
     if ($err) throw new ValidationException($err);
     return $f;
 }

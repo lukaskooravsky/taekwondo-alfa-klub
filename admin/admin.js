@@ -212,4 +212,108 @@
       failsEl.appendChild(li);
     }
   });
+
+  /* ---------- formátovací editor (Quill) pre textarea[data-rich="full|inline"] ---------- */
+  // Povolené písma, veľkosti a farby musia sedieť s RICH_* v inc/rich.php (server ostatné zahodí).
+  const RICH_COLORS = ["#f3efe6", "#c3bdb1", "#948e83", "#e6bd6a", "#c8a04e", "#ef5350", "#ff9f43", "#66bb6a", "#4fc3f7", "#ba68c8"];
+  const EMOJI = ("🥋 🥇 🥈 🥉 🏆 🎖️ 🏅 💪 🔥 ⭐ ✨ 👏 🙌 👍 👊 🤜 🦵 🎉 🎊 🥳 📣 📢 📅 🗓️ ⏰ 📍 🏫 🏟️ ✅ ❗ ❓ " +
+    "ℹ️ ⚠️ ➡️ 👉 📸 🎥 📝 📞 ✉️ 🔗 😀 😃 😄 😁 😊 🙂 😉 😍 🤩 😎 🤗 🤔 😮 😢 😭 😅 🙏 ❤️ 🧡 💛 💚 💙 🤍 🖤 " +
+    "🇸🇰 🇰🇷 🌍 ☀️ 🌧️ ❄️ 🎂 🍕 🚌 🚗 ✈️").split(" ");
+  const richBoxes = document.querySelectorAll("textarea[data-rich]");
+  if (richBoxes.length && window.Quill) {
+    const Font = Quill.import("formats/font");
+    Font.whitelist = ["saira", "georgia", "arial", "courier"];
+    Quill.register(Font, true);
+  }
+  richBoxes.forEach(function (ta) {
+    if (!window.Quill) return; // bez editora ostane obyčajná textarea (server ju berie ako prostý text)
+    const inline = ta.dataset.rich === "inline";
+    const max = parseInt(ta.dataset.max || "0", 10);
+    const fontSize = [{ font: [false, "saira", "georgia", "arial", "courier"] }, { size: ["small", false, "large", "huge"] }];
+    const toolbar = inline
+      ? [fontSize, ["bold", "italic", "underline"], [{ color: RICH_COLORS }], ["link", "emoji", "clean"]]
+      : [fontSize, ["bold", "italic", "underline", "strike"], [{ color: RICH_COLORS }],
+        [{ header: 2 }, { header: 3 }, { list: "ordered" }, { list: "bullet" }], ["link", "emoji", "clean"]];
+    const formats = ["font", "size", "bold", "italic", "underline", "color", "link"]
+      .concat(inline ? [] : ["strike", "header", "list"]);
+
+    const box = document.createElement("div");
+    box.className = "a-rich" + (inline ? " a-rich-inline" : "");
+    const host = document.createElement("div");
+    box.appendChild(host);
+    ta.hidden = true;
+    ta.parentNode.insertBefore(box, ta.nextSibling);
+
+    const quill = new Quill(host, {
+      theme: "snow",
+      formats: formats,
+      placeholder: inline ? "1–2 vety, ktoré sa zobrazia v zozname aktualít…" : "Sem napíš text…",
+      modules: { toolbar: { container: toolbar, handlers: { emoji: function () { togglePicker(); } } } }
+    });
+    if (ta.value.trim() !== "") quill.clipboard.dangerouslyPasteHTML(ta.value);
+    quill.history.clear();
+
+    // popisy tlačidiel (title) — tréner nemusí poznať ikony
+    const titles = { bold: "Tučné", italic: "Kurzíva", underline: "Podčiarknuté", strike: "Prečiarknuté", link: "Odkaz",
+      clean: "Zrušiť formátovanie", emoji: "Emoji", "header-2": "Nadpis", "header-3": "Podnadpis",
+      "list-ordered": "Číslovaný zoznam", "list-bullet": "Odrážky" };
+    box.querySelectorAll(".ql-toolbar button").forEach(function (b) {
+      const name = (b.className.match(/ql-(\w+)/) || [])[1];
+      const key = b.value ? name + "-" + b.value : name;
+      if (titles[key]) b.title = titles[key];
+    });
+    const emojiBtn = box.querySelector(".ql-emoji");
+    if (emojiBtn) emojiBtn.textContent = "😀";
+
+    // výber emoji
+    const picker = document.createElement("div");
+    picker.className = "a-emoji";
+    picker.hidden = true;
+    EMOJI.forEach(function (em) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = em;
+      b.addEventListener("mousedown", function (e) { e.preventDefault(); }); // nestratiť výber v editore
+      b.addEventListener("click", function () {
+        const range = quill.getSelection(true);
+        quill.insertText(range.index, em, "user");
+        quill.setSelection(range.index + em.length, 0, "user");
+        picker.hidden = true;
+      });
+      picker.appendChild(b);
+    });
+    box.querySelector(".ql-toolbar").after(picker);
+    function togglePicker() { picker.hidden = !picker.hidden; }
+    document.addEventListener("click", function (e) {
+      if (!picker.hidden && !picker.contains(e.target) && e.target !== emojiBtn) picker.hidden = true;
+    });
+
+    // počítadlo znakov (krátky úvod)
+    let counter = null;
+    if (max) {
+      counter = document.createElement("small");
+      counter.className = "a-hint a-rich-count";
+      box.after(counter);
+    }
+
+    function sync() {
+      const text = quill.getText().trim();
+      ta.value = text === "" ? "" : quill.root.innerHTML;
+      if (counter) {
+        counter.textContent = Array.from(text).length + " / " + max + " znakov";
+        counter.classList.toggle("a-err", Array.from(text).length > max);
+      }
+    }
+    quill.on("text-change", sync);
+    sync();
+
+    const form = ta.form;
+    if (form && !form.querySelector("input[name=rich]")) {
+      const flag = document.createElement("input");
+      flag.type = "hidden";
+      flag.name = "rich";
+      flag.value = "1";
+      form.appendChild(flag);
+    }
+  });
 })();

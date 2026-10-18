@@ -11,7 +11,7 @@ try {
 if (!$post) not_found('Táto aktualita neexistuje alebo bola zmazaná.', 'aktuality.php', '← Všetky aktuality');
 
 $img = post_image($post);
-$page = ['title' => $post['title'], 'description' => $post['excerpt']];
+$page = ['title' => $post['title'], 'description' => post_excerpt_text($post)];
 require __DIR__ . '/inc/layout-header.php';
 ?>
 
@@ -28,8 +28,8 @@ require __DIR__ . '/inc/layout-header.php';
       <?php if (!empty($post['image'])): ?>
       <figure class="article-img"><img src="<?= e($img['full']) ?>" alt="<?= e($post['title']) ?>"></figure>
       <?php endif; ?>
-      <p class="article-lead"><?= e($post['excerpt']) ?></p>
-      <div class="prose"><?= text_to_html($post['body']) ?></div>
+      <p class="article-lead"><?= post_excerpt_html($post) ?></p>
+      <div class="prose"><?= post_body_html($post) ?></div>
       <p style="margin-top:2.4rem;"><a class="btn btn-ghost" href="aktuality.php">← Všetky aktuality</a></p>
     </div>
   </section>

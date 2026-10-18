@@ -8,7 +8,7 @@ function add_sample_photo(string $albumId, string $photoId): array
 }
 
 test('album_clean validuje názov a dátum', function () {
-    eq(['title' => 'Skúšky', 'date' => '2026-06-20'], album_clean(['title' => ' Skúšky ', 'date' => '2026-06-20']));
+    eq(['title' => 'Skúšky', 'date' => '2026-06-20', 'description' => ''], album_clean(['title' => ' Skúšky ', 'date' => '2026-06-20']));
     $e = throws(fn() => album_clean(['title' => '', 'date' => 'x']), ValidationException::class);
     eq(['title' => 'Doplň názov albumu.', 'date' => 'Zadaj platný dátum.'], $e->errors);
     throws(fn() => album_clean(['title' => str_repeat('a', 121), 'date' => '2026-06-20']), ValidationException::class);
@@ -65,4 +65,13 @@ test('album_update a album_delete (aj s priečinkom fotiek)', function () {
     eq(null, album_get($a['id']));
     ok(!is_dir(upload_path('albums/' . $a['id'])));
     ok(!album_delete($a['id']));
+});
+
+test('popis albumu: HTML z editora sa vyčistí, prostý text sa prevedie', function () {
+    $f = album_clean(['title' => 'A', 'date' => '2026-06-20', 'rich' => '1', 'description' => '<p><strong>Super</strong><script>x</script></p>']);
+    eq('<p><strong>Super</strong></p>', $f['description']);
+    eq('<p>a &lt;b&gt;</p>', album_clean(['title' => 'A', 'date' => '2026-06-20', 'description' => 'a <b>'])['description']);
+    throws(fn() => album_clean(['title' => 'A', 'date' => '2026-06-20', 'description' => str_repeat('x', 5001)]), ValidationException::class);
+    $a = album_create(['title' => 'A', 'date' => '2026-06-20']);
+    eq('<p>x</p>', album_update($a['id'], ['title' => 'A', 'date' => '2026-06-20', 'rich' => '1', 'description' => '<p>x</p>'])['description']);
 });

@@ -12,6 +12,22 @@ function post_image(array $p): array
     return ['full' => PLACEHOLDER_IMAGE, 'thumb' => PLACEHOLDER_IMAGE];
 }
 
+/** Krátky úvod ako HTML (riadkové formátovanie z editora alebo escapovaný prostý text). */
+function post_excerpt_html(array $p): string
+{
+    return !empty($p['rich']) ? rich_clean($p['excerpt'], true) : e($p['excerpt']);
+}
+
+function post_excerpt_text(array $p): string
+{
+    return !empty($p['rich']) ? rich_text($p['excerpt']) : $p['excerpt'];
+}
+
+function post_body_html(array $p): string
+{
+    return !empty($p['rich']) ? '<div class="rich">' . rich_clean($p['body']) . '</div>' : text_to_html($p['body']);
+}
+
 function render_post_card(array $p): string
 {
     $img = post_image($p);
@@ -21,7 +37,7 @@ function render_post_card(array $p): string
         . '<div class="post-body">'
         . '<span class="date">' . e(format_date_sk($p['date'])) . '</span>'
         . '<h3><a href="' . $url . '">' . e($p['title']) . '</a></h3>'
-        . '<p>' . e($p['excerpt']) . '</p>'
+        . '<p>' . post_excerpt_html($p) . '</p>'
         . '<a class="more" href="' . $url . '">Čítať viac →</a>'
         . '</div></article>';
 }

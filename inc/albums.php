@@ -3,11 +3,15 @@ declare(strict_types=1);
 
 function album_clean(array $in): array
 {
-    $f = ['title' => trim(input_str($in['title'] ?? '')), 'date' => trim(input_str($in['date'] ?? ''))];
+    $desc = trim(input_str($in['description'] ?? ''));
+    // popis z editora je HTML (rich=1); bez JS príde prostý text
+    $desc = rich_clean(input_str($in['rich'] ?? '') === '1' ? $desc : rich_from_text($desc));
+    $f = ['title' => trim(input_str($in['title'] ?? '')), 'date' => trim(input_str($in['date'] ?? '')), 'description' => $desc];
     $err = [];
     if ($f['title'] === '') $err['title'] = 'Doplň názov albumu.';
     elseif (str_len($f['title']) > 120) $err['title'] = 'Názov môže mať najviac 120 znakov.';
     if (!valid_date($f['date'])) $err['date'] = 'Zadaj platný dátum.';
+    if (str_len(rich_text($desc)) > 5000 || strlen($desc) > 50000) $err['description'] = 'Popis je príliš dlhý (max 5 000 znakov).';
     if ($err) throw new ValidationException($err);
     return $f;
 }

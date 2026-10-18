@@ -75,3 +75,30 @@ test('poškodený posts.json: posts_all hodí StoreException', function () {
     file_put_contents(store_path('posts'), 'xx');
     throws(fn() => posts_all(), StoreException::class);
 });
+
+test('formátovaná aktualita (rich=1): čistenie, limity podľa textu, zobrazenie', function () {
+    $in = sample_post(['rich' => '1', 'excerpt' => '<p><strong>Úvod</strong> 🥇</p>',
+        'body' => '<h2>Nadpis</h2><p onclick="x">Text <a href="javascript:x">zlý</a></p>']);
+    $c = post_clean($in);
+    eq(true, $c['rich']);
+    eq('<strong>Úvod</strong> 🥇', $c['excerpt']);
+    eq('<h2>Nadpis</h2><p>Text zlý</p>', $c['body']);
+    // 300 znakov textu prejde aj s dlhým HTML okolo
+    post_clean(sample_post(['rich' => '1', 'excerpt' => '<p><span class="ql-size-large">' . str_repeat('a', 300) . '</span></p>']));
+    $e = throws(fn() => post_clean(sample_post(['rich' => '1', 'excerpt' => '<p><br></p>'])), ValidationException::class);
+    eq('Doplň krátky úvod.', $e->errors['excerpt']);
+    $p = post_create($in, null);
+    eq('<strong>Úvod</strong> 🥇', post_excerpt_html($p));
+    eq('Úvod 🥇', post_excerpt_text($p));
+    eq('<div class="rich"><h2>Nadpis</h2><p>Text zlý</p></div>', post_body_html($p));
+    ok(str_contains(render_post_card($p), '<p><strong>Úvod</strong> 🥇</p>'));
+});
+
+test('stará aktualita bez rich ostáva prostý text', function () {
+    $p = post_create(sample_post(['excerpt' => 'Pozor <b>', 'body' => "a\n\nb"]), null);
+    eq(false, $p['rich']);
+    eq('Pozor &lt;b&gt;', post_excerpt_html($p));
+    eq("<p>a</p>\n<p>b</p>", post_body_html($p));
+    unset($p['rich']); // dáta spred editora kľúč vôbec nemajú
+    eq('Pozor &lt;b&gt;', post_excerpt_html($p));
+});

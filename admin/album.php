@@ -80,6 +80,8 @@ admin_header($album['title']);
     <?= csrf_field() ?><input type="hidden" name="action" value="rename">
     <label>Názov albumu<input name="title" value="<?= e($album['title']) ?>" maxlength="120" required></label>
     <label>Dátum<input type="date" name="date" value="<?= e($album['date']) ?>" required></label>
+    <div class="a-field"><span>Popis albumu <small>(nepovinný, zobrazí sa nad fotkami)</small></span>
+      <textarea name="description" rows="5" data-rich="full" aria-label="Popis albumu"><?= e($album['description'] ?? '') ?></textarea></div>
     <div class="a-actions"><button class="a-btn a-btn-primary">Uložiť</button></div>
   </form>
 </section>
@@ -90,4 +92,4 @@ admin_header($album['title']);
   <form method="post" data-confirm="Naozaj zmazať celý album? Klikni znova"><?= csrf_field() ?><input type="hidden" name="action" value="delete-album"><button class="a-btn a-btn-danger">Zmazať album</button></form>
 </section>
 <?php
-admin_footer();
+admin_footer(rich: true);

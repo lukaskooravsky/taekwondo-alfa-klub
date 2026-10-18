@@ -28,6 +28,7 @@ require __DIR__ . '/inc/layout-header.php';
       <div class="breadcrumb"><a href="index.php">Domov</a> / <a href="galeria.php">Galéria</a></div>
       <span class="eyebrow"><?= e(format_date_sk($album['date'])) ?> · <?= e(sk_plural(count($album['photos']), 'fotka', 'fotky', 'fotiek')) ?></span>
       <h1 class="h1-post"><?= e($album['title']) ?></h1>
+      <?php if (($album['description'] ?? '') !== ''): ?><div class="rich album-desc"><?= rich_clean($album['description']) ?></div><?php endif; ?>
       <p>Kliknutím sa fotka zväčší.</p>
       <?php else: ?>
       <div class="breadcrumb"><a href="index.php">Domov</a> / Galéria</div>

@@ -54,6 +54,7 @@ function install_requirements(): array
         if (!extension_loaded($ext)) $req[] = "rozšírenie PHP „$ext“";
     }
     $rec = [];
+    if (!extension_loaded('dom')) $rec[] = 'rozšírenie PHP „dom“ (bez neho sa formátovanie textu zobrazí len ako čistý text)';
     if (!extension_loaded('gd')) $rec[] = 'rozšírenie PHP „gd“ (bez neho server nezmenší fotky, ak to nespraví prehliadač)';
     return ['required' => $req, 'recommended' => $rec];
 }

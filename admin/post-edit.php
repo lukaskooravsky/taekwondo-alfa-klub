@@ -50,6 +50,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+if ($post && empty($post['rich']) && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+    // staršia aktualita v prostom texte → HTML pre editor (uloží sa už ako formátovaná)
+    $values['excerpt'] = rich_from_text($post['excerpt'], true);
+    $values['body'] = rich_from_text($post['body']);
+}
+
 admin_header($post ? 'Upraviť aktualitu' : 'Nová aktualita');
 ?>
 <?= isset($errors['form']) ? '<div class="flash flash-error">' . e($errors['form']) . '</div>' : '' ?>
@@ -72,14 +78,14 @@ admin_header($post ? 'Upraviť aktualitu' : 'Nová aktualita');
     <img class="a-preview" data-resize-preview alt="" hidden>
     <small class="a-hint" data-resize-status><?= $errors ? 'Ak si vyberal fotku, vyber ju prosím znova.' : '' ?></small>
   </div>
-  <label>Krátky úvod <small>(1–2 vety do zoznamu, max 300 znakov)</small> <?= field_error($errors, 'excerpt') ?>
-    <textarea name="excerpt" rows="3" maxlength="300" required><?= e($values['excerpt']) ?></textarea></label>
-  <label>Celý text <small>(prázdny riadok = nový odsek; odkazy sa stanú klikateľnými)</small> <?= field_error($errors, 'body') ?>
-    <textarea name="body" rows="12"><?= e($values['body']) ?></textarea></label>
+  <div class="a-field"><span>Krátky úvod <small>(1–2 vety do zoznamu, max 300 znakov)</small></span> <?= field_error($errors, 'excerpt') ?>
+    <textarea name="excerpt" rows="3" data-rich="inline" data-max="300" aria-label="Krátky úvod"><?= e($values['excerpt']) ?></textarea></div>
+  <div class="a-field"><span>Celý text</span> <?= field_error($errors, 'body') ?>
+    <textarea name="body" rows="12" data-rich="full" aria-label="Celý text"><?= e($values['body']) ?></textarea></div>
   <div class="a-actions">
     <button class="a-btn a-btn-primary">Uložiť</button>
     <a class="a-btn" href="posts.php">Zrušiť</a>
   </div>
 </form>
 <?php
-admin_footer();
+admin_footer(rich: true);
