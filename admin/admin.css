@@ -32,10 +32,12 @@ h2 { font-size: 1.3rem; margin-bottom: 0.8rem; }
 .a-narrow { max-width: 380px; }
 .a-form label, .a-field { display: grid; gap: 0.35rem; font-weight: 600; }
 .a-form small, .a-hint { color: var(--muted-2); font-weight: 400; }
-.a-form input:not([type]), .a-form input[type=text], .a-form input[type=password], .a-form input[type=date], .a-form textarea {
-  width: 100%; min-height: 44px; padding: 0.6rem 0.75rem; background: var(--ink-2); border: 1px solid var(--line); color: var(--bone); font: inherit; font-weight: 400;
+.a-form input:not([type]), .a-form input[type=text], .a-form input[type=email], .a-form input[type=password], .a-form input[type=date], .a-form textarea {
+  color-scheme: dark; width: 100%; min-height: 44px; padding: 0.6rem 0.75rem; background: var(--ink-2); border: 1px solid var(--line); color: var(--bone); font: inherit; font-weight: 400;
 }
 .a-form input:focus, .a-form textarea:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+/* automatické dopĺňanie (Edge/Chrome) inak prefarbí políčko na bielo/modro */
+.a-form input:-webkit-autofill { -webkit-text-fill-color: var(--bone); box-shadow: 0 0 0 100px var(--ink-2) inset; caret-color: var(--bone); }
 .a-form input[type=file] { font: inherit; font-weight: 400; color: var(--muted); }
 .a-form .a-check { display: flex; gap: 0.5rem; align-items: center; font-weight: 400; }
 .a-check input { width: 22px; height: 22px; }
