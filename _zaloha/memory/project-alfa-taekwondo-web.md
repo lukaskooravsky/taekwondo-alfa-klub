@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: b3956cdb-161a-4185-8cf7-509308ed727e
-  modified: 2026-10-18T20:43:49.890Z
+  modified: 2026-10-18T21:18:57.876Z
 ---
 
 Web pre klub **ALFA Taekwondo Club Bratislava** (ITF Taekwon-Do) pre trénera Ľubomíra Závodného. Podrobnosti v `CLAUDE.md` a `NASADENIE.md` repa.
@@ -20,6 +20,8 @@ Bezpečnosť: vlastný session handler, dôveryhodné zariadenie, login CSRF cez
 `SITE_INDEX=false` (aby Google nepovažoval ostrú doménu za duplikát). FTP `public_html/_sub/alfa/`, cert FTP na `*.nameserver.sk`
 → curl `--resolve ftp.nameserver.sk:21:195.181.251.39`. Webglobe vnucuje nezapisovateľný session.save_path (preto AlfaSessionHandler).
 Admin nainštalovaný na e-mail lub.zavodny1@gmail.com (heslo poznal používateľ — mal si ho zmeniť; aj FTP heslo).
+
+**Nasadené naživo 2026-10-18 večer** (commit 1fca926) po 5 kolách nezávislej kritickej revízie (0/0/3/5 → 0/0/2/7 → 0/0/2/5 → 0/0/1/2 → 0/0/1/0, všetko opravené; 6. kolo ešte nebolo). Pozor: Quill `.ql-container`/`.ql-editor` majú height:100% — v grid formulári prekrývali tlačidlá (opravené `height:auto`); editor treba po zmenách CSS overiť klikom (CDP skript `cdp.mjs` v scratchpade, headless Chrome).
 
 **Finálne:** ostrý web na trénerov hosting/doménu (Brian alebo Lukáš) podľa NASADENIE.md časť 10 (SITE_URL, SITE_INDEX=true,
 preniesť data/ + uploads/, Search Console, Firemný profil Google, presmerovať alfa.oravsky.sk).
