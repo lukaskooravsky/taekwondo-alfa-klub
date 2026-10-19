@@ -19,7 +19,7 @@ try {
 } catch (UploadException $e) {
     json_out(413, ['ok' => false, 'error' => $e->getMessage()]);
 }
-if (empty($in) && (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) json_out(413, ['ok' => false, 'error' => 'Fotka je príliš veľká pre server (limit ' . ini_get('post_max_size') . ').']);
+if (empty($in) && (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) json_out(413, ['ok' => false, 'error' => 'Server fotku neprijal (limit ' . ini_get('post_max_size') . ') — skús ju znova alebo menšiu.']);
 if (!csrf_check($in['csrf'] ?? null)) json_out(403, ['ok' => false, 'error' => 'Platnosť stránky vypršala. Obnov ju a skús znova.']);
 
 $albumId = input_str($in['album'] ?? '');

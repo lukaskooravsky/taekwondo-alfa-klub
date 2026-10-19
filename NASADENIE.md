@@ -41,9 +41,9 @@ Najspoľahlivejšie: end-to-end test v prehliadači `node tools/e2e/e2e.mjs http
 ## 6. Riešenie problémov
 - **Chyba 500 hneď po nahratí** — zakomentuj (`#`) v `.htaccess` riadky `Options -Indexes` a `AddDefaultCharset UTF-8`; inak pozri chybový log hostingu.
 - **„Príliš veľa presmerovaní“ na /admin/** — proxy neoznamuje HTTPS. Zakomentuj 4 riadky bloku „Admin a inštalácia len cez HTTPS“ v `.htaccess`; ak nepomôže, v `inc/bootstrap.php` vo `require_https()` daj na začiatok `return;`.
-- **Fotky sa nenahrajú („Fotku sa nepodarilo nahrať“)** — admin posiela fotky ako JSON a ukladá ich cez vlastný `data/tmp`,
-  takže nepotrebuje dočasný priečinok PHP (Webglobe ho má nezapisovateľný). Skontroluj, že `data/` a `uploads/` sú zapisovateľné.
-  Fotka po zmenšení musí byť pod ~1,4 MB (bežne má 100–500 kB).
+- **Fotky sa nenahrajú („Fotku sa nepodarilo nahrať“)** — admin posiela fotky ako base64 v textových poliach formulára
+  a ukladá ich cez vlastný `data/tmp`, takže nepotrebuje dočasný priečinok PHP (Webglobe ho má nezapisovateľný; JSON nad ~16 kB
+  by tam PHP zahodil). Skontroluj, že `data/` a `uploads/` sú zapisovateľné. Fotka po zmenšení musí byť pod 5 MB (bežne 100–400 kB).
 - **„Platnosť formulára vypršala“ pri každom odoslaní** — relácie sa neukladajú. Web ich ukladá sám do `data/sessions` (nezávisle od nastavení hostingu); skontroluj, že `data/` je zapisovateľný.
 - **Certifikát pre subdoménu** — vo Webglobe: Hosting → Web → Subdomény (vytvoriť) a SSL certifikáty (vystaviť aj pre subdoménu); trvá pár minút.
 

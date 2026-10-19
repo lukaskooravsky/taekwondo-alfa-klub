@@ -80,7 +80,7 @@ admin_header($post ? 'Upraviť aktualitu' : 'Nová aktualita');
     <input type="file" name="image_full" hidden>
     <input type="file" name="image_thumb" hidden>
     <img class="a-preview" data-resize-preview alt="" hidden>
-    <small class="a-hint">Vyber fotku alebo ju sem pretiahni myšou. Formáty: JPG, PNG, WebP — aj GIF, AVIF či BMP (prehliadač ich prevedie). HEIC z iPhonu najprv ulož ako JPG.</small>
+    <small class="a-hint">Vyber fotku alebo ju sem pretiahni myšou. Veľkosť fotky nevadí — web ju sám zmenší (dlhšia strana 1600 px, zvyčajne 100–400 KB). Formáty: JPG, PNG, WebP — aj GIF, AVIF či BMP (prehliadač ich prevedie). HEIC z iPhonu najprv ulož ako JPG.</small>
     <small class="a-hint" data-resize-status><?= $errors ? 'Ak si vyberal fotku, vyber ju prosím znova.' : '' ?></small>
   </div>
   <div class="a-field"><span>Krátky úvod <small>(1–2 vety do zoznamu, max 300 znakov)</small></span> <?= field_error($errors, 'excerpt') ?>

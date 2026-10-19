@@ -121,6 +121,18 @@ test('nahratie cez JSON (base64) bez dočasného priečinka PHP', function () {
     unset($_SERVER['CONTENT_TYPE']);
 });
 
+test('nahratie cez textové pole formulára (base64 v $_POST, nie súbor)', function () {
+    ensure_storage();
+    $png = base64_encode((string)file_get_contents(fixture_png(tmp('m.png'))));
+    $_SERVER['CONTENT_TYPE'] = 'multipart/form-data; boundary=x';
+    $_POST = ['csrf' => 'x', 'full' => $png, 'thumb' => $png];
+    $r = upload_from_api('inline', 'i_formtest');
+    eq('inline/i_formtest.png', $r['full']);
+    ok(is_file(upload_path('inline/i_formtest_t.png')));
+    $_POST = [];
+    unset($_SERVER['CONTENT_TYPE']);
+});
+
 test('vopred nahratá titulná fotka: platný odkaz prejde, cudzí/neexistujúci/obsadený nie', function () {
     ensure_storage();
     $r = upload_store_pair(fake_file(fixture_png(tmp('r1.png'))), fake_file(fixture_png(tmp('r2.png'))), 'posts', 'p_refaaa', false);

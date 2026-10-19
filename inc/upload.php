@@ -215,8 +215,10 @@ function maintenance_daily(?int $now = null): bool
 
 /*
  * Nahrávanie bez PHP upload_tmp_dir: niektoré hostingy (Webglobe) majú dočasný priečinok PHP nezapisovateľný
- * (UPLOAD_ERR_NO_TMP_DIR) — klasický multipart upload tam nefunguje vôbec. Admin preto posiela fotky ako JSON
- * {full: base64, thumb: base64}; telo do 2 MB drží PHP v pamäti. Súbory si zapíšeme do vlastného data/tmp.
+ * (UPLOAD_ERR_NO_TMP_DIR) — súbor vo formulári (multipart) ani telo JSON nad ~16 kB (PHP ho odkladá do dočasného
+ * súboru) tam neprejdú. Admin preto posiela fotky ako TEXTOVÉ polia formulára {full, thumb} v base64: textové polia
+ * multipart číta PHP priebežne do pamäte, bez dočasného súboru. Súbory si zapíšeme do vlastného data/tmp.
+ * JSON ostal ako alternatíva (testy, malé telá).
  */
 const UPLOAD_JSON_MAX = 1900000;   // bajtov tela (pod 2 MB — inak by PHP potreboval dočasný súbor)
 
@@ -257,8 +259,8 @@ function upload_temp_from_b64(mixed $b64): ?array
 /** Fotka z API: JSON (full + thumb ako base64) alebo multipart polia full/thumb. null = žiadna fotka. */
 function upload_from_api(string $subdir, string $base): ?array
 {
-    if (!request_is_json()) return upload_from_request('full', 'thumb', $subdir, $base);
     $in = api_input();
+    if (!request_is_json() && !is_string($in['full'] ?? null)) return upload_from_request('full', 'thumb', $subdir, $base);
     $full = upload_temp_from_b64($in['full'] ?? null);
     $thumb = null;
     try {

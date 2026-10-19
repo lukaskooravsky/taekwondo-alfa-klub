@@ -49,7 +49,7 @@ Fotky z iných webov sa vložiť nedajú — ulož si ich do počítača a vlož
 Na webe sa album ukáže, až keď je zverejnený a má aspoň jednu fotku.
 
 ## Fotky — formáty
-- **JPG, PNG, WebP** idú priamo; **GIF, AVIF, BMP** prehliadač prevedie sám. Fotky sa automaticky zmenšia.
+- **JPG, PNG, WebP** idú priamo; **GIF, AVIF, BMP** prehliadač prevedie sám. Fotky sa automaticky zmenšia (dlhšia strana 1600 px) — veľkosť fotky nevadí, nič nemusíš upravovať vopred.
 - **HEIC z iPhonu** na Windows nejde — v iPhone zapni *Nastavenia → Kamera → Formáty → Najkompatibilnejší*,
   alebo fotku ulož ako JPG.
 

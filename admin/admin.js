@@ -79,10 +79,10 @@
     }
   }
   /*
-   * Fotky sa posielajú ako JSON {full, thumb} v base64 — PHP pri tom nepotrebuje dočasný priečinok hostingu
-   * (na Webglobe je nezapisovateľný a klasické nahratie súboru tam zlyhá). Telo musí byť pod 2 MB (UPLOAD_JSON_MAX).
+   * Fotky sa posielajú ako TEXTOVÉ polia formulára {full, thumb} v base64 — PHP ich číta do pamäte a nepotrebuje
+   * dočasný priečinok hostingu (na Webglobe je nezapisovateľný: súbor vo formulári ani JSON nad ~16 kB tam neprejde).
    */
-  const JSON_MAX = 1400000; // bajtov fotiek (base64 pridá ~33 %)
+  const PHOTO_MAX = 5 * 1024 * 1024; // bajtov jednej fotky (UPLOAD_MAX_BYTES)
   function blobToB64(blob) {
     return new Promise(function (resolve, reject) {
       const r = new FileReader();
@@ -95,19 +95,21 @@
     let pair = null;
     if (canDecode) { try { pair = await makePair(file); } catch (e) { pair = null; } }
     if (pair) {
-      if (pair.full.size + pair.thumb.size > JSON_MAX) throw new Error("Fotka je po zmenšení stále príliš veľká — skús inú.");
+      if (pair.full.size > PHOTO_MAX) throw new Error("Fotka je po zmenšení stále príliš veľká — skús inú.");
       return { full: await blobToB64(pair.full), thumb: await blobToB64(pair.thumb), preview: pair.thumb, size: pair.full.size };
     }
     if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
       throw new Error("Fotku „" + file.name + "“ tento prehliadač nevie spracovať (napr. HEIC) — ulož ju ako JPG a skús znova.");
     }
-    if (file.size > JSON_MAX) throw new Error("Fotka je príliš veľká a prehliadač ju nevie zmenšiť — ulož ju menšiu (do 1 MB).");
+    if (file.size > PHOTO_MAX) throw new Error("Fotka je príliš veľká a prehliadač ju nevie zmenšiť — ulož ju menšiu (do 5 MB).");
     return { full: await blobToB64(file), preview: file, size: file.size };   // zmenší server
   }
-  async function postJson(url, data) {
+  async function postPhoto(url, data) {
+    const fd = new FormData();
+    Object.keys(data).forEach(function (k) { if (data[k] != null) fd.append(k, data[k]); });   // reťazce = textové polia, nie súbory
     let res;
     try {
-      res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data), credentials: "same-origin" });
+      res = await fetch(url, { method: "POST", body: fd, credentials: "same-origin" });
     } catch (e) {
       throw new Error("Chyba pripojenia.");
     }
@@ -161,7 +163,7 @@
       status.classList.remove("a-err");
       busy = (async function () {
         const p = await photoPayload(file);
-        const out = await postJson("api/post-image.php", { csrf: csrfVal, full: p.full, thumb: p.thumb });
+        const out = await postPhoto("api/post-image.php", { csrf: csrfVal, full: p.full, thumb: p.thumb });
         refIn.value = out.ref;
         input.removeAttribute("name");   // výber ostane viditeľný, súbor sa už neposiela znova
         showPreview(p.preview);
@@ -206,7 +208,7 @@
 
     async function uploadOne(file) {
       const p = await photoPayload(file);
-      await postJson(box.dataset.endpoint, { csrf: csrf, album: box.dataset.album, full: p.full, thumb: p.thumb });
+      await postPhoto(box.dataset.endpoint, { csrf: csrf, album: box.dataset.album, full: p.full, thumb: p.thumb });
     }
 
     function warnLeave(e) { e.preventDefault(); e.returnValue = ""; }
@@ -702,7 +704,7 @@
         let data = null;
         try {
           const p = await photoPayload(files[i]);
-          data = await postJson(API.image, { csrf: csrfIn.value, full: p.full, thumb: p.thumb });
+          data = await postPhoto(API.image, { csrf: csrfIn.value, full: p.full, thumb: p.thumb });
         } catch (e) {
           say(e.message || "Chyba pripojenia.", true);
           continue;

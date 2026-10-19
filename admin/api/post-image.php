@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-// Titulná fotka aktuality — nahrá sa vopred (JSON, bez dočasného priečinka PHP); formulár potom pošle len odkaz image_ref.
+// Titulná fotka aktuality — nahrá sa vopred (base64 v textovom poli, bez dočasného priečinka PHP); formulár potom pošle len odkaz image_ref.
 require __DIR__ . '/../../inc/bootstrap.php';
 send_security_headers(true);
 auth_start_session();
@@ -20,6 +20,7 @@ try {
 } catch (UploadException $e) {
     json_out(413, ['ok' => false, 'error' => $e->getMessage()]);
 }
+if (empty($in) && (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) json_out(413, ['ok' => false, 'error' => 'Server fotku neprijal (limit ' . ini_get('post_max_size') . ') — skús ju znova alebo menšiu.']);
 if (!csrf_check($in['csrf'] ?? null)) json_out(403, ['ok' => false, 'error' => 'Platnosť stránky vypršala. Obnov ju a skús znova.']);
 
 try {

@@ -24,10 +24,13 @@ Web pre klub **ALFA Taekwondo Club Bratislava** (ITF Taekwon-Do): verejné strá
 - **Koncepty:** aktuality aj albumy majú `status` (`draft` / `published`, chýbajúci = zverejnené). Verejne len
   `posts_public()` / `albums_public()`; koncept vidí cez priamu adresu len prihlásený tréner (`admin_viewer()`, pásik + noindex).
   Tlačidlá: prvé bez `name` = ponechať stav (Enter nikdy nezverejní), `name=publish` / `name=draft`. Nový album = koncept.
-- **Nahrávanie fotiek ide cez JSON (base64), nie multipart:** Webglobe má `upload_tmp_dir` nezapisovateľný (UPLOAD_ERR_NO_TMP_DIR)
-  a nedá sa to zmeniť v `.user.ini`. Prehliadač fotku zmenší (WebP/JPEG) a pošle JSON do `admin/api/*` (`upload_from_api`,
-  telo pod 2 MB — inak by PHP potreboval dočasný súbor); súbory idú cez vlastný `data/tmp`. Titulná fotka aktuality sa nahrá
-  vopred (`api/post-image.php`) a formulár pošle len `image_ref`. Multipart ostal ako záloha pre bežné hostingy.
+- **Nahrávanie fotiek: base64 v TEXTOVÝCH poliach formulára (FormData), nie súbor ani JSON:** Webglobe má `upload_tmp_dir`
+  nezapisovateľný (UPLOAD_ERR_NO_TMP_DIR, `.user.ini` to nezmení). PHP drží v pamäti len ~16 kB tela JSON/urlencoded —
+  väčšie odkladá do dočasného súboru, a keď nejde, telo zahodí („POST data can't be buffered“ → prázdny vstup). Textové polia
+  multipart číta priebežne bez dočasného súboru. Prehliadač fotku zmenší (WebP/JPEG, 1600 px) a pošle do `admin/api/*`
+  (`upload_from_api`); súbory idú cez vlastný `data/tmp`. Titulná fotka aktuality sa nahrá vopred (`api/post-image.php`)
+  a formulár pošle len `image_ref`. **Formuláre s dlhým textom musia byť `enctype="multipart/form-data"`.**
+  Overenie: `php -d upload_tmp_dir=Z:/nope -d sys_temp_dir=Z:/nope -S …` (TMP/TEMP tiež na neexistujúci priečinok).
 - Bezpečnosť: bcrypt, rate-limit (5 pokusov/IP, globálny strop 50 — dôveryhodné zariadenie ho obíde), CSRF (prihlásenie
   cez cookie, inde cez reláciu), vlastný session handler (`AlfaSessionHandler` — Webglobe vnucuje nezapisovateľný
   `session.save_path`), bezpečnostné hlavičky `send_security_headers()`, HTTPS pre admin.
