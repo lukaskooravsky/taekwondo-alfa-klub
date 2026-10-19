@@ -28,11 +28,7 @@ require __DIR__ . '/inc/layout-header.php';
           <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.3-7-11a7 7 0 0114 0c0 4.7-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></span><div><b>Kde trénujeme</b><span>ZŠ Holíčska 50, 851 05 Bratislava — Petržalka</span></div></li>
           <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span><div><b>Tréningy</b><span>Utorok a Štvrtok · 16:30, 17:30 alebo 18:30 (tréning trvá 1 hodinu podľa skupiny)</span></div></li>
         </ul>
-        <a class="map-card" href="https://www.google.com/maps/search/?api=1&query=Z%C3%A1kladn%C3%A1+%C5%A1kola+Hol%C3%AD%C4%8Dska+50+Bratislava" target="_blank" rel="noopener" aria-label="Mapa: ZŠ Holíčska 50, Bratislava — otvoriť v Google Mapách">
-          <img src="assets/mapa.jpg" width="720" height="450" alt="Mapa okolia ZŠ Holíčska 50 v Petržalke" loading="lazy">
-          <span class="map-card-cta">Otvoriť v mapách →</span>
-        </a>
-        <p class="map-credit">Mapa © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">prispievatelia OpenStreetMap</a></p>
+        <a class="btn btn-ghost map-link" href="https://www.google.com/maps/search/?api=1&query=Z%C3%A1kladn%C3%A1+%C5%A1kola+Hol%C3%AD%C4%8Dska+50+851+05+Bratislava" target="_blank" rel="noopener">Otvoriť v mapách →</a>
       </div>
 
       <div class="form-card reveal">
@@ -45,6 +41,13 @@ require __DIR__ . '/inc/layout-header.php';
           <label class="checkbox"><input type="checkbox" required> Beriem na vedomie, ako klub spracúva moje údaje (len na odpoveď na správu). <a href="ochrana-osobnych-udajov.php" style="color:var(--gold-2)">Ochrana osobných údajov</a></label>
           <button class="btn btn-primary" type="submit">Odoslať správu</button>
         </form>
+      </div>
+    </div>
+
+    <!-- Mapa Google (interaktívna; spomenutá v ochrana-osobnych-udajov.php) -->
+    <div class="container">
+      <div class="map-embed reveal">
+        <iframe src="https://www.google.com/maps/embed?origin=mfe&amp;pb=!1m3!2m1!1zWsOha2xhZG7DoSDFoWtvbGEgSG9sw63EjXNrYSA1MCwgODUxIDA1IEJyYXRpc2xhdmE!6i16!3m1!1ssk!5m1!1ssk" title="Mapa: ZŠ Holíčska 50, Bratislava — Petržalka" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
       </div>
     </div>
   </section>

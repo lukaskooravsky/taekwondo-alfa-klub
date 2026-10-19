@@ -76,7 +76,7 @@ NAVOD-PRE-TRENERA.md  návod na administráciu pre trénera
 - **Rozvrh**: tabuľka `.schedule` v `o-nas.php` a `index.php`.
 - **Fotky stránok**: `assets/` (hlavná akčná fotka `assets/extrakt.jpg`, 966×760). Disciplíny (v `co-je-taekwondo.php`): `assets/disc-*.jpg`
   (inline `style="background-image:url('assets/…')"` v `co-je-taekwondo.php`).
-- **Mapka na Kontakte**: `assets/mapa.jpg` (statický obrázok z OpenStreetMap, bez cookies) — pregeneruj `php -d extension=openssl tools/static-map.php`.
+- **Mapa na Kontakte**: vložená Google mapa (iframe v `kontakty.php`, spomenutá v `ochrana-osobnych-udajov.php` — pri zmene drž oboje).
 - Po zmene: `php tests/run.php` **a** pri zmene adminu aj `node tools/e2e/e2e.mjs` (kliky v prehliadači), commit + push,
   nahrať zmenené súbory cez FTP (`NASADENIE.md` časť 8). Pri zmene ovládania aktualizuj `NAVOD-PRE-TRENERA.md`.
 - **Pozor:** Quill má `.ql-container`/`.ql-editor` `height:100%` — v grid formulári to editor natiahne cez tlačidlá

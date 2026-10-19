@@ -46,7 +46,10 @@ $c = CLUB;
         <h2>Cookies a meranie návštevnosti</h2>
         <p>Web nepoužíva reklamné ani analytické cookies a nemeria návštevnosť. Písma sú uložené priamo na webe (bez služieb Google).
           Ak je v článku video z YouTube, načítava sa v režime so zvýšenou ochranou súkromia (youtube-nocookie.com);
-          YouTube môže ukladať údaje až po spustení videa.</p>
+          YouTube môže ukladať údaje až po spustení videa.
+          Na stránke Kontakt je vložená mapa Google Maps — pri jej zobrazení sa prehliadač pripojí k serverom Google
+          (prenesie sa napr. IP adresa) a Google môže použiť cookies podľa svojich
+          <a href="https://policies.google.com/privacy?hl=sk" target="_blank" rel="noopener">zásad ochrany súkromia</a>.</p>
 
         <h2>Vaše práva</h2>
         <p>Máte právo na prístup k údajom, ich opravu, vymazanie, obmedzenie spracúvania, prenosnosť a právo namietať.

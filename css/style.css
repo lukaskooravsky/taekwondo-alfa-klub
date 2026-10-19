@@ -607,21 +607,13 @@ section { padding-block: clamp(4rem, 9vw, 7.5rem); position: relative; }
 .contact-list b { display: block; font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.1em; color: var(--white); }
 .contact-list a, .contact-list span { color: var(--muted); }
 .contact-list a:hover { color: var(--gold-2); }
-/* Mapka: statický obrázok (tools/static-map.php), klik otvorí Google Mapy */
-.map-card {
-  position: relative; display: block; margin-top: 1.8rem; overflow: hidden;
-  border: 1px solid var(--line); clip-path: var(--cut);
+.map-link {
+  margin-top: 1.6rem; display: inline-flex;
 }
-.map-card img { display: block; width: 100%; height: auto; transition: transform 0.5s ease; }
-.map-card:hover img { transform: scale(1.04); }
-.map-card-cta {
-  position: absolute; left: 0; right: 0; bottom: 0; padding: 0.8rem 1.1rem;
-  background: linear-gradient(transparent, rgba(10,10,12,0.92));
-  font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; color: var(--gold-2);
-}
-.map-card:hover .map-card-cta, .map-card:focus-visible .map-card-cta { color: var(--white); }
-.map-credit { margin-top: 0.5rem; font-size: 0.78rem; color: var(--muted-2); }
-.map-credit a { color: inherit; text-decoration: underline; }
+/* Interaktívna Google mapa pod kontaktmi (kontakty.php) */
+.map-embed { margin-top: 3rem; border: 1px solid var(--line); background: var(--ink-2); }
+.map-embed iframe { display: block; width: 100%; height: 420px; border: 0; }
+@media (max-width: 600px) { .map-embed iframe { height: 320px; } }
 
 /* ============================================================
    CTA BAND
