@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: b3956cdb-161a-4185-8cf7-509308ed727e
-  modified: 2026-10-18T21:35:49.253Z
+  modified: 2026-10-19T18:15:58.634Z
 ---
 
 Web pre klub **ALFA Taekwondo Club Bratislava** (ITF Taekwon-Do) pre trénera Ľubomíra Závodného. Podrobnosti v `CLAUDE.md` a `NASADENIE.md` repa.
@@ -32,6 +32,13 @@ preniesť data/ + uploads/, Search Console, Firemný profil Google, presmerovať
 používateľ overil, že na alfa.oravsky.sk funguje. Titulná fotka aktuality: popisky Aktuálna/Nová, „Zrušiť novú fotku“,
 „Odstrániť túto fotku (bez náhrady)“ so zošednutím — nasadené, klikom v prihlásenom admine zatiaľ neoverené (e2e nebežalo).
 FTP heslo používateľ napísal do chatu 2026-10-19 — odporučené zmeniť; nové heslo nepýtať do chatu, nech spustí deploy sám v Git Bash.
+
+**Deploy na FTP (od 2026-10-19):** po commite spusti používateľovi okno
+`("/c/Users/lukas/AppData/Local/Programs/Git/git-bash.exe" tools/nahraj-ftp.sh &)` z koreňa repa — skript nahrá zmeny
+od git značky `ftp-alfa` (FTP meno dusan@oravsky.sk, ftp.oravsky.sk = 195.181.251.39), používateľ len napíše heslo,
+značka sa posunie. Heslo z chatu nepoužívať (používateľ ho tam opakovane posiela a chce, aby to Claude urobil sám — vysvetliť krátko a otvoriť okno).
+Pozor: Windows curl nečíta `<(...)` ani `--netrc-file` s MSYS cestou → cygpath -w.
+**2026-10-19 nasadené:** disciplíny presunuté z Domov na Čo je taekwondo; Kontakt má interaktívnu Google mapu na celú šírku (iframe www.google.com/maps/embed, zmienka v GDPR).
 
 **Ostáva:** reálne fotky + logo PNG, zmazať ukážkový obsah, skontrolovať texty a GDPR (IČO), ostrá doména, vypnúť GitHub Pages, merge do main.
 

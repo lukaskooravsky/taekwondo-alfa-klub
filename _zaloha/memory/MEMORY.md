@@ -1,4 +1,4 @@
-- [ALFA Taekwondo web](project-alfa-taekwondo-web.md) — PHP web+admin na vetve cms-admin; ukážka na alfa.oravsky.sk (Webglobe FTP); ostrý web podľa NASADENIE.md §10
+- [ALFA Taekwondo web](project-alfa-taekwondo-web.md) — PHP web+admin na vetve cms-admin; ukážka alfa.oravsky.sk; deploy `tools/nahraj-ftp.sh` v git-bash okne (heslo píše používateľ); ostrý web podľa NASADENIE.md §10
 - [Deploy / git](deploy-git-lukasko-token.md) — repo lukaskooravsky; gh prihlásené ako lukaskooravsky → bežný `git push` (token už netreba)
 - [KR font subset gotcha](fonts-kr-subset-gotcha.md) — nové kórejské znaky = prázdne štvorčeky (fonty sú subsety)
 - [Používateľ Lukáš](user-lukas.md) — pushuje ako lukaskooravsky; DusanOravsky = otcov účet
