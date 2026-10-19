@@ -151,28 +151,65 @@
       form.appendChild(refIn);
     }
     const csrfVal = (form.querySelector("input[name=csrf]") || {}).value || "";
-    input.addEventListener("change", function () {
+    /* nová fotka nahradí pôvodnú — „Odstrániť fotku“ vtedy nemá zmysel; „Zrušiť novú fotku“ vráti pôvodný stav */
+    const removeBox = form.querySelector("input[name=remove_image]");
+    const removeLabel = removeBox ? removeBox.closest("label") : null;
+    const cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "a-btn";
+    cancelBtn.textContent = "Zrušiť novú fotku";
+    cancelBtn.hidden = true;
+    preview.after(cancelBtn);
+    const caption = document.createElement("small");
+    caption.className = "a-hint";
+    caption.textContent = removeLabel ? "Nová fotka — po uložení nahradí aktuálnu:" : "Nová fotka:";
+    caption.hidden = true;
+    preview.before(caption);
+    let gen = 0;                       // neskoro dokončené nahratie zrušenej fotky už nič nezmení
+
+    function reset() {
+      gen++;
+      busy = null;
       setFiles(fullIn, []);
       setFiles(thumbIn, []);
       refIn.value = "";
       input.name = origName; // pri novom výbere znova posielať originál, kým nie je nahratý
       showPreview(null);
-      const file = input.files[0];
-      if (!file) { status.textContent = ""; return; }
-      status.textContent = "Nahrávam fotku…";
+      cancelBtn.hidden = true;
+      caption.hidden = true;
+      if (removeLabel) removeLabel.hidden = false;
+      status.textContent = "";
       status.classList.remove("a-err");
-      busy = (async function () {
+    }
+    cancelBtn.addEventListener("click", function () {
+      input.value = "";
+      reset();
+    });
+
+    input.addEventListener("change", function () {
+      reset();
+      const file = input.files[0];
+      if (!file) return;
+      const my = gen;
+      cancelBtn.hidden = false;
+      caption.hidden = false;
+      if (removeLabel) { removeBox.checked = false; removeLabel.hidden = true; }
+      status.textContent = "Nahrávam fotku…";
+      const job = (async function () {
         const p = await photoPayload(file);
         const out = await postPhoto("api/post-image.php", { csrf: csrfVal, full: p.full, thumb: p.thumb });
+        if (my !== gen) return;
         refIn.value = out.ref;
         input.removeAttribute("name");   // výber ostane viditeľný, súbor sa už neposiela znova
         showPreview(p.preview);
         status.textContent = "Fotka nahratá (" + Math.round(p.size / 1024) + " KB) — ulož aktualitu.";
       })().catch(function (e) {
+        if (my !== gen) return;
         input.name = origName;           // záloha: klasické odoslanie s formulárom (na bežných hostingoch funguje)
         status.textContent = e.message || "Fotku sa nepodarilo nahrať.";
         status.classList.add("a-err");
-      }).finally(function () { busy = null; });
+      }).finally(function () { if (busy === job) busy = null; });
+      busy = job;
     });
 
     form.addEventListener("submit", function (e) {

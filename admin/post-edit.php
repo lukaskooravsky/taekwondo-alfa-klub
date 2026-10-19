@@ -73,6 +73,7 @@ admin_header($post ? 'Upraviť aktualitu' : 'Nová aktualita');
   <div class="a-field">
     <span>Fotka <small>(nepovinná)</small></span> <?= field_error($errors, 'image') ?>
     <?php if (!empty($post['image'])): ?>
+    <small class="a-hint">Aktuálna fotka:</small>
     <img class="a-preview" src="../<?= e(upload_url($post['image']['thumb'])) ?>" alt="">
     <label class="a-check"><input type="checkbox" name="remove_image" value="1"> Odstrániť fotku</label>
     <?php endif; ?>
