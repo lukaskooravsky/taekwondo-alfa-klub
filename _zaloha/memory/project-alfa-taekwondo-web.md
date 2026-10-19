@@ -44,3 +44,8 @@ Pozor: Windows curl nečíta `<(...)` ani `--netrc-file` s MSYS cestou → cygpa
 
 Pozor na fonty: [[fonts-kr-subset-gotcha]]. Git: [[deploy-git-lukasko-token]]. Lokálne PHP: [[reference-local-php]].
 Postup práce: [[feedback-ukladaj-priebezne]], [[feedback-review-nulove]].
+
+**Balík pre trénera (2026-10-19):** `php -d extension=zip tools/zabal-pre-trenera.php` → `../ALFA-web-<dátum>.zip` (web/ + návod
+NASADENIE-PRE-TRENERA.md s jednorazovým install tokenom + návod na admin). SITE_URL/SITE_INDEX sa zisťujú samy z domény
+(SITE_DEMO_HOSTS = alfa.oravsky.sk → noindex), tréner nič v kóde nemení. Rozhodnuté: tréner začína načisto (bez obsahu z ukážky).
+Každé spustenie skriptu = nový token (starší ZIP potom stále platí, kým sa nepoužije — token je v jeho install-token.php).
