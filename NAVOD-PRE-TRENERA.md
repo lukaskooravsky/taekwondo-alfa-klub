@@ -13,7 +13,7 @@ Funguje na počítači aj na mobile.
 2. Vyplň **nadpis**, **dátum**, **krátky úvod** (1–2 vety do zoznamu, max 300 znakov) a **celý text**.
 3. **Titulná fotka** (nepovinná): vyber ju alebo ju pretiahni myšou na políčko. Bez fotky sa ukáže logo klubu.
    Nová fotka po uložení nahradí aktuálnu; ak si ju vybral omylom, klikni **Zrušiť novú fotku**.
-   Fotku úplne odstrániš zaškrtnutím **Odstrániť fotku** pri aktuálnej fotke a uložením.
+   Fotku úplne odstrániš zaškrtnutím **Odstrániť túto fotku (bez náhrady)** — fotka zošedne — a uložením.
 4. Ulož:
    - **Uložiť ako koncept** — aktualita sa uloží, ale **na webe ju nikto nevidí**. Môžeš sa k nej vrátiť neskôr.
    - **Zverejniť** — aktualita sa hneď objaví na webe.

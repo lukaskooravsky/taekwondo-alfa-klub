@@ -181,6 +181,22 @@
       status.textContent = "";
       status.classList.remove("a-err");
     }
+    if (removeBox) {                   // zaškrtnutie hneď ukáže, čo sa stane po uložení
+      const current = removeLabel.previousElementSibling;
+      const note = document.createElement("small");
+      note.className = "a-hint a-err";
+      note.textContent = "Po uložení sa titulná fotka odstráni a ukáže sa logo klubu.";
+      note.hidden = true;
+      removeLabel.after(note);
+      const sync = function () {
+        const on = removeBox.checked && !removeLabel.hidden;
+        note.hidden = !on;
+        if (current && current.tagName === "IMG") current.style.opacity = on ? ".3" : "";
+      };
+      removeBox.addEventListener("change", sync);
+      input.addEventListener("change", function () { setTimeout(sync); });      // až po skrytí/ukázaní políčka nižšie
+      cancelBtn.addEventListener("click", function () { setTimeout(sync); });
+    }
     cancelBtn.addEventListener("click", function () {
       input.value = "";
       reset();
