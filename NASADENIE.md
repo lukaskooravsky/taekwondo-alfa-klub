@@ -18,8 +18,9 @@ Overené na: Webglobe (dočasná ukážka `alfa.oravsky.sk`, PHP 8.4, nginx pred
 3. Web musí bežať v **koreni** domény alebo subdomény (napr. Webglobe: subdoména `alfa` = priečinok `public_html/_sub/alfa`).
 
 ## 3. Nastavenie v kóde (`inc/site.php`)
-- `SITE_URL` — verejná adresa bez lomky na konci (napr. `https://www.alfataekwondo.sk`). Používa sa v sitemap, canonical, náhľadoch pre Facebook a v dátach pre Google/AI.
-- `SITE_INDEX` — `false` = vyhľadávače a AI web neindexujú (dočasná ukážka). **Na ostrej doméne `true`.**
+- **Adresa webu sa zistí sama** (`SITE_URL` z adresy, na ktorej web beží) — pri presune na inú doménu netreba nič meniť.
+  Pevnú adresu (napr. len `https://www.…`) nastavíš v `SITE_URL_FIXED`.
+- **Indexovanie** (`SITE_INDEX`) je automaticky zapnuté na ostrej doméne a vypnuté na dočasných ukážkach (`SITE_DEMO_HOSTS`, teraz `alfa.oravsky.sk`) a lokálne.
 - `CLUB` — fakty o klube (adresa, tréningy, kontakt) pre Google a AI. Pri zmene uprav aj texty stránok.
 
 ## 4. Prvé spustenie (nastavenie e-mailu a hesla)
@@ -67,7 +68,8 @@ Cieľ: web beží na trénerovom hostingu a vlastnej doméne, s obsahom, ktorý 
 
 1. **Pripraviť hosting** podľa časti 1 (PHP 8.1+, HTTPS pre doménu aj `www`).
 2. **Nahrať kód** podľa časti 2.
-3. **V `inc/site.php`** nastaviť `SITE_URL` na novú doménu a `SITE_INDEX = true`; nahrať tento súbor.
+3. **Adresu ani indexovanie netreba meniť** — `inc/site.php` ich zistí sám (indexuje sa všade okrem `SITE_DEMO_HOSTS`).
+   Jednoduchý postup pre trénera (FileZilla, inštalačný odkaz, obrázky): `NASADENIE-PRE-TRENERA.md`.
 4. **Preniesť obsah** — z ukážky (`public_html/_sub/alfa/`) stiahnuť celé `data/` a `uploads/` (okrem prípadného `uploads/.trash/` — starý kôš sa neprenáša) (vrátane `data/auth.json`, takže e-mail a heslo trénera ostanú) a nahrať ich na nový hosting do koreňa webu.
    Ak chce tréner začať načisto: obsah nepreniesť a spraviť časť 4 (nový token, bez ukážkového obsahu).
 5. **Skontrolovať** podľa časti 5 a prihlásiť sa do `https://<nová-doména>/admin/`.

@@ -5,14 +5,41 @@ declare(strict_types=1);
 
 const SITE_DEMO = false; // true = zobrazí pásik „Náhľad webu (demo)…“
 
-/** Verejná adresa webu bez lomky na konci. Pri presune na vlastnú doménu zmeň TU (sitemap, canonical, náhľady). */
-const SITE_URL = 'https://alfa.oravsky.sk';
+/**
+ * Verejná adresa webu bez lomky na konci. Prázdne = web si ju zistí sám z adresy, na ktorej beží
+ * (pri presune na novú doménu netreba nič meniť). Vyplň (napr. 'https://www.klub.sk') len ak treba jednu pevnú adresu.
+ */
+const SITE_URL_FIXED = '';
+
+/** Dočasné ukážky — tu sa web neindexuje (aby Google neskôr nepovažoval ostrú doménu za duplikát). */
+const SITE_DEMO_HOSTS = ['alfa.oravsky.sk'];
+
+/** Host z požiadavky, len ak vyzerá ako doména/IP (Host hlavičku posiela prehliadač — nevkladať ju naslepo). */
+function site_request_host(): string
+{
+    $host = strtolower((string)($_SERVER['HTTP_HOST'] ?? ''));
+    return preg_match('/^[a-z0-9.-]+(:\d+)?$|^\[[0-9a-f:]+\](:\d+)?$/D', $host) === 1 ? $host : '';
+}
+
+function site_host_is_local(string $host): bool
+{
+    return $host === '' || preg_match('/^(localhost|127\.|\[::1\]|10\.|192\.168\.|[^.]+(:\d+)?$)/', $host) === 1;
+}
+
+define('SITE_URL', SITE_URL_FIXED !== '' ? SITE_URL_FIXED : (static function (): string {
+    $host = site_request_host();
+    if ($host === '') return 'http://localhost';
+    return (site_host_is_local($host) ? 'http://' : 'https://') . $host;
+})());
 
 /**
  * true = vyhľadávače a AI smú web indexovať (robots.txt Allow + sitemap, bez noindex).
- * Na dočasnej ukážke (alfa.oravsky.sk) nechaj false — inak by Google neskôr považoval ostrú doménu za duplikát.
+ * Automaticky: áno na ostrej doméne, nie na dočasnej ukážke (SITE_DEMO_HOSTS) a lokálne.
  */
-const SITE_INDEX = false;
+define('SITE_INDEX', (static function (): bool {
+    $host = (string)parse_url(SITE_URL, PHP_URL_HOST);
+    return !site_host_is_local($host) && !in_array($host, SITE_DEMO_HOSTS, true);
+})());
 
 const SITE_NAME = 'ALFA Taekwondo Club Bratislava';
 

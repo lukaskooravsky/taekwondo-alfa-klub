@@ -15,7 +15,9 @@ Web pre klub **ALFA Taekwondo Club Bratislava** (ITF Taekwon-Do): verejné strá
   Staré `*.html` adresy presmeruje `.htaccess` (301).
 - Dáta: `data/*.json` (aktuality, albumy, heslo, zálohy v `data/backup/`, relácie v `data/sessions/`), fotky `uploads/`
   (`posts/`, `albums/a_*/`, `inline/` = fotky v texte); kôš zmazaných fotiek `data/trash/` (30 dní). **Nie sú v gite.**
-- Nastavenia na jednom mieste: `inc/site.php` — `SITE_URL`, `SITE_INDEX`, `SITE_DEMO`, `CLUB` (fakty o klube pre SEO/AI).
+- Nastavenia na jednom mieste: `inc/site.php` — `SITE_URL` a `SITE_INDEX` sa **zistia samy** z domény (neindexuje sa na `SITE_DEMO_HOSTS`
+  = alfa.oravsky.sk a lokálne; pevná adresa cez `SITE_URL_FIXED`), `SITE_DEMO`, `CLUB` (fakty o klube pre SEO/AI).
+- **Balík pre trénera:** `php tools/zabal-pre-trenera.php` → ZIP s `web/` + návodmi (`NASADENIE-PRE-TRENERA.md` s jednorazovým install tokenom).
 - Editor textu: **Quill 2.0.3** (`assets/vendor/quill/`, self-hosted). Server čistí HTML v `inc/rich.php` (whitelist značiek,
   písiem, farieb, fotky len z `uploads/inline`, video len YouTube → youtube-nocookie). **Palety a písma v `inc/rich.php`
   musia sedieť s `admin/admin.js`.**
@@ -86,7 +88,7 @@ NAVOD-PRE-TRENERA.md  návod na administráciu pre trénera
 ## Čo ešte treba doriešiť (pred ostrým spustením)
 - [ ] Reálne tréningové fotky, **logo v priehľadnom PNG**; zmazať ukážkové aktuality/album v admine.
 - [ ] Skontrolovať texty (Čo je taekwondo, Pásy, O nás) a stránku Ochrana osobných údajov (doplniť IČO/sídlo klubu, ak existuje).
-- [ ] Ostrá doména + hosting → `NASADENIE.md` časť 10 (`SITE_URL`, `SITE_INDEX = true`, Search Console, Firemný profil Google).
+- [ ] Ostrá doména + hosting → `NASADENIE.md` časť 10 (balík `tools/zabal-pre-trenera.php` + `NASADENIE-PRE-TRENERA.md`; adresa sa zistí sama; Search Console, Firemný profil Google).
 - [ ] Vypnúť GitHub Pages, zlúčiť `cms-admin` do `main`.
 - [x] Admin (aktuality, galéria, editor, filter, koncepty), SEO/AI, GDPR stránka, bezpečnosť — hotové (2026-10-18/19),
       6 kôl nezávislej kritickej revízie (posledné 0/0/0/3, opravené) + end-to-end test naživo (22/22).
