@@ -28,6 +28,11 @@ Admin nainštalovaný na e-mail lub.zavodny1@gmail.com (heslo poznal používate
 **Finálne:** ostrý web na trénerov hosting/doménu (Brian alebo Lukáš) podľa NASADENIE.md časť 10 (SITE_URL, SITE_INDEX=true,
 preniesť data/ + uploads/, Search Console, Firemný profil Google, presmerovať alfa.oravsky.sk).
 
+**2026-10-19:** nahrávanie fotiek opravené (base64 v textových poliach formulára, viď [[reference-webglobe-php-tmp]]) —
+používateľ overil, že na alfa.oravsky.sk funguje. Titulná fotka aktuality: popisky Aktuálna/Nová, „Zrušiť novú fotku“,
+„Odstrániť túto fotku (bez náhrady)“ so zošednutím — nasadené, klikom v prihlásenom admine zatiaľ neoverené (e2e nebežalo).
+FTP heslo používateľ napísal do chatu 2026-10-19 — odporučené zmeniť; nové heslo nepýtať do chatu, nech spustí deploy sám v Git Bash.
+
 **Ostáva:** reálne fotky + logo PNG, zmazať ukážkový obsah, skontrolovať texty a GDPR (IČO), ostrá doména, vypnúť GitHub Pages, merge do main.
 
 Pozor na fonty: [[fonts-kr-subset-gotcha]]. Git: [[deploy-git-lukasko-token]]. Lokálne PHP: [[reference-local-php]].
