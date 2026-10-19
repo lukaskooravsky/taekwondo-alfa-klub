@@ -90,51 +90,6 @@ require __DIR__ . '/inc/layout-header.php';
     </div>
   </section>
 
-  <!-- DISCIPLÍNY -->
-  <section id="discipliny" style="border-top:1px solid var(--line);">
-    <div class="container">
-      <div class="head-block reveal">
-        <span class="eyebrow">Súťažné Taekwon-Do</span>
-        <h2 class="section-title">Disciplíny ITF</h2>
-        <p class="lead">ITF Taekwon-Do rozvíja technickú presnosť, rýchlosť, silu, odvahu aj tímovú spoluprácu. Na súťažiach sa stretávame v týchto disciplínach.</p>
-      </div>
-      <div class="disc-grid">
-        <article class="disc reveal">
-          <div class="disc-media" data-tag="Tul" style="background-image:url('assets/disc-tul.jpg')"></div>
-          <div class="disc-body">
-            <span class="disc-tag">Tul</span>
-            <h3>Technické zostavy</h3>
-            <p>Presne stanovené zostavy útokov a obrán. Rozhodcovia hodnotia techniku, silu, rovnováhu, rytmus a správne dýchanie.</p>
-          </div>
-        </article>
-        <article class="disc reveal">
-          <div class="disc-media" data-tag="Matsogi" style="background-image:url('assets/disc-matsogi.jpg')"></div>
-          <div class="disc-body">
-            <span class="disc-tag">Matsogi</span>
-            <h3>Športový boj</h3>
-            <p>Dynamický semi-kontaktný súboj dvoch pretekárov. Body sa získavajú za presné a kontrolované techniky na povolené pásma.</p>
-          </div>
-        </article>
-        <article class="disc reveal">
-          <div class="disc-media" data-tag="Wi-ryok" style="background-image:url('assets/disc-wiryok.jpg')"></div>
-          <div class="disc-body">
-            <span class="disc-tag">Wi-ryok</span>
-            <h3>Silové prerážanie</h3>
-            <p>Disciplína preveruje účinnosť a silu techník rúk aj nôh pri prerážaní dosiek určenými technikami.</p>
-          </div>
-        </article>
-        <article class="disc reveal">
-          <div class="disc-media" data-tag="Teuki" style="background-image:url('assets/disc-teuki.jpg')"></div>
-          <div class="disc-body">
-            <span class="disc-tag">Teuki</span>
-            <h3>Špeciálne techniky</h3>
-            <p>Kopy vo výskoku na vysoko alebo ďaleko umiestnené ciele. Rozhoduje výška, presnosť a správne vykonanie techniky.</p>
-          </div>
-        </article>
-      </div>
-    </div>
-  </section>
-
   <!-- TRÉNER -->
   <section style="background:var(--ink-2);border-block:1px solid var(--line);">
     <div class="container split">
