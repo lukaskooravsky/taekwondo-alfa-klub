@@ -28,7 +28,11 @@ require __DIR__ . '/inc/layout-header.php';
           <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.3-7-11a7 7 0 0114 0c0 4.7-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></span><div><b>Kde trénujeme</b><span>ZŠ Holíčska 50, 851 05 Bratislava — Petržalka</span></div></li>
           <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span><div><b>Tréningy</b><span>Utorok a Štvrtok · 16:30, 17:30 alebo 18:30 (tréning trvá 1 hodinu podľa skupiny)</span></div></li>
         </ul>
-        <a class="btn btn-ghost map-link" href="https://www.google.com/maps/search/?api=1&query=Z%C5%A0+Hol%C3%AD%C4%8Dska+50+Bratislava" target="_blank" rel="noopener">Otvoriť v mapách →</a>
+        <a class="map-card" href="https://www.google.com/maps/search/?api=1&query=Z%C3%A1kladn%C3%A1+%C5%A1kola+Hol%C3%AD%C4%8Dska+50+Bratislava" target="_blank" rel="noopener" aria-label="Mapa: ZŠ Holíčska 50, Bratislava — otvoriť v Google Mapách">
+          <img src="assets/mapa.jpg" width="720" height="450" alt="Mapa okolia ZŠ Holíčska 50 v Petržalke" loading="lazy">
+          <span class="map-card-cta">Otvoriť v mapách →</span>
+        </a>
+        <p class="map-credit">Mapa © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">prispievatelia OpenStreetMap</a></p>
       </div>
 
       <div class="form-card reveal">
