@@ -78,7 +78,7 @@ NAVOD-PRE-TRENERA.md  návod na administráciu pre trénera
   (inline `style="background-image:url('assets/…')"` v `co-je-taekwondo.php`).
 - **Mapa na Kontakte**: vložená Google mapa (iframe v `kontakty.php`, spomenutá v `ochrana-osobnych-udajov.php` — pri zmene drž oboje).
 - Po zmene: `php tests/run.php` **a** pri zmene adminu aj `node tools/e2e/e2e.mjs` (kliky v prehliadači), commit + push,
-  nahrať zmenené súbory cez FTP (`NASADENIE.md` časť 8). Pri zmene ovládania aktualizuj `NAVOD-PRE-TRENERA.md`.
+  nahrať na FTP: **`bash tools/nahraj-ftp.sh`** (zmeny od značky `ftp-alfa`, pýta len heslo; Claude ho spustí cez `git-bash.exe`). Pri zmene ovládania aktualizuj `NAVOD-PRE-TRENERA.md`.
 - **Pozor:** Quill má `.ql-container`/`.ql-editor` `height:100%` — v grid formulári to editor natiahne cez tlačidlá
   (neviditeľne ich prekryje). V `admin.css` je `height:auto`; po zmenách CSS over `tools/e2e/probe-buttons.mjs`.
 - Emoji v editore: len také, ktoré zobrazí aj Windows 10 (Unicode ≤ 12; napr. 🥷 🫡 🫶 sú štvorčeky).
